@@ -56,8 +56,11 @@ export async function POST(request: NextRequest) {
     
     try {
       if (file.type === 'application/pdf') {
-        const pdf = await import('pdf-parse/lib/pdf-parse')
-        const pdfData = await pdf.default(buffer)
+        const pdf = await import('pdf-parse')
+        const pdfData = await pdf.default(buffer, {
+          // Prevent pdf-parse from trying to read its test fixture file in prod.
+          max: 0,
+        })
         content = pdfData.text
       } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
                  file.type === 'application/msword') {
