@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { extractTasksFromContent } from '@/lib/openai'
-import { writeFile } from 'fs/promises'
+import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
 
 export async function POST(request: NextRequest) {
@@ -43,20 +43,13 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes)
     
     const fileName = `${Date.now()}-${file.name}`
-    const uploadPath = join(process.cwd(), 'uploads', fileName)
-    
-    // Ensure uploads directory exists
-    const uploadsDir = join(process.cwd(), 'uploads')
-    try {
-      await writeFile(uploadPath, buffer)
-    } catch {
-      // Create directory if it doesn't exist
-      const fs = await import('fs')
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true })
-      }
-      await writeFile(uploadPath, buffer)
-    }
+    const baseDir = process.env.VERCEL ? '/tmp' : process.cwd()
+    const uploadsDir = join(baseDir, 'uploads')
+    const uploadPath = join(uploadsDir, fileName)
+
+    // Ensure uploads directory exists (serverless-safe temp dir on Vercel)
+    await mkdir(uploadsDir, { recursive: true })
+    await writeFile(uploadPath, buffer)
 
     // Extract text content based on file type
     let content = ''
