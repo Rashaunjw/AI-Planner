@@ -5,15 +5,17 @@ import { Brain, ArrowLeft, Calendar, Clock, Plus } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { redirect } from "next/navigation"
+import { isDevBypassClientEnabled } from "@/lib/dev-bypass-client"
 
 export default function CalendarPage() {
   const { data: session, status } = useSession()
+  const isDevBypass = isDevBypassClientEnabled()
 
-  if (status === "loading") {
+  if (status === "loading" && !isDevBypass) {
     return <div>Loading...</div>
   }
 
-  if (!session) {
+  if (!session && !isDevBypass) {
     redirect("/auth/signin")
   }
 

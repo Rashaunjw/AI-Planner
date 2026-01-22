@@ -4,6 +4,7 @@ import Link from "next/link"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import EmailSignInForm from "@/components/auth/email-signin-form"
 
 export default async function SignIn() {
   const session = await getServerSession(authOptions)
@@ -30,10 +31,21 @@ export default async function SignIn() {
             <p className="text-gray-600">Sign in to your account to continue</p>
           </div>
 
+          <EmailSignInForm />
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">or</span>
+            </div>
+          </div>
+
           <form action="/api/auth/signin/google" method="post">
             <Button 
               type="submit" 
-              className="w-full mb-4"
+              className="w-full"
               size="lg"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -48,10 +60,7 @@ export default async function SignIn() {
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Don&apos;t have an account?{" "}
-              <span className="text-blue-600 font-medium">
-                Sign up with Google above
-              </span>
+              Use email to sign in without Google. You can still use Google if you prefer.
             </p>
           </div>
         </div>

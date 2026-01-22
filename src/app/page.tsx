@@ -20,7 +20,7 @@ export default async function Home() {
           <Brain className="h-8 w-8 text-blue-600" />
           <span className="text-2xl font-bold text-gray-900">AI Planner</span>
         </div>
-        <Link href="/auth/signin">
+        <Link href="/auth/signin" className="cursor-pointer">
           <Button variant="outline">Sign In</Button>
         </Link>
       </nav>
@@ -38,15 +38,12 @@ export default async function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Link href="/auth/signin">
+            <Link href="/dashboard" className="cursor-pointer">
               <Button size="lg" className="text-lg px-8 py-4">
                 Get Started Free
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Button variant="outline" size="lg" className="text-lg px-8 py-4">
-              Watch Demo
-            </Button>
           </div>
 
           {/* Features Grid */}

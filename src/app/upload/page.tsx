@@ -6,6 +6,7 @@ import { Brain, Upload, FileText, ArrowLeft, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { redirect } from "next/navigation"
+import { isDevBypassClientEnabled } from "@/lib/dev-bypass-client"
 
 export default function UploadPage() {
   const { data: session, status } = useSession()
@@ -13,12 +14,13 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false)
   const [uploaded, setUploaded] = useState(false)
   const [file, setFile] = useState<File | null>(null)
+  const isDevBypass = isDevBypassClientEnabled()
 
-  if (status === "loading") {
+  if (status === "loading" && !isDevBypass) {
     return <div>Loading...</div>
   }
 
-  if (!session) {
+  if (!session && !isDevBypass) {
     redirect("/auth/signin")
   }
 
@@ -70,6 +72,10 @@ export default function UploadPage() {
   }
 
   const handleUpload = async () => {
+    if (isDevBypass) {
+      alert("Dev bypass enabled. Upload is disabled without a real account.")
+      return
+    }
     if (!file) return
 
     setUploading(true)

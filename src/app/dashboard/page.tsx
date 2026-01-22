@@ -4,10 +4,15 @@ import Link from "next/link"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { getDevBypassSession, isAuthBypassEnabled } from "@/lib/auth-dev-bypass"
 
 export default async function Dashboard() {
-  const session = await getServerSession(authOptions)
+  let session = await getServerSession(authOptions)
   
+  if (!session && isAuthBypassEnabled()) {
+    session = getDevBypassSession() as any
+  }
+
   if (!session) {
     redirect("/auth/signin")
   }
@@ -33,6 +38,7 @@ export default async function Dashboard() {
                 </Button>
               </Link>
               <form action="/api/auth/signout" method="post">
+                <input type="hidden" name="callbackUrl" value="/" />
                 <Button variant="ghost" size="sm" type="submit">
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
@@ -66,7 +72,7 @@ export default async function Dashboard() {
                 <h3 className="text-lg font-semibold ml-3">Upload Syllabus</h3>
               </div>
               <p className="text-gray-600 text-sm">
-                Upload PDF or Word documents to extract assignments and deadlines
+                Upload PDF to extract assignments and deadlines
               </p>
             </div>
           </Link>

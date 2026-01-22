@@ -7,6 +7,7 @@ import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { redirect } from "next/navigation"
 import { getRelativeTime } from "@/lib/utils"
+import { isDevBypassClientEnabled } from "@/lib/dev-bypass-client"
 
 interface Task {
   id: string
@@ -25,16 +26,22 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [editingTask, setEditingTask] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Partial<Task>>({})
+  const isDevBypass = isDevBypassClientEnabled()
 
   useEffect(() => {
-    fetchTasks()
-  }, [])
+    if (!isDevBypass) {
+      fetchTasks()
+    } else {
+      setTasks([])
+      setLoading(false)
+    }
+  }, [isDevBypass])
 
-  if (status === "loading") {
+  if (status === "loading" && !isDevBypass) {
     return <div>Loading...</div>
   }
 
-  if (!session) {
+  if (!session && !isDevBypass) {
     redirect("/auth/signin")
   }
 

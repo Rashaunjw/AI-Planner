@@ -6,6 +6,7 @@ import { Brain, ArrowLeft, Save, Bell, Calendar, User } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { redirect } from "next/navigation"
+import { isDevBypassClientEnabled } from "@/lib/dev-bypass-client"
 
 export default function SettingsPage() {
   const { data: session, status } = useSession()
@@ -16,12 +17,13 @@ export default function SettingsPage() {
     notifications: true
   })
   const [saving, setSaving] = useState(false)
+  const isDevBypass = isDevBypassClientEnabled()
 
-  if (status === "loading") {
+  if (status === "loading" && !isDevBypass) {
     return <div>Loading...</div>
   }
 
-  if (!session) {
+  if (!session && !isDevBypass) {
     redirect("/auth/signin")
   }
 
