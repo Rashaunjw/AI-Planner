@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Calendar, FileText, Brain, Bell } from "lucide-react"
+import { ArrowRight, Calendar, FileText, Brain } from "lucide-react"
 import Link from "next/link"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"

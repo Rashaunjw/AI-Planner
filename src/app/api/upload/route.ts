@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const uploadsDir = join(process.cwd(), 'uploads')
     try {
       await writeFile(uploadPath, buffer)
-    } catch (error) {
+    } catch {
       // Create directory if it doesn't exist
       const fs = await import('fs')
       if (!fs.existsSync(uploadsDir)) {

@@ -10,7 +10,7 @@ export default async function Dashboard() {
   let session = await getServerSession(authOptions)
   
   if (!session && isAuthBypassEnabled()) {
-    session = getDevBypassSession() as any
+    session = getDevBypassSession()
   }
 
   if (!session) {

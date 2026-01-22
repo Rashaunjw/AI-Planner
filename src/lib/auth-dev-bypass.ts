@@ -1,8 +1,10 @@
+import type { Session } from "next-auth"
+
 /**
  * Development bypass for authentication.
  * Set ENABLE_AUTH_BYPASS=true in .env.local to bypass auth checks.
  */
-export function getDevBypassSession() {
+export function getDevBypassSession(): Session | null {
   if (process.env.ENABLE_AUTH_BYPASS === "true" && process.env.NODE_ENV !== "production") {
     return {
       user: {
