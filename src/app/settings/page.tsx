@@ -80,11 +80,11 @@ export default function SettingsPage() {
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Name</label>
-                <p className="text-gray-900">{session.user?.name || 'Not provided'}</p>
+                <p className="text-gray-900">{session?.user?.name || "Not provided"}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Email</label>
-                <p className="text-gray-900">{session.user?.email}</p>
+                <p className="text-gray-900">{session?.user?.email || "Not provided"}</p>
               </div>
             </div>
           </div>
