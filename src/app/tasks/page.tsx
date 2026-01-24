@@ -29,6 +29,20 @@ export default function TasksPage() {
   const [editForm, setEditForm] = useState<Partial<Task>>({})
   const isDevBypass = isDevBypassClientEnabled()
 
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch('/api/tasks')
+      if (response.ok) {
+        const data = await response.json()
+        setTasks(data.tasks || [])
+      }
+    } catch (error) {
+      console.error('Error fetching tasks:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (!isDevBypass) {
       fetchTasks()
@@ -50,20 +64,6 @@ export default function TasksPage() {
 
   if (!session && !isDevBypass) {
     return null
-  }
-
-  const fetchTasks = async () => {
-    try {
-      const response = await fetch('/api/tasks')
-      if (response.ok) {
-        const data = await response.json()
-        setTasks(data.tasks || [])
-      }
-    } catch (error) {
-      console.error('Error fetching tasks:', error)
-    } finally {
-      setLoading(false)
-    }
   }
 
   const handleEdit = (task: Task) => {
