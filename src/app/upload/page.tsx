@@ -1,27 +1,34 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Brain, Upload, FileText, ArrowLeft, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { isDevBypassClientEnabled } from "@/lib/dev-bypass-client"
 
 export default function UploadPage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const [dragActive, setDragActive] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploaded, setUploaded] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const isDevBypass = isDevBypassClientEnabled()
 
+  useEffect(() => {
+    if (!isDevBypass && status !== "loading" && !session) {
+      router.replace("/auth/signin")
+    }
+  }, [isDevBypass, router, session, status])
+
   if (status === "loading" && !isDevBypass) {
     return <div>Loading...</div>
   }
 
   if (!session && !isDevBypass) {
-    redirect("/auth/signin")
+    return null
   }
 
   const handleDrag = (e: React.DragEvent) => {

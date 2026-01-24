@@ -1,15 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Brain, ArrowLeft, Save, Bell, Calendar, User } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { isDevBypassClientEnabled } from "@/lib/dev-bypass-client"
 
 export default function SettingsPage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const [settings, setSettings] = useState({
     emailReminders: true,
     reminderDays: 2,
@@ -19,12 +20,18 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const isDevBypass = isDevBypassClientEnabled()
 
+  useEffect(() => {
+    if (!isDevBypass && status !== "loading" && !session) {
+      router.replace("/auth/signin")
+    }
+  }, [isDevBypass, router, session, status])
+
   if (status === "loading" && !isDevBypass) {
     return <div>Loading...</div>
   }
 
   if (!session && !isDevBypass) {
-    redirect("/auth/signin")
+    return null
   }
 
   const handleSave = async () => {

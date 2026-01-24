@@ -1,22 +1,30 @@
 "use client"
 
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Brain, ArrowLeft, Calendar, Clock, Plus } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { isDevBypassClientEnabled } from "@/lib/dev-bypass-client"
 
 export default function CalendarPage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const isDevBypass = isDevBypassClientEnabled()
+
+  useEffect(() => {
+    if (!isDevBypass && status !== "loading" && !session) {
+      router.replace("/auth/signin")
+    }
+  }, [isDevBypass, router, session, status])
 
   if (status === "loading" && !isDevBypass) {
     return <div>Loading...</div>
   }
 
   if (!session && !isDevBypass) {
-    redirect("/auth/signin")
+    return null
   }
 
   return (

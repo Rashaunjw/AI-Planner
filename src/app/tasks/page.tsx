@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Brain, Calendar, Edit, Trash2, ArrowLeft, CheckCircle, Clock } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { getRelativeTime } from "@/lib/utils"
 import { isDevBypassClientEnabled } from "@/lib/dev-bypass-client"
 
@@ -22,6 +22,7 @@ interface Task {
 
 export default function TasksPage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [editingTask, setEditingTask] = useState<string | null>(null)
@@ -37,12 +38,18 @@ export default function TasksPage() {
     }
   }, [isDevBypass])
 
+  useEffect(() => {
+    if (!isDevBypass && status !== "loading" && !session) {
+      router.replace("/auth/signin")
+    }
+  }, [isDevBypass, router, session, status])
+
   if (status === "loading" && !isDevBypass) {
     return <div>Loading...</div>
   }
 
   if (!session && !isDevBypass) {
-    redirect("/auth/signin")
+    return null
   }
 
   const fetchTasks = async () => {
