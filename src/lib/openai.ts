@@ -24,7 +24,7 @@ export async function extractTasksFromContent(content: string): Promise<Extracte
     const exampleFormat: string = "Example format: [{\"title\": \"Midterm Exam\", \"description\": \"Comprehensive exam covering chapters 1-8\", \"dueDate\": \"2024-03-15\", \"priority\": \"high\", \"category\": \"exam\", \"estimatedDuration\": 120}]"
     
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -44,8 +44,8 @@ export async function extractTasksFromContent(content: string): Promise<Extracte
       throw new Error('No response from OpenAI')
     }
 
-    // Parse the JSON response
-    const tasks = JSON.parse(responseContent) as ExtractedTask[]
+    // Parse the JSON response (handle code fences or extra text)
+    const tasks = parseJsonFromModel(responseContent) as ExtractedTask[]
     
     // Validate and clean the tasks
     return tasks.map(task => ({
@@ -94,4 +94,20 @@ export async function generateStudyPlan(tasks: ExtractedTask[]): Promise<string>
     console.error('Error generating study plan:', error)
     throw new Error('Failed to generate study plan')
   }
+}
+
+function parseJsonFromModel(raw: string): unknown {
+  const trimmed = raw.trim()
+  const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i)
+  if (fencedMatch?.[1]) {
+    return JSON.parse(fencedMatch[1].trim())
+  }
+
+  const arrayStart = trimmed.indexOf('[')
+  const arrayEnd = trimmed.lastIndexOf(']')
+  if (arrayStart !== -1 && arrayEnd !== -1 && arrayEnd > arrayStart) {
+    return JSON.parse(trimmed.slice(arrayStart, arrayEnd + 1))
+  }
+
+  return JSON.parse(trimmed)
 }
