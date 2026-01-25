@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Brain, ArrowLeft, Calendar, Clock, Plus } from "lucide-react"
+import { Brain, ArrowLeft, Plus } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -32,6 +32,43 @@ export default function CalendarPage() {
       router.replace("/auth/signin")
     }
   }, [isDevBypass, router, session, status])
+
+  const monthLabel = currentMonth.toLocaleString("en-US", {
+    month: "long",
+    year: "numeric",
+  })
+
+  const taskByDate = useMemo(() => {
+    const map = new Map<string, Task[]>()
+    tasks.forEach((task) => {
+      if (!task.dueDate) return
+      const key = formatDateKey(new Date(task.dueDate))
+      const existing = map.get(key) || []
+      existing.push(task)
+      map.set(key, existing)
+    })
+    return map
+  }, [tasks])
+
+  const calendarWeeks = useMemo(() => {
+    const year = currentMonth.getFullYear()
+    const month = currentMonth.getMonth()
+    const firstOfMonth = new Date(year, month, 1)
+    const start = new Date(firstOfMonth)
+    start.setDate(firstOfMonth.getDate() - firstOfMonth.getDay())
+
+    const weeks: Date[][] = []
+    const cursor = new Date(start)
+    for (let week = 0; week < 6; week += 1) {
+      const days: Date[] = []
+      for (let day = 0; day < 7; day += 1) {
+        days.push(new Date(cursor))
+        cursor.setDate(cursor.getDate() + 1)
+      }
+      weeks.push(days)
+    }
+    return weeks
+  }, [currentMonth])
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -65,43 +102,6 @@ export default function CalendarPage() {
   if (!session && !isDevBypass) {
     return null
   }
-
-  const monthLabel = currentMonth.toLocaleString("en-US", {
-    month: "long",
-    year: "numeric",
-  })
-
-  const taskByDate = useMemo(() => {
-    const map = new Map<string, Task[]>()
-    tasks.forEach((task) => {
-      if (!task.dueDate) return
-      const key = formatDateKey(new Date(task.dueDate))
-      const existing = map.get(key) || []
-      existing.push(task)
-      map.set(key, existing)
-    })
-    return map
-  }, [tasks])
-
-  const calendarWeeks = useMemo(() => {
-    const year = currentMonth.getFullYear()
-    const month = currentMonth.getMonth()
-    const firstOfMonth = new Date(year, month, 1)
-    const start = new Date(firstOfMonth)
-    start.setDate(firstOfMonth.getDate() - firstOfMonth.getDay())
-
-    const weeks: Date[][] = []
-    let cursor = new Date(start)
-    for (let week = 0; week < 6; week += 1) {
-      const days: Date[] = []
-      for (let day = 0; day < 7; day += 1) {
-        days.push(new Date(cursor))
-        cursor.setDate(cursor.getDate() + 1)
-      }
-      weeks.push(days)
-    }
-    return weeks
-  }, [currentMonth])
 
   const handleSync = async () => {
     setSyncing(true)
@@ -244,7 +244,7 @@ export default function CalendarPage() {
           {tasks.length === 0 && !loading && (
             <div className="mt-6 text-center text-sm text-gray-500">
               No tasks with due dates yet. Upload a syllabus or add tasks to populate the calendar.
-            </div>
+          </div>
           )}
         </div>
       </div>
