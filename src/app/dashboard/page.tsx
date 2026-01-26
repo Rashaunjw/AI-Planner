@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getDevBypassSession, isAuthBypassEnabled } from "@/lib/auth-dev-bypass"
+import { prisma } from "@/lib/prisma"
+import { formatDate } from "@/lib/utils"
 
 export default async function Dashboard() {
   let session = await getServerSession(authOptions)
@@ -16,6 +18,22 @@ export default async function Dashboard() {
   if (!session) {
     redirect("/auth/signin")
   }
+
+  const [recentUploads, upcomingTasks] = await Promise.all([
+    prisma.upload.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.task.findMany({
+      where: {
+        userId: session.user.id,
+        dueDate: { not: null },
+      },
+      orderBy: { dueDate: "asc" },
+      take: 5,
+    }),
+  ])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -112,16 +130,67 @@ export default async function Dashboard() {
             <h2 className="text-lg font-semibold">Recent Activity</h2>
           </div>
           <div className="p-6">
-            <div className="text-center py-8">
-              <Brain className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
-              <p className="text-gray-600 mb-4">
-                Upload your first syllabus to see your study plan here
-              </p>
-              <Link href="/upload">
-                <Button>Get Started</Button>
-              </Link>
-            </div>
+            {recentUploads.length === 0 && upcomingTasks.length === 0 ? (
+              <div className="text-center py-8">
+                <Brain className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
+                <p className="text-gray-600 mb-4">
+                  Upload your first syllabus to see your study plan here
+                </p>
+                <Link href="/upload">
+                  <Button>Get Started</Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {upcomingTasks.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      Upcoming Tasks
+                    </h3>
+                    <ul className="space-y-2">
+                      {upcomingTasks.map((task) => (
+                        <li key={task.id} className="flex items-center justify-between">
+                          <div>
+                            <p className="text-gray-900 font-medium">{task.title}</p>
+                            {task.dueDate && (
+                              <p className="text-sm text-gray-500">
+                                Due {formatDate(new Date(task.dueDate))}
+                              </p>
+                            )}
+                          </div>
+                          <Link href="/tasks" className="text-sm text-blue-600 hover:text-blue-700">
+                            View
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {recentUploads.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      Recent Uploads
+                    </h3>
+                    <ul className="space-y-2">
+                      {recentUploads.map((upload) => (
+                        <li key={upload.id} className="flex items-center justify-between">
+                          <div>
+                            <p className="text-gray-900 font-medium">{upload.fileName}</p>
+                            <p className="text-sm text-gray-500">
+                              Uploaded {formatDate(new Date(upload.createdAt))}
+                            </p>
+                          </div>
+                          <Link href="/tasks" className="text-sm text-blue-600 hover:text-blue-700">
+                            Review
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

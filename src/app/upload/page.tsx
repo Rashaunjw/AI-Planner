@@ -15,6 +15,7 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false)
   const [uploaded, setUploaded] = useState(false)
   const [file, setFile] = useState<File | null>(null)
+  const [pastedText, setPastedText] = useState("")
   const isDevBypass = isDevBypassClientEnabled()
 
   useEffect(() => {
@@ -83,13 +84,18 @@ export default function UploadPage() {
       alert("Dev bypass enabled. Upload is disabled without a real account.")
       return
     }
-    if (!file) return
+    if (!file && !pastedText.trim()) return
 
     setUploading(true)
     
     try {
       const formData = new FormData()
-      formData.append('file', file)
+      if (file) {
+        formData.append('file', file)
+      }
+      if (pastedText.trim()) {
+        formData.append('text', pastedText.trim())
+      }
       
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -240,6 +246,28 @@ export default function UploadPage() {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Paste Text */}
+        <div className="mt-8 bg-white rounded-xl shadow-sm border p-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Or paste syllabus text
+          </label>
+          <textarea
+            value={pastedText}
+            onChange={(e) => setPastedText(e.target.value)}
+            rows={6}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="Paste syllabus text here..."
+          />
+          <div className="mt-4">
+            <Button
+              onClick={handleUpload}
+              disabled={!pastedText.trim() || uploading}
+            >
+              {uploading ? "Processing..." : "Process Text"}
+            </Button>
           </div>
         </div>
 

@@ -18,6 +18,8 @@ export default function SettingsPage() {
     notifications: true
   })
   const [saving, setSaving] = useState(false)
+  const [accounts, setAccounts] = useState<Array<{ provider: string }>>([])
+  const [loadingSettings, setLoadingSettings] = useState(true)
   const isDevBypass = isDevBypassClientEnabled()
 
   useEffect(() => {
@@ -34,13 +36,58 @@ export default function SettingsPage() {
     return null
   }
 
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch("/api/settings")
+        if (response.ok) {
+          const data = await response.json()
+          if (data.settings) {
+            setSettings((prev) => ({
+              ...prev,
+              emailReminders: Boolean(data.settings.emailReminders),
+              reminderDays: Number(data.settings.reminderDays) || 2,
+            }))
+          }
+          if (Array.isArray(data.accounts)) {
+            setAccounts(data.accounts)
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error)
+      } finally {
+        setLoadingSettings(false)
+      }
+    }
+
+    if (session && !isDevBypass) {
+      fetchSettings()
+    } else {
+      setLoadingSettings(false)
+    }
+  }, [isDevBypass, session])
+
   const handleSave = async () => {
     setSaving(true)
-    // TODO: Implement settings save to database
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emailReminders: settings.emailReminders,
+          reminderDays: settings.reminderDays,
+        }),
+      })
+      if (!response.ok) {
+        throw new Error("Settings update failed")
+      }
+      alert("Settings saved successfully!")
+    } catch (error) {
+      console.error("Error saving settings:", error)
+      alert("Failed to save settings. Please try again.")
+    } finally {
       setSaving(false)
-      alert('Settings saved successfully!')
-    }, 1000)
+    }
   }
 
   return (
@@ -94,6 +141,28 @@ export default function SettingsPage() {
                 <p className="text-gray-900">{session?.user?.email || "Not provided"}</p>
               </div>
             </div>
+          </div>
+
+          {/* Connected Accounts */}
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="flex items-center mb-4">
+              <User className="h-5 w-5 text-gray-600 mr-2" />
+              <h2 className="text-lg font-semibold">Connected Accounts</h2>
+            </div>
+            {loadingSettings ? (
+              <p className="text-sm text-gray-500">Loading connected accounts...</p>
+            ) : accounts.length > 0 ? (
+              <ul className="space-y-2 text-sm text-gray-700">
+                {accounts.map((account) => (
+                  <li key={account.provider} className="flex items-center justify-between">
+                    <span className="capitalize">{account.provider}</span>
+                    <span className="text-green-600 font-medium">Connected</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500">No connected accounts found.</p>
+            )}
           </div>
 
           {/* Notification Settings */}

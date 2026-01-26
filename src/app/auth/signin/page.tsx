@@ -27,7 +27,7 @@ export default async function SignIn() {
         {/* Sign In Card */}
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome back</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome</h1>
             <p className="text-gray-600">Sign in to your account to continue</p>
           </div>
 

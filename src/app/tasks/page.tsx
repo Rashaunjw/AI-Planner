@@ -27,6 +27,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [editingTask, setEditingTask] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Partial<Task>>({})
+  const [deletingAll, setDeletingAll] = useState(false)
   const isDevBypass = isDevBypassClientEnabled()
 
   const fetchTasks = async () => {
@@ -116,6 +117,25 @@ export default function TasksPage() {
     }
   }
 
+  const handleDeleteAll = async () => {
+    if (!confirm('Delete all tasks? This action cannot be undone.')) return
+
+    setDeletingAll(true)
+    try {
+      const response = await fetch('/api/tasks', {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        setTasks([])
+      }
+    } catch (error) {
+      console.error('Error deleting tasks:', error)
+    } finally {
+      setDeletingAll(false)
+    }
+  }
+
   const handleStatusChange = async (taskId: string, status: string) => {
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
@@ -192,11 +212,21 @@ export default function TasksPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Tasks</h1>
-          <p className="text-gray-600">
-            Review and manage your AI-extracted tasks
-          </p>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Tasks</h1>
+            <p className="text-gray-600">
+              Review and manage your AI-extracted tasks
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDeleteAll}
+            disabled={tasks.length === 0 || deletingAll}
+          >
+            {deletingAll ? "Deleting..." : "Delete All"}
+          </Button>
         </div>
 
         {tasks.length === 0 ? (
