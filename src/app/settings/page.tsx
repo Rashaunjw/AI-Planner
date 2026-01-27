@@ -28,14 +28,6 @@ export default function SettingsPage() {
     }
   }, [isDevBypass, router, session, status])
 
-  if (status === "loading" && !isDevBypass) {
-    return <div>Loading...</div>
-  }
-
-  if (!session && !isDevBypass) {
-    return null
-  }
-
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -66,6 +58,14 @@ export default function SettingsPage() {
       setLoadingSettings(false)
     }
   }, [isDevBypass, session])
+
+  if (status === "loading" && !isDevBypass) {
+    return <div>Loading...</div>
+  }
+
+  if (!session && !isDevBypass) {
+    return null
+  }
 
   const handleSave = async () => {
     setSaving(true)
