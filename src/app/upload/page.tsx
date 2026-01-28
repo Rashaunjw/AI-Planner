@@ -194,15 +194,15 @@ export default function UploadPage() {
                   </p>
                 </div>
                 <Button 
-                  variant="outline" 
-                  onClick={() => setFile(null)}
+                  onClick={handleUpload}
                   disabled={uploading}
                   className="w-full"
                 >
                   {uploading ? "Processing..." : "Process File"}
                 </Button>
                 <Button 
-                  onClick={handleUpload}
+                  variant="outline" 
+                  onClick={() => setFile(null)}
                   disabled={uploading}
                 >
                   Choose Different File
