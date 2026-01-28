@@ -42,6 +42,7 @@ model User {
   image         String?
   emailReminders Boolean   @default(true)
   reminderDays   Int       @default(2)
+  calendarSync   Boolean   @default(false)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   accounts      Account[]

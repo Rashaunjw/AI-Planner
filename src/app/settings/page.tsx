@@ -39,6 +39,7 @@ export default function SettingsPage() {
               ...prev,
               emailReminders: Boolean(data.settings.emailReminders),
               reminderDays: Number(data.settings.reminderDays) || 2,
+              calendarSync: Boolean(data.settings.calendarSync),
             }))
           }
           if (Array.isArray(data.accounts)) {
@@ -76,6 +77,7 @@ export default function SettingsPage() {
         body: JSON.stringify({
           emailReminders: settings.emailReminders,
           reminderDays: settings.reminderDays,
+          calendarSync: settings.calendarSync,
         }),
       })
       if (!response.ok) {
@@ -237,13 +239,17 @@ export default function SettingsPage() {
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
               </div>
-              
-              {!settings.calendarSync && (
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>Coming Soon:</strong> Calendar integration will allow you to automatically sync your tasks with Google Calendar and receive smart scheduling suggestions.
-                  </p>
+              {settings.calendarSync ? (
+                <div className="flex items-center justify-between rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                  <span>Automatic sync is enabled. We will sync nightly.</span>
+                  <Button variant="outline" size="sm" onClick={() => fetch("/api/calendar/sync", { method: "POST" })}>
+                    Sync Now
+                  </Button>
                 </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Enable to sync your tasks to Google Calendar each night.
+                </p>
               )}
             </div>
           </div>

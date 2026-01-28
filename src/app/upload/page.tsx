@@ -194,25 +194,15 @@ export default function UploadPage() {
                   </p>
                 </div>
                 <Button 
-                  onClick={handleUpload}
+                  variant="outline" 
+                  onClick={() => setFile(null)}
                   disabled={uploading}
                   className="w-full"
                 >
-                  {uploading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Process File
-                    </>
-                  )}
+                  {uploading ? "Processing..." : "Process File"}
                 </Button>
                 <Button 
-                  variant="outline" 
-                  onClick={() => setFile(null)}
+                  onClick={handleUpload}
                   disabled={uploading}
                 >
                   Choose Different File
@@ -265,6 +255,7 @@ export default function UploadPage() {
             <Button
               onClick={handleUpload}
               disabled={!pastedText.trim() || uploading}
+              variant="outline"
             >
               {uploading ? "Processing..." : "Process Text"}
             </Button>
