@@ -7,6 +7,7 @@ import { redirect } from "next/navigation"
 import { getDevBypassSession, isAuthBypassEnabled } from "@/lib/auth-dev-bypass"
 import { prisma } from "@/lib/prisma"
 import { formatDate } from "@/lib/utils"
+import ActivityClearButton from "@/components/activity-clear-button"
 
 export default async function Dashboard() {
   let session = await getServerSession(authOptions)
@@ -126,8 +127,9 @@ export default async function Dashboard() {
 
         {/* Recent Activity */}
         <div className="bg-white rounded-lg shadow-sm border">
-          <div className="px-6 py-4 border-b">
+          <div className="px-6 py-4 border-b flex items-center justify-between">
             <h2 className="text-lg font-semibold">Recent Activity</h2>
+            <ActivityClearButton />
           </div>
           <div className="p-6">
             {recentUploads.length === 0 && upcomingTasks.length === 0 ? (

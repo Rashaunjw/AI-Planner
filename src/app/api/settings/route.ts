@@ -21,9 +21,16 @@ export async function GET() {
       }),
     ])
 
+    const uploads = await prisma.upload.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, fileName: true, createdAt: true },
+    })
+
     return NextResponse.json({
       settings: user ?? { emailReminders: true, reminderDays: 2 },
       accounts,
+      uploads,
     })
   } catch (error) {
     console.error("Settings fetch error:", error)

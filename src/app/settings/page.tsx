@@ -20,6 +20,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [accounts, setAccounts] = useState<Array<{ provider: string }>>([])
   const [loadingSettings, setLoadingSettings] = useState(true)
+  const [uploads, setUploads] = useState<Array<{ id: string; fileName: string; createdAt: string }>>([])
   const isDevBypass = isDevBypassClientEnabled()
 
   useEffect(() => {
@@ -44,6 +45,9 @@ export default function SettingsPage() {
           }
           if (Array.isArray(data.accounts)) {
             setAccounts(data.accounts)
+          }
+          if (Array.isArray(data.uploads)) {
+            setUploads(data.uploads)
           }
         }
       } catch (error) {
@@ -269,6 +273,27 @@ export default function SettingsPage() {
                 </>
               )}
             </Button>
+          </div>
+
+          {/* Activity */}
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Activity</h2>
+            {loadingSettings ? (
+              <p className="text-sm text-gray-500">Loading uploads...</p>
+            ) : uploads.length > 0 ? (
+              <ul className="space-y-2 text-sm text-gray-700">
+                {uploads.map((upload) => (
+                  <li key={upload.id} className="flex items-center justify-between">
+                    <span className="truncate max-w-[70%]">{upload.fileName}</span>
+                    <span className="text-gray-500">
+                      {new Date(upload.createdAt).toLocaleDateString()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500">No uploads yet.</p>
+            )}
           </div>
         </div>
       </div>

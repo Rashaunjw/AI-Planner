@@ -237,7 +237,7 @@ export default function TasksPage() {
               Upload a syllabus to extract tasks automatically, or add them manually
             </p>
             <Link href="/upload">
-              <Button>Upload Syllabus</Button>
+              <Button>Upload Syllabus/Schedule</Button>
             </Link>
           </div>
         ) : (
