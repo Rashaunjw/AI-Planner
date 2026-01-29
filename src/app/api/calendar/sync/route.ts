@@ -29,8 +29,13 @@ export async function POST() {
 
     let accessToken = account.access_token
     const expiresAt = account.expires_at ? account.expires_at * 1000 : null
+    let refreshedOnce = false
 
-    if (expiresAt && account.refresh_token && Date.now() > expiresAt - 60_000) {
+    const refreshAccessToken = async () => {
+      if (!account.refresh_token) {
+        return false
+      }
+
       const refreshParams = new URLSearchParams({
         client_id: process.env.GOOGLE_CLIENT_ID || "",
         client_secret: process.env.GOOGLE_CLIENT_SECRET || "",
@@ -44,19 +49,27 @@ export async function POST() {
         body: refreshParams.toString(),
       })
 
-      if (refreshResponse.ok) {
-        const refreshData = await refreshResponse.json()
-        accessToken = refreshData.access_token
-        await prisma.account.update({
-          where: { id: account.id },
-          data: {
-            access_token: refreshData.access_token,
-            expires_at: refreshData.expires_in
-              ? Math.floor(Date.now() / 1000) + refreshData.expires_in
-              : account.expires_at,
-          },
-        })
+      if (!refreshResponse.ok) {
+        return false
       }
+
+      const refreshData = await refreshResponse.json()
+      accessToken = refreshData.access_token
+      await prisma.account.update({
+        where: { id: account.id },
+        data: {
+          access_token: refreshData.access_token,
+          expires_at: refreshData.expires_in
+            ? Math.floor(Date.now() / 1000) + refreshData.expires_in
+            : account.expires_at,
+        },
+      })
+      refreshedOnce = true
+      return true
+    }
+
+    if (account.refresh_token && (!expiresAt || Date.now() > expiresAt - 60_000)) {
+      await refreshAccessToken()
     }
 
     const tasks = await prisma.task.findMany({
@@ -82,7 +95,7 @@ export async function POST() {
         end: { date: formatDate(endDate) },
       }
 
-      const eventResponse = await fetch(GOOGLE_EVENTS_URL, {
+      let eventResponse = await fetch(GOOGLE_EVENTS_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -90,6 +103,20 @@ export async function POST() {
         },
         body: JSON.stringify(payload),
       })
+
+      if (eventResponse.status === 401 && !refreshedOnce && account.refresh_token) {
+        const refreshed = await refreshAccessToken()
+        if (refreshed) {
+          eventResponse = await fetch(GOOGLE_EVENTS_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          })
+        }
+      }
 
       if (eventResponse.ok) {
         createdCount += 1
