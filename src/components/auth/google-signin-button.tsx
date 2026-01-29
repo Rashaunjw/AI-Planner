@@ -13,7 +13,13 @@ export default function GoogleSignInButton() {
       type="button"
       className="w-full"
       size="lg"
-      onClick={() => signIn("google", { callbackUrl })}
+      onClick={() =>
+        signIn("google", {
+          callbackUrl,
+          prompt: "consent",
+          access_type: "offline",
+        })
+      }
     >
       <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
         <path
