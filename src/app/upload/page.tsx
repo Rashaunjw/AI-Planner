@@ -87,6 +87,7 @@ export default function UploadPage() {
     if (!file && !pastedText.trim()) return
 
     setUploading(true)
+    setUploaded(true)
     
     try {
       const formData = new FormData()
@@ -103,7 +104,6 @@ export default function UploadPage() {
       })
 
       if (response.ok) {
-        setUploaded(true)
         // Redirect to task review after a short delay
         setTimeout(() => {
           window.location.href = '/tasks'
@@ -113,6 +113,7 @@ export default function UploadPage() {
       }
     } catch (error) {
       console.error('Upload error:', error)
+      setUploaded(false)
       alert('Upload failed. Please try again.')
     } finally {
       setUploading(false)
