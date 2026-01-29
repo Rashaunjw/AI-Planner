@@ -26,6 +26,12 @@ export async function POST() {
         { status: 400 }
       )
     }
+    if (!account.refresh_token) {
+      return NextResponse.json(
+        { error: "Google refresh token missing. Reconnect your Google account." },
+        { status: 400 }
+      )
+    }
 
     let accessToken = account.access_token
     const expiresAt = account.expires_at ? account.expires_at * 1000 : null
