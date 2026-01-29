@@ -4,17 +4,12 @@ import Link from "next/link"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { getDevBypassSession, isAuthBypassEnabled } from "@/lib/auth-dev-bypass"
 import { prisma } from "@/lib/prisma"
 import { formatDate } from "@/lib/utils"
 import ActivityClearButton from "@/components/activity-clear-button"
 
 export default async function Dashboard() {
-  let session = await getServerSession(authOptions)
-  
-  if (!session && isAuthBypassEnabled()) {
-    session = getDevBypassSession()
-  }
+  const session = await getServerSession(authOptions)
 
   if (!session) {
     redirect("/auth/signin")

@@ -6,7 +6,6 @@ import { Brain, ArrowLeft, Plus } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { isDevBypassClientEnabled } from "@/lib/dev-bypass-client"
 
 type Task = {
   id: string
@@ -20,7 +19,6 @@ type Task = {
 export default function CalendarPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const isDevBypass = isDevBypassClientEnabled()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [currentMonth, setCurrentMonth] = useState(() => new Date())
@@ -28,10 +26,10 @@ export default function CalendarPage() {
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isDevBypass && status !== "loading" && !session) {
+    if (status !== "loading" && !session) {
       router.replace("/auth/signin")
     }
-  }, [isDevBypass, router, session, status])
+  }, [router, session, status])
 
   const monthLabel = currentMonth.toLocaleString("en-US", {
     month: "long",
@@ -85,21 +83,17 @@ export default function CalendarPage() {
       }
     }
 
-    if (!isDevBypass && status !== "loading" && session) {
+    if (status !== "loading" && session) {
       fetchTasks()
     }
 
-    if (isDevBypass) {
-      setTasks([])
-      setLoading(false)
-    }
-  }, [isDevBypass, session, status])
+  }, [session, status])
 
-  if (status === "loading" && !isDevBypass) {
+  if (status === "loading") {
     return <div>Loading...</div>
   }
 
-  if (!session && !isDevBypass) {
+  if (!session) {
     return null
   }
 

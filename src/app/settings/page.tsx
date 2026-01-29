@@ -6,7 +6,6 @@ import { Brain, ArrowLeft, Save, Bell, Calendar, User } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { isDevBypassClientEnabled } from "@/lib/dev-bypass-client"
 
 export default function SettingsPage() {
   const { data: session, status } = useSession()
@@ -21,13 +20,12 @@ export default function SettingsPage() {
   const [accounts, setAccounts] = useState<Array<{ provider: string }>>([])
   const [loadingSettings, setLoadingSettings] = useState(true)
   const [uploads, setUploads] = useState<Array<{ id: string; fileName: string; createdAt: string }>>([])
-  const isDevBypass = isDevBypassClientEnabled()
 
   useEffect(() => {
-    if (!isDevBypass && status !== "loading" && !session) {
+    if (status !== "loading" && !session) {
       router.replace("/auth/signin")
     }
-  }, [isDevBypass, router, session, status])
+  }, [router, session, status])
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -57,18 +55,18 @@ export default function SettingsPage() {
       }
     }
 
-    if (session && !isDevBypass) {
+    if (session) {
       fetchSettings()
     } else {
       setLoadingSettings(false)
     }
-  }, [isDevBypass, session])
+  }, [session])
 
-  if (status === "loading" && !isDevBypass) {
+  if (status === "loading") {
     return <div>Loading...</div>
   }
 
-  if (!session && !isDevBypass) {
+  if (!session) {
     return null
   }
 

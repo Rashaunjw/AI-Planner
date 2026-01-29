@@ -7,7 +7,6 @@ import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { getRelativeTime } from "@/lib/utils"
-import { isDevBypassClientEnabled } from "@/lib/dev-bypass-client"
 
 interface Task {
   id: string
@@ -37,7 +36,6 @@ export default function TasksPage() {
     category: "",
     estimatedDuration: ""
   })
-  const isDevBypass = isDevBypassClientEnabled()
 
   const fetchTasks = async () => {
     try {
@@ -54,25 +52,20 @@ export default function TasksPage() {
   }
 
   useEffect(() => {
-    if (!isDevBypass) {
-      fetchTasks()
-    } else {
-      setTasks([])
-      setLoading(false)
-    }
-  }, [isDevBypass])
+    fetchTasks()
+  }, [])
 
   useEffect(() => {
-    if (!isDevBypass && status !== "loading" && !session) {
+    if (status !== "loading" && !session) {
       router.replace("/auth/signin")
     }
-  }, [isDevBypass, router, session, status])
+  }, [router, session, status])
 
-  if (status === "loading" && !isDevBypass) {
+  if (status === "loading") {
     return <div>Loading...</div>
   }
 
-  if (!session && !isDevBypass) {
+  if (!session) {
     return null
   }
 
@@ -147,10 +140,6 @@ export default function TasksPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (isDevBypass) {
-      alert("Dev bypass enabled. Task creation is disabled without a real account.")
-      return
-    }
     if (!createForm.title.trim()) return
 
     setCreating(true)
