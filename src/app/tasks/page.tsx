@@ -28,6 +28,15 @@ export default function TasksPage() {
   const [editingTask, setEditingTask] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Partial<Task>>({})
   const [deletingAll, setDeletingAll] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [createForm, setCreateForm] = useState({
+    title: "",
+    description: "",
+    dueDate: "",
+    priority: "medium",
+    category: "",
+    estimatedDuration: ""
+  })
   const isDevBypass = isDevBypassClientEnabled()
 
   const fetchTasks = async () => {
@@ -136,6 +145,54 @@ export default function TasksPage() {
     }
   }
 
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (isDevBypass) {
+      alert("Dev bypass enabled. Task creation is disabled without a real account.")
+      return
+    }
+    if (!createForm.title.trim()) return
+
+    setCreating(true)
+    try {
+      const payload = {
+        title: createForm.title.trim(),
+        description: createForm.description.trim() || undefined,
+        dueDate: createForm.dueDate || undefined,
+        priority: createForm.priority,
+        category: createForm.category.trim() || undefined,
+        estimatedDuration: createForm.estimatedDuration
+          ? Number(createForm.estimatedDuration)
+          : undefined
+      }
+
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setTasks([data.task, ...tasks])
+        setCreateForm({
+          title: "",
+          description: "",
+          dueDate: "",
+          priority: "medium",
+          category: "",
+          estimatedDuration: ""
+        })
+      }
+    } catch (error) {
+      console.error('Error creating task:', error)
+    } finally {
+      setCreating(false)
+    }
+  }
+
   const handleStatusChange = async (taskId: string, status: string) => {
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
@@ -197,7 +254,7 @@ export default function TasksPage() {
             
             <div className="flex items-center space-x-4">
               <Link href="/upload">
-                <Button size="sm">Add Tasks</Button>
+                <Button size="sm">Upload</Button>
               </Link>
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm">
@@ -216,7 +273,7 @@ export default function TasksPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Tasks</h1>
             <p className="text-gray-600">
-              Review and manage your AI-extracted tasks
+              Review, edit, or add tasks manually
             </p>
           </div>
           <Button
@@ -227,6 +284,99 @@ export default function TasksPage() {
           >
             {deletingAll ? "Deleting..." : "Delete All"}
           </Button>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Add a task</h2>
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Title
+              </label>
+              <input
+                type="text"
+                value={createForm.title}
+                onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                className="w-full border rounded px-3 py-2"
+                placeholder="e.g., Read chapter 4"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                value={createForm.description}
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                className="w-full border rounded px-3 py-2"
+                rows={3}
+                placeholder="Optional details"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  value={createForm.dueDate}
+                  onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })}
+                  className="w-full border rounded px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Priority
+                </label>
+                <select
+                  value={createForm.priority}
+                  onChange={(e) => setCreateForm({ ...createForm, priority: e.target.value })}
+                  className="w-full border rounded px-3 py-2"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <input
+                  type="text"
+                  value={createForm.category}
+                  onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="Optional"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Est. Duration (min)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={createForm.estimatedDuration}
+                  onChange={(e) => setCreateForm({ ...createForm, estimatedDuration: e.target.value })}
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="Optional"
+                />
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Button type="submit" disabled={creating || !createForm.title.trim()}>
+                {creating ? "Adding..." : "Add Task"}
+              </Button>
+              <Link href="/upload">
+                <Button type="button" variant="outline">
+                  Upload Syllabus/Schedule
+                </Button>
+              </Link>
+            </div>
+          </form>
         </div>
 
         {tasks.length === 0 ? (
