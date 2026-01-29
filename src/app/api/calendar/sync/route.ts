@@ -68,6 +68,7 @@ export async function POST() {
     })
 
     let createdCount = 0
+    const failures: Array<{ status: number; message: string }> = []
     for (const task of tasks) {
       if (!task.dueDate) continue
       const startDate = new Date(task.dueDate)
@@ -92,10 +93,17 @@ export async function POST() {
 
       if (eventResponse.ok) {
         createdCount += 1
+      } else {
+        const message = await eventResponse.text()
+        failures.push({ status: eventResponse.status, message })
       }
     }
 
-    return NextResponse.json({ createdCount })
+    return NextResponse.json({
+      createdCount,
+      failedCount: failures.length,
+      failures,
+    })
   } catch (error) {
     console.error("Calendar sync error:", error)
     return NextResponse.json({ error: "Failed to sync calendar." }, { status: 500 })
