@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Brain, ArrowLeft, Save, Bell, Calendar, User } from "lucide-react"
 import Link from "next/link"
-import { useSession } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
 export default function SettingsPage() {
@@ -253,6 +253,19 @@ export default function SettingsPage() {
                   Enable to sync your tasks to Google Calendar each night.
                 </p>
               )}
+              <div className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                <span>Having trouble syncing? Reconnect your Google account.</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    await fetch("/api/calendar/reconnect", { method: "POST" })
+                    signOut({ callbackUrl: "/auth/signin" })
+                  }}
+                >
+                  Reconnect Google
+                </Button>
+              </div>
             </div>
           </div>
 
