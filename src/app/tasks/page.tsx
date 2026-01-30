@@ -28,10 +28,12 @@ export default function TasksPage() {
   const [editForm, setEditForm] = useState<Partial<Task>>({})
   const [deletingAll, setDeletingAll] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [showCreateForm, setShowCreateForm] = useState(false)
   const [createForm, setCreateForm] = useState({
     title: "",
     description: "",
     dueDate: "",
+    dueTime: "",
     priority: "medium",
     category: "",
     estimatedDuration: ""
@@ -144,10 +146,17 @@ export default function TasksPage() {
 
     setCreating(true)
     try {
-      const payload = {
+    const dueDateTime =
+      createForm.dueDate && createForm.dueTime
+        ? new Date(`${createForm.dueDate}T${createForm.dueTime}`)
+        : createForm.dueDate
+        ? new Date(`${createForm.dueDate}T00:00`)
+        : null
+
+    const payload = {
         title: createForm.title.trim(),
         description: createForm.description.trim() || undefined,
-        dueDate: createForm.dueDate || undefined,
+      dueDate: dueDateTime ? dueDateTime.toISOString() : undefined,
         priority: createForm.priority,
         category: createForm.category.trim() || undefined,
         estimatedDuration: createForm.estimatedDuration
@@ -170,10 +179,12 @@ export default function TasksPage() {
           title: "",
           description: "",
           dueDate: "",
+          dueTime: "",
           priority: "medium",
           category: "",
           estimatedDuration: ""
         })
+        setShowCreateForm(false)
       }
     } catch (error) {
       console.error('Error creating task:', error)
@@ -265,108 +276,129 @@ export default function TasksPage() {
               Review, edit, or add tasks manually
             </p>
           </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDeleteAll}
-            disabled={tasks.length === 0 || deletingAll}
-          >
-            {deletingAll ? "Deleting..." : "Delete All"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              onClick={() => setShowCreateForm((prev) => !prev)}
+            >
+              {showCreateForm ? "Hide Add Task" : "Add Task"}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteAll}
+              disabled={tasks.length === 0 || deletingAll}
+            >
+              {deletingAll ? "Deleting..." : "Delete All"}
+            </Button>
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Add a task</h2>
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Title
-              </label>
-              <input
-                type="text"
-                value={createForm.title}
-                onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
-                className="w-full border rounded px-3 py-2"
-                placeholder="e.g., Read chapter 4"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                value={createForm.description}
-                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                className="w-full border rounded px-3 py-2"
-                rows={3}
-                placeholder="Optional details"
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {showCreateForm && (
+          <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Add a task</h2>
+            <form onSubmit={handleCreate} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Due Date
-                </label>
-                <input
-                  type="date"
-                  value={createForm.dueDate}
-                  onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })}
-                  className="w-full border rounded px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Priority
-                </label>
-                <select
-                  value={createForm.priority}
-                  onChange={(e) => setCreateForm({ ...createForm, priority: e.target.value })}
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
+                  Title
                 </label>
                 <input
                   type="text"
-                  value={createForm.category}
-                  onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
+                  value={createForm.title}
+                  onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
                   className="w-full border rounded px-3 py-2"
-                  placeholder="Optional"
+                  placeholder="e.g., Read chapter 4"
+                  required
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Est. Duration (min)
+                  Description
                 </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={createForm.estimatedDuration}
-                  onChange={(e) => setCreateForm({ ...createForm, estimatedDuration: e.target.value })}
+                <textarea
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                   className="w-full border rounded px-3 py-2"
-                  placeholder="Optional"
+                  rows={3}
+                  placeholder="Optional details"
                 />
               </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Button type="submit" disabled={creating || !createForm.title.trim()}>
-                {creating ? "Adding..." : "Add Task"}
-              </Button>
-              <Link href="/upload">
-                <Button type="button" variant="outline">
-                  Upload Syllabus/Schedule
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    value={createForm.dueDate}
+                    onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Time Slot
+                  </label>
+                  <input
+                    type="time"
+                    value={createForm.dueTime}
+                    onChange={(e) => setCreateForm({ ...createForm, dueTime: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Priority
+                  </label>
+                  <select
+                    value={createForm.priority}
+                    onChange={(e) => setCreateForm({ ...createForm, priority: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    value={createForm.category}
+                    onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="Optional"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Est. Duration (min)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={createForm.estimatedDuration}
+                    onChange={(e) => setCreateForm({ ...createForm, estimatedDuration: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="Optional"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Button type="submit" disabled={creating || !createForm.title.trim()}>
+                  {creating ? "Adding..." : "Add Task"}
                 </Button>
-              </Link>
-            </div>
-          </form>
-        </div>
+                <Link href="/upload">
+                  <Button type="button" variant="outline">
+                    Upload Syllabus/Schedule
+                  </Button>
+                </Link>
+              </div>
+            </form>
+          </div>
+        )}
 
         {tasks.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
