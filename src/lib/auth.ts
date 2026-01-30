@@ -41,6 +41,7 @@ export const authOptions: NextAuthOptions = {
           access_type: "offline",
         },
       },
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
   callbacks: {
