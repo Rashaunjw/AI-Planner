@@ -91,14 +91,23 @@ export async function POST() {
     for (const task of tasks) {
       if (!task.dueDate) continue
       const startDate = new Date(task.dueDate)
-      const endDate = new Date(startDate)
-      endDate.setDate(startDate.getDate() + 1)
+      // Default to a 9–10am slot to create a timed event instead of all-day.
+      const startDateTime = new Date(Date.UTC(
+        startDate.getUTCFullYear(),
+        startDate.getUTCMonth(),
+        startDate.getUTCDate(),
+        9,
+        0,
+        0
+      ))
+      const endDateTime = new Date(startDateTime)
+      endDateTime.setUTCHours(endDateTime.getUTCHours() + 1)
 
       const payload = {
         summary: task.title,
         description: task.description || undefined,
-        start: { date: formatDate(startDate) },
-        end: { date: formatDate(endDate) },
+        start: { dateTime: startDateTime.toISOString(), timeZone: "UTC" },
+        end: { dateTime: endDateTime.toISOString(), timeZone: "UTC" },
       }
 
       let eventResponse = await fetch(GOOGLE_EVENTS_URL, {
