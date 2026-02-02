@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { extractTasksFromContent } from '@/lib/openai'
+import { parseDateInput } from '@/lib/date'
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
 
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
               uploadId: upload.id,
               title: task.title,
               description: task.description,
-              dueDate: task.dueDate ? new Date(task.dueDate) : null,
+              dueDate: task.dueDate ? parseDateInput(task.dueDate) : null,
               priority: task.priority,
               category: task.category,
               estimatedDuration: task.estimatedDuration,

@@ -33,7 +33,6 @@ export default function TasksPage() {
     title: "",
     description: "",
     dueDate: "",
-    dueTime: "",
     priority: "medium",
     category: "",
     estimatedDuration: ""
@@ -146,17 +145,10 @@ export default function TasksPage() {
 
     setCreating(true)
     try {
-    const dueDateTime =
-      createForm.dueDate && createForm.dueTime
-        ? new Date(`${createForm.dueDate}T${createForm.dueTime}`)
-        : createForm.dueDate
-        ? new Date(`${createForm.dueDate}T00:00`)
-        : null
-
     const payload = {
         title: createForm.title.trim(),
         description: createForm.description.trim() || undefined,
-      dueDate: dueDateTime ? dueDateTime.toISOString() : undefined,
+      dueDate: createForm.dueDate || undefined,
         priority: createForm.priority,
         category: createForm.category.trim() || undefined,
         estimatedDuration: createForm.estimatedDuration
@@ -179,7 +171,6 @@ export default function TasksPage() {
           title: "",
           description: "",
           dueDate: "",
-          dueTime: "",
           priority: "medium",
           category: "",
           estimatedDuration: ""
@@ -332,17 +323,6 @@ export default function TasksPage() {
                     type="date"
                     value={createForm.dueDate}
                     onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })}
-                    className="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Time Slot
-                  </label>
-                  <input
-                    type="time"
-                    value={createForm.dueTime}
-                    onChange={(e) => setCreateForm({ ...createForm, dueTime: e.target.value })}
                     className="w-full border rounded px-3 py-2"
                   />
                 </div>

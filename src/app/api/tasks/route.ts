@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { parseDateInput } from '@/lib/date'
 
 export async function GET() {
   try {
@@ -45,12 +46,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
+    const parsedDueDate = dueDate ? parseDateInput(dueDate) : null
+
     const task = await prisma.task.create({
       data: {
         userId: session.user.id,
         title,
         description,
-        dueDate: dueDate ? new Date(dueDate) : null,
+        dueDate: parsedDueDate,
         priority: priority || 'medium',
         category,
         estimatedDuration,

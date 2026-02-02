@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { parseDateInput } from '@/lib/date'
 
 export async function PUT(
   request: NextRequest,
@@ -37,7 +38,7 @@ export async function PUT(
       data: {
         ...(title && { title }),
         ...(description !== undefined && { description }),
-        ...(dueDate && { dueDate: new Date(dueDate) }),
+        ...(dueDate && { dueDate: parseDateInput(dueDate) }),
         ...(priority && { priority }),
         ...(category !== undefined && { category }),
         ...(estimatedDuration !== undefined && { estimatedDuration }),
