@@ -18,7 +18,7 @@ export default async function Home() {
       <nav className="flex items-center justify-between p-6">
         <div className="flex items-center space-x-2">
           <Brain className="h-8 w-8 text-blue-600" />
-          <span className="text-2xl font-bold text-gray-900">AI Planner</span>
+          <span className="text-2xl font-bold text-gray-900">PlanEra</span>
         </div>
         <Link href="/auth/signin" className="cursor-pointer">
           <Button variant="outline">Sign In</Button>
@@ -117,7 +117,7 @@ export default async function Home() {
         <div className="container mx-auto px-6 text-center">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Brain className="h-6 w-6" />
-            <span className="text-xl font-bold">AI Planner</span>
+            <span className="text-xl font-bold">PlanEra</span>
           </div>
           <p className="text-gray-400">Smart study planning for college students</p>
         </div>

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Planner - Smart Study Planning",
+  title: "PlanEra - Smart Study Planning",
   description: "Upload your syllabus and get AI-powered study plans with calendar integration",
 };
 

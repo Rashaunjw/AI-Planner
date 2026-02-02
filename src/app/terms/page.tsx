@@ -11,7 +11,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">Acceptance</h2>
             <p>
-              By using AI Planner, you agree to these Terms. If you do not agree,
+              By using PlanEra, you agree to these Terms. If you do not agree,
               do not use the service.
             </p>
           </section>

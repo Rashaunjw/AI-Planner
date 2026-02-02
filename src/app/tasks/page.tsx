@@ -239,7 +239,7 @@ export default function TasksPage() {
             <div className="flex items-center">
               <Link href="/dashboard" className="flex items-center space-x-2">
                 <Brain className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold text-gray-900">AI Planner</span>
+                <span className="text-xl font-bold text-gray-900">PlanEra</span>
               </Link>
             </div>
             

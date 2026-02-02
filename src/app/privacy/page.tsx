@@ -11,7 +11,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">Overview</h2>
             <p>
-              AI Planner helps users upload syllabi and manage tasks. This policy
+              PlanEra helps users upload syllabi and manage tasks. This policy
               explains what data we collect and how we use it.
             </p>
           </section>
