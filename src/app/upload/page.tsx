@@ -124,6 +124,9 @@ export default function UploadPage() {
             <p className="text-gray-600 mb-6">
               Your file has been processed. AI is now extracting tasks and deadlines...
             </p>
+            <p className="text-sm text-gray-500 mb-4">
+              Please be patient, parsing takes up to 1 minute to finish.
+            </p>
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="text-sm text-gray-500 mt-4">Redirecting to task review...</p>
           </div>
