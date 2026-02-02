@@ -95,7 +95,7 @@ async function sendReminderEmail(
   tasks: ReminderCandidate[]
 ) {
   const apiKey = process.env.SENDGRID_API_KEY
-  const from = process.env.EMAIL_FROM
+  const from = process.env.FROM_EMAIL || process.env.EMAIL_FROM
   if (!apiKey || !from) {
     throw new Error("Email provider not configured")
   }

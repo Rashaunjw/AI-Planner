@@ -10,10 +10,10 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     EmailProvider({
-      from: process.env.EMAIL_FROM,
+      from: process.env.FROM_EMAIL || process.env.EMAIL_FROM,
       sendVerificationRequest: async ({ identifier, url }) => {
         const apiKey = process.env.SENDGRID_API_KEY
-        const from = process.env.EMAIL_FROM
+        const from = process.env.FROM_EMAIL || process.env.EMAIL_FROM
         if (!apiKey || !from) {
           throw new Error("Email provider not configured")
         }
