@@ -19,9 +19,10 @@ export async function extractTasksFromContent(content: string): Promise<Extracte
       throw new Error('OpenAI API key not configured')
     }
 
-    const basePrompt: string = "You are an AI assistant that extracts academic tasks and deadlines from syllabus content. Analyze the following text and extract all assignments, exams, projects, and other academic tasks. For each task, provide: title (clear, concise title), description (brief description), dueDate (YYYY-MM-DD format if mentioned), priority (low/medium/high), category (assignment/exam/project/quiz/homework), estimatedDuration (minutes, optional). Return as JSON array. If no due date mentioned, omit dueDate field."
+    const currentYear = new Date().getFullYear()
+    const basePrompt: string = "You are an AI assistant that extracts academic tasks and deadlines from syllabus content. Analyze the following text and extract all assignments, exams, projects, and other academic tasks. For each task, provide: title (clear, concise title), description (brief description), dueDate (YYYY-MM-DD format), priority (low/medium/high), category (assignment/exam/project/quiz/homework), estimatedDuration (minutes, optional). If the syllabus uses a dated schedule table (e.g., a date column with items on the same row), treat the row's date as the dueDate for each task listed in that row, even if it doesn't say 'due'. If a date is given as month/day without a year, infer the year from the syllabus; if no year is present, use the current year (" + currentYear + "). Return as JSON array. If no date is mentioned anywhere for a task, omit dueDate."
     
-    const exampleFormat: string = "Example format: [{\"title\": \"Midterm Exam\", \"description\": \"Comprehensive exam covering chapters 1-8\", \"dueDate\": \"2024-03-15\", \"priority\": \"high\", \"category\": \"exam\", \"estimatedDuration\": 120}]"
+    const exampleFormat: string = "Example format: [{\"title\": \"Midterm Exam\", \"description\": \"Comprehensive exam covering chapters 1-8\", \"dueDate\": \"2024-03-15\", \"priority\": \"high\", \"category\": \"exam\", \"estimatedDuration\": 120}]. If the text says '1/14 Problem Set 1', output dueDate as \"" + currentYear + "-01-14\"."
     
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
