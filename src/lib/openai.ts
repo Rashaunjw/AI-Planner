@@ -157,7 +157,18 @@ function fallbackExtractTasks(content: string, fallbackYear: number): ExtractedT
 }
 
 function findDateInText(text: string, fallbackYear: number): string | undefined {
-  const numericMatch = text.match(/\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2}|\d{4}))?\b/)
+  const isoMatch = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/)
+  if (isoMatch) {
+    const year = Number(isoMatch[1])
+    const month = Number(isoMatch[2])
+    const day = Number(isoMatch[3])
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return formatDateYYYYMMDD(year, month, day)
+    }
+  }
+
+  // Only treat slash dates as dates to avoid matching ranges like "11-14".
+  const numericMatch = text.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2}|\d{4}))?\b/)
   if (numericMatch) {
     const month = Number(numericMatch[1])
     const day = Number(numericMatch[2])
