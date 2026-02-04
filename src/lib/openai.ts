@@ -14,12 +14,13 @@ export interface ExtractedTask {
 }
 
 export async function extractTasksFromContent(content: string): Promise<ExtractedTask[]> {
+  const currentYear = new Date().getFullYear()
+
   try {
     if (!openai) {
       throw new Error('OpenAI API key not configured')
     }
 
-    const currentYear = new Date().getFullYear()
     const basePrompt: string = "You are an AI assistant that extracts academic tasks and deadlines from syllabus content. Analyze the following text and extract all assignments, exams, projects, and other academic tasks. For each task, provide: title (clear, concise title), description (brief description), dueDate (YYYY-MM-DD format), priority (low/medium/high), category (assignment/exam/project/quiz/homework), estimatedDuration (minutes, optional). If the syllabus uses a dated schedule table (e.g., a date column with items on the same row), treat the row's date as the dueDate for each task listed in that row, even if it doesn't say 'due'. If a date is given as month/day without a year, infer the year from the syllabus; if no year is present, use the current year (" + currentYear + "). Return as JSON array. If no date is mentioned anywhere for a task, omit dueDate."
     
     const exampleFormat: string = "Example format: [{\"title\": \"Midterm Exam\", \"description\": \"Comprehensive exam covering chapters 1-8\", \"dueDate\": \"2024-03-15\", \"priority\": \"high\", \"category\": \"exam\", \"estimatedDuration\": 120}]. If the text says '1/14 Problem Set 1', output dueDate as \"" + currentYear + "-01-14\"."
@@ -49,7 +50,7 @@ export async function extractTasksFromContent(content: string): Promise<Extracte
     const tasks = parseJsonFromModel(responseContent) as ExtractedTask[]
     
     // Validate and clean the tasks
-    return tasks.map(task => ({
+    const cleaned = tasks.map(task => ({
       ...task,
       title: task.title?.trim() || 'Untitled Task',
       description: task.description?.trim(),
@@ -57,8 +58,17 @@ export async function extractTasksFromContent(content: string): Promise<Extracte
       category: task.category?.trim() || 'assignment'
     }))
 
+    if (cleaned.length === 0) {
+      return fallbackExtractTasks(content, currentYear)
+    }
+
+    return cleaned
   } catch (error) {
     console.error('Error extracting tasks:', error)
+    const fallback = fallbackExtractTasks(content, currentYear)
+    if (fallback.length > 0) {
+      return fallback
+    }
     throw new Error('Failed to extract tasks from content')
   }
 }
@@ -111,4 +121,111 @@ function parseJsonFromModel(raw: string): unknown {
   }
 
   return JSON.parse(trimmed)
+}
+
+function fallbackExtractTasks(content: string, fallbackYear: number): ExtractedTask[] {
+  const lines = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  const tasks: ExtractedTask[] = []
+  const seen = new Set<string>()
+
+  for (const line of lines) {
+    const dueDate = findDateInText(line, fallbackYear)
+    if (!dueDate) continue
+
+    const keyword = findKeywordInText(line)
+    if (!keyword) continue
+
+    const title = buildTitleFromLine(line, keyword)
+    const key = `${title}|${dueDate}`
+    if (seen.has(key)) continue
+    seen.add(key)
+
+    tasks.push({
+      title,
+      description: line,
+      dueDate,
+      priority: keyword.priority,
+      category: keyword.category
+    })
+  }
+
+  return tasks
+}
+
+function findDateInText(text: string, fallbackYear: number): string | undefined {
+  const numericMatch = text.match(/\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2}|\d{4}))?\b/)
+  if (numericMatch) {
+    const month = Number(numericMatch[1])
+    const day = Number(numericMatch[2])
+    const yearRaw = numericMatch[3]
+    const year = yearRaw
+      ? (yearRaw.length === 2 ? 2000 + Number(yearRaw) : Number(yearRaw))
+      : fallbackYear
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return formatDateYYYYMMDD(year, month, day)
+    }
+  }
+
+  return undefined
+}
+
+function findKeywordInText(text: string): { category: ExtractedTask['category']; priority: ExtractedTask['priority'] } | undefined {
+  const lower = text.toLowerCase()
+  if (/\b(exam|midterm|final)\b/.test(lower)) {
+    return { category: 'exam', priority: 'high' }
+  }
+  if (/\bquiz\b/.test(lower)) {
+    return { category: 'quiz', priority: 'medium' }
+  }
+  if (/\b(project|paper)\b/.test(lower)) {
+    return { category: 'project', priority: 'high' }
+  }
+  if (/\b(problem set|ps[-\s]?\d+|assignment|homework)\b/.test(lower)) {
+    return { category: 'assignment', priority: 'medium' }
+  }
+  return undefined
+}
+
+function buildTitleFromLine(text: string, keyword: { category: ExtractedTask['category']; priority: ExtractedTask['priority'] }): string {
+  const problemSetMatch = text.match(/\b(?:problem set|ps)[-\s]?(\d+)\b/i)
+  if (problemSetMatch?.[1]) {
+    return `Problem Set ${problemSetMatch[1]}`
+  }
+
+  const examMatch = text.match(/\b([A-Za-z0-9 &-]{0,40}\bExam)\b/i)
+  if (examMatch?.[1]) {
+    return examMatch[1].trim()
+  }
+
+  const quizMatch = text.match(/\b([A-Za-z0-9 &-]{0,40}\bQuiz)\b/i)
+  if (quizMatch?.[1]) {
+    return quizMatch[1].trim()
+  }
+
+  const projectMatch = text.match(/\b([A-Za-z0-9 &-]{0,40}\bProject)\b/i)
+  if (projectMatch?.[1]) {
+    return projectMatch[1].trim()
+  }
+
+  const assignmentMatch = text.match(/\b([A-Za-z0-9 &-]{0,40}\bAssignment)\b/i)
+  if (assignmentMatch?.[1]) {
+    return assignmentMatch[1].trim()
+  }
+
+  const homeworkMatch = text.match(/\b([A-Za-z0-9 &-]{0,40}\bHomework)\b/i)
+  if (homeworkMatch?.[1]) {
+    return homeworkMatch[1].trim()
+  }
+
+  return keyword.category === 'exam' ? 'Exam' : 'Assignment'
+}
+
+function formatDateYYYYMMDD(year: number, month: number, day: number): string {
+  const mm = String(month).padStart(2, '0')
+  const dd = String(day).padStart(2, '0')
+  return `${year}-${mm}-${dd}`
 }
