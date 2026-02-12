@@ -24,4 +24,3 @@ export function parseDateInput(value: string) {
   const parsed = new Date(trimmed)
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
-

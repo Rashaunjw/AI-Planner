@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { parseDateInput } from '@/lib/date'
+import { normalizeWeightPercent } from '@/lib/weights'
 
 export async function PUT(
   request: NextRequest,
@@ -17,7 +18,7 @@ export async function PUT(
 
     const { id } = await params
     const body = await request.json()
-    const { title, description, dueDate, priority, category, estimatedDuration, status } = body
+    const { title, description, dueDate, priority, category, estimatedDuration, status, weightPercent, className } = body
 
     // Verify task belongs to user
     const existingTask = await prisma.task.findFirst({
@@ -31,18 +32,32 @@ export async function PUT(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
 
+    const normalizedWeightPercent = normalizeWeightPercent(weightPercent)
+    if (title !== undefined && !title.trim()) {
+      return NextResponse.json({ error: 'Assignment name is required' }, { status: 400 })
+    }
+    if (className !== undefined && !className.trim()) {
+      return NextResponse.json({ error: 'Class name is required' }, { status: 400 })
+    }
+    if (dueDate !== undefined && !parseDateInput(dueDate)) {
+      return NextResponse.json({ error: 'Invalid due date' }, { status: 400 })
+    }
     const task = await prisma.task.update({
       where: {
         id: id
       },
       data: {
-        ...(title && { title }),
+        ...(title && { title: title.trim() }),
         ...(description !== undefined && { description }),
         ...(dueDate && { dueDate: parseDateInput(dueDate) }),
         ...(priority && { priority }),
         ...(category !== undefined && { category }),
         ...(estimatedDuration !== undefined && { estimatedDuration }),
-        ...(status && { status })
+        ...(status && { status }),
+        ...(weightPercent !== undefined && {
+          weightPercent: weightPercent === null ? null : (normalizedWeightPercent ?? null)
+        }),
+        ...(className !== undefined && { className: className.trim() })
       }
     })
 

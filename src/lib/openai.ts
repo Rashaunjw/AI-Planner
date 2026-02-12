@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { normalizeWeightPercent } from '@/lib/weights'
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -11,6 +12,8 @@ export interface ExtractedTask {
   priority: 'low' | 'medium' | 'high'
   category: string
   estimatedDuration?: number
+  weightPercent?: number
+  className?: string
 }
 
 export async function extractTasksFromContent(content: string): Promise<ExtractedTask[]> {
@@ -21,9 +24,9 @@ export async function extractTasksFromContent(content: string): Promise<Extracte
       throw new Error('OpenAI API key not configured')
     }
 
-    const basePrompt: string = "You are an AI assistant that extracts academic tasks and deadlines from syllabus content. Analyze the following text and extract all assignments, exams, projects, and other academic tasks. For each task, provide: title (clear, concise title), description (brief description), dueDate (YYYY-MM-DD format), priority (low/medium/high), category (assignment/exam/project/quiz/homework), estimatedDuration (minutes, optional). If the syllabus uses a dated schedule table (e.g., a date column with items on the same row), treat the row's date as the dueDate for each task listed in that row, even if it doesn't say 'due'. If a date is given as month/day without a year, infer the year from the syllabus; if no year is present, use the current year (" + currentYear + "). Return as JSON array. If no date is mentioned anywhere for a task, omit dueDate."
+    const basePrompt: string = "You are an AI assistant that extracts academic tasks and deadlines from syllabus content. Analyze the following text and extract all assignments, exams, projects, and other academic tasks. For each task, provide: title (clear, concise title), description (brief description), dueDate (YYYY-MM-DD format), priority (low/medium/high), category (assignment/exam/project/quiz/homework), estimatedDuration (minutes, optional), weightPercent (number 0-100 if a grading weight is specified), className (course name, e.g., \"Biology 101\"). If the syllabus uses a dated schedule table (e.g., a date column with items on the same row), treat the row's date as the dueDate for each task listed in that row, even if it doesn't say 'due'. If a date is given as month/day without a year, infer the year from the syllabus; if no year is present, use the current year (" + currentYear + "). Return as JSON array. If no date is mentioned anywhere for a task, omit dueDate. If no weight is mentioned, omit weightPercent. If no class name is mentioned, omit className."
     
-    const exampleFormat: string = "Example format: [{\"title\": \"Midterm Exam\", \"description\": \"Comprehensive exam covering chapters 1-8\", \"dueDate\": \"2024-03-15\", \"priority\": \"high\", \"category\": \"exam\", \"estimatedDuration\": 120}]. If the text says '1/14 Problem Set 1', output dueDate as \"" + currentYear + "-01-14\"."
+    const exampleFormat: string = "Example format: [{\"title\": \"Midterm Exam\", \"description\": \"Comprehensive exam covering chapters 1-8\", \"dueDate\": \"2024-03-15\", \"priority\": \"high\", \"category\": \"exam\", \"estimatedDuration\": 120, \"weightPercent\": 25, \"className\": \"Biology 101\"}]. If the text says '1/14 Problem Set 1', output dueDate as \"" + currentYear + "-01-14\"."
     
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -55,7 +58,9 @@ export async function extractTasksFromContent(content: string): Promise<Extracte
       title: task.title?.trim() || 'Untitled Task',
       description: task.description?.trim(),
       priority: ['low', 'medium', 'high'].includes(task.priority) ? task.priority : 'medium',
-      category: task.category?.trim() || 'assignment'
+      category: task.category?.trim() || 'assignment',
+      weightPercent: normalizeWeightPercent(task.weightPercent),
+      className: task.className?.trim()
     }))
 
     if (cleaned.length === 0) {
@@ -212,27 +217,15 @@ function buildTitleFromLine(text: string, keyword: { category: ExtractedTask['ca
     return examMatch[1].trim()
   }
 
-  const quizMatch = text.match(/\b([A-Za-z0-9 &-]{0,40}\bQuiz)\b/i)
-  if (quizMatch?.[1]) {
-    return quizMatch[1].trim()
+  if (keyword.category === 'project') {
+    return 'Project'
   }
 
-  const projectMatch = text.match(/\b([A-Za-z0-9 &-]{0,40}\bProject)\b/i)
-  if (projectMatch?.[1]) {
-    return projectMatch[1].trim()
+  if (keyword.category === 'quiz') {
+    return 'Quiz'
   }
 
-  const assignmentMatch = text.match(/\b([A-Za-z0-9 &-]{0,40}\bAssignment)\b/i)
-  if (assignmentMatch?.[1]) {
-    return assignmentMatch[1].trim()
-  }
-
-  const homeworkMatch = text.match(/\b([A-Za-z0-9 &-]{0,40}\bHomework)\b/i)
-  if (homeworkMatch?.[1]) {
-    return homeworkMatch[1].trim()
-  }
-
-  return keyword.category === 'exam' ? 'Exam' : 'Assignment'
+  return 'Assignment'
 }
 
 function formatDateYYYYMMDD(year: number, month: number, day: number): string {

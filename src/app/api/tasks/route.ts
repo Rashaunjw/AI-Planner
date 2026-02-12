@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { parseDateInput } from '@/lib/date'
+import { normalizeWeightPercent } from '@/lib/weights'
 
 export async function GET() {
   try {
@@ -40,23 +41,37 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, description, dueDate, priority, category, estimatedDuration } = body
+    const { title, description, dueDate, priority, category, estimatedDuration, weightPercent, className } = body
 
-    if (!title) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
+    if (!title?.trim()) {
+      return NextResponse.json({ error: 'Assignment name is required' }, { status: 400 })
+    }
+
+    if (!dueDate) {
+      return NextResponse.json({ error: 'Due date is required' }, { status: 400 })
+    }
+
+    if (!className?.trim()) {
+      return NextResponse.json({ error: 'Class name is required' }, { status: 400 })
     }
 
     const parsedDueDate = dueDate ? parseDateInput(dueDate) : null
+    const normalizedWeightPercent = normalizeWeightPercent(weightPercent)
+    if (!parsedDueDate) {
+      return NextResponse.json({ error: 'Invalid due date' }, { status: 400 })
+    }
 
     const task = await prisma.task.create({
       data: {
         userId: session.user.id,
-        title,
+        title: title.trim(),
         description,
         dueDate: parsedDueDate,
         priority: priority || 'medium',
         category,
         estimatedDuration,
+        weightPercent: normalizedWeightPercent ?? null,
+        className: className.trim(),
         status: 'pending'
       }
     })
