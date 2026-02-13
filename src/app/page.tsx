@@ -33,7 +33,7 @@ export default async function Home() {
             <span className="text-blue-600"> Made Simple</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Upload your syllabus, work schedule, or any document. Our AI creates personalized study plans 
+            Upload your syllabus, work schedule, or any other document. Our AI creates personalized study plans 
             and syncs them with your calendar with smart reminders.
           </p>
           

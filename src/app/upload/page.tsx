@@ -171,7 +171,7 @@ export default function UploadPage() {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Your Syllabus</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Your Syllabus or Schedule</h1>
           <p className="text-gray-600">
             Upload PDF, Word documents, or paste text to extract assignments and deadlines
           </p>
@@ -252,14 +252,14 @@ export default function UploadPage() {
         {/* Paste Text */}
         <div className="mt-8 bg-white rounded-xl shadow-sm border p-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Or paste syllabus text
+            Or paste syllabus or schedule text
           </label>
           <textarea
             value={pastedText}
             onChange={(e) => setPastedText(e.target.value)}
             rows={6}
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Paste syllabus text here..."
+            placeholder="Paste syllabus or schedule text here..."
           />
           <div className="mt-4">
             <Button

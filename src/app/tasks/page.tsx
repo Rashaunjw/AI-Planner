@@ -495,7 +495,7 @@ export default function TasksPage() {
             <Brain className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No tasks yet</h3>
             <p className="text-gray-600 mb-6">
-              Upload a syllabus to extract tasks automatically, or add them manually
+              Upload a syllabus or schedule to extract tasks automatically, or add them manually
             </p>
             <Link href="/upload">
               <Button>Upload Syllabus/Schedule</Button>

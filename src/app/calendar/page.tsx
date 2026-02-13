@@ -240,7 +240,7 @@ export default function CalendarPage() {
 
           {tasks.length === 0 && !loading && (
             <div className="mt-6 text-center text-sm text-gray-500">
-              No tasks with due dates yet. Upload a syllabus or add tasks to populate the calendar.
+              No tasks with due dates yet. Upload a syllabus or schedule and add tasks to populate the calendar.
             </div>
           )}
         </div>

@@ -71,7 +71,7 @@ export default async function Dashboard() {
             Welcome back, {session.user?.name || "Student"}!
           </h1>
           <p className="text-gray-600">
-            Ready to organize your academic schedule? Upload your syllabus to get started.
+            Ready to organize your academic schedule? Upload your syllabus or schedule to get started.
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export default async function Dashboard() {
                 <div className="bg-blue-100 p-3 rounded-lg">
                   <Upload className="h-6 w-6 text-blue-600" />
                 </div>
-                <h3 className="text-lg font-semibold ml-3">Upload Syllabus</h3>
+                <h3 className="text-lg font-semibold ml-3">Upload Syllabus or Schedule</h3>
               </div>
               <p className="text-gray-600 text-sm">
                 Upload PDF to extract assignments and deadlines
@@ -132,7 +132,7 @@ export default async function Dashboard() {
                 <Brain className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
                 <p className="text-gray-600 mb-4">
-                  Upload your first syllabus to see your study plan here
+                  Upload your first syllabus or schedule to see your study plan here
                 </p>
                 <Link href="/upload">
                   <Button>Get Started</Button>
