@@ -96,6 +96,13 @@ export default function TasksPage() {
     return missing
   }
 
+  const toDateInputValue = (value?: string) => {
+    if (!value) return ""
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return ""
+    return date.toISOString().slice(0, 10)
+  }
+
   if (status === "loading") {
     return <div>Loading...</div>
   }
@@ -109,7 +116,7 @@ export default function TasksPage() {
     setEditForm({
       title: task.title,
       description: task.description,
-      dueDate: task.dueDate,
+      dueDate: toDateInputValue(task.dueDate),
       priority: task.priority,
       category: task.category,
       estimatedDuration: task.estimatedDuration,
