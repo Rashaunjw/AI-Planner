@@ -107,7 +107,11 @@ export default function CalendarPage() {
         setSyncMessage(data.error || "Failed to sync calendar.")
         return
       }
-      setSyncMessage(`Synced ${data.createdCount} tasks to Google Calendar.`)
+      const skippedNote =
+        data.skippedCount > 0
+          ? ` Skipped ${data.skippedCount} task${data.skippedCount === 1 ? "" : "s"} missing required info.`
+          : ""
+      setSyncMessage(`Synced ${data.createdCount} tasks to Google Calendar.${skippedNote}`)
     } catch (error) {
       console.error("Calendar sync error:", error)
       setSyncMessage("Failed to sync calendar.")
@@ -128,7 +132,7 @@ export default function CalendarPage() {
                 <span className="text-xl font-bold text-gray-900">PlanEra</span>
               </Link>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <Link href="/upload">
                 <Button size="sm">
@@ -208,9 +212,8 @@ export default function CalendarPage() {
                 return (
                   <div
                     key={key}
-                    className={`min-h-[96px] rounded border p-2 ${
-                      isCurrentMonth ? "bg-white" : "bg-gray-50 text-gray-400"
-                    }`}
+                    className={`min-h-[96px] rounded border p-2 ${isCurrentMonth ? "bg-white" : "bg-gray-50 text-gray-400"
+                      }`}
                   >
                     <div className="text-xs font-semibold">{date.getDate()}</div>
                     <div className="mt-1 space-y-1">
@@ -238,7 +241,7 @@ export default function CalendarPage() {
           {tasks.length === 0 && !loading && (
             <div className="mt-6 text-center text-sm text-gray-500">
               No tasks with due dates yet. Upload a syllabus or add tasks to populate the calendar.
-          </div>
+            </div>
           )}
         </div>
       </div>

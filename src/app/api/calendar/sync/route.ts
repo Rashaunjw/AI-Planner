@@ -81,14 +81,21 @@ export async function POST() {
     const tasks = await prisma.task.findMany({
       where: {
         userId: session.user.id,
-        dueDate: { not: null },
       },
       orderBy: { dueDate: "asc" },
     })
 
+    const syncableTasks = tasks.filter((task) => {
+      if (!task.dueDate) return false
+      if (!task.className?.trim()) return false
+      if (!task.title?.trim() || task.title.trim() === "Untitled task") return false
+      return true
+    })
+    const skippedCount = tasks.length - syncableTasks.length
+
     let createdCount = 0
     const failures: Array<{ status: number; message: string }> = []
-    for (const task of tasks) {
+    for (const task of syncableTasks) {
       if (!task.dueDate) continue
       const startDate = new Date(task.dueDate)
       const endDate = new Date(startDate)
@@ -134,6 +141,7 @@ export async function POST() {
 
     return NextResponse.json({
       createdCount,
+      skippedCount,
       failedCount: failures.length,
       failures,
     })

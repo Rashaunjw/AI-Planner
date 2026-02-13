@@ -81,6 +81,21 @@ export default function TasksPage() {
     return map
   }, [tasks])
 
+  const getMissingFields = (task: Task) => {
+    const missing: string[] = []
+    const title = task.title?.trim() || ""
+    if (!title || title === "Untitled task") {
+      missing.push("title")
+    }
+    if (!task.dueDate) {
+      missing.push("due date")
+    }
+    if (!task.className?.trim()) {
+      missing.push("class name")
+    }
+    return missing
+  }
+
   if (status === "loading") {
     return <div>Loading...</div>
   }
@@ -487,9 +502,16 @@ export default function TasksPage() {
                   ? null
                   : weightGroups.get(weightKey(task.weightPercent))
               const sameWeightCount = weightGroup ? weightGroup.length - 1 : 0
+              const missingFields = getMissingFields(task)
+              const isIncomplete = missingFields.length > 0
 
               return (
-                <div key={task.id} className="bg-white rounded-lg shadow-sm border p-6">
+                <div
+                  key={task.id}
+                  className={`rounded-lg shadow-sm border p-6 ${
+                    isIncomplete ? "border-yellow-300 bg-yellow-50" : "bg-white"
+                  }`}
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       {editingTask === task.id ? (
@@ -582,6 +604,12 @@ export default function TasksPage() {
                               {task.status}
                             </span>
                           </div>
+                          {isIncomplete && (
+                            <div className="mb-3 rounded border border-yellow-200 bg-yellow-100 px-3 py-2 text-xs text-yellow-800">
+                              Missing required fields: {missingFields.join(", ")}. Fill these in to sync
+                              with Google Calendar.
+                            </div>
+                          )}
                           
                           {task.description && (
                             <p className="text-gray-600 mb-3">{task.description}</p>

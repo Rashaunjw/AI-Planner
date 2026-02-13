@@ -103,33 +103,31 @@ export async function POST(request: NextRequest) {
     // Extract tasks using AI
     try {
       const extractedTasks = await extractTasksFromContent(content)
-      const validTasks = extractedTasks.filter((task) => {
-        if (!task.dueDate || !task.className?.trim()) return false
-        const parsed = parseDateInput(task.dueDate)
-        return Boolean(parsed)
-      })
-      if (validTasks.length === 0) {
-        return NextResponse.json(
-          { error: 'No tasks with required fields (title, due date, class name) were found.' },
-          { status: 400 }
-        )
+      if (!extractedTasks.length) {
+        return NextResponse.json({
+          success: true,
+          uploadId: upload.id,
+          taskCount: 0,
+          message: 'File uploaded but no tasks were detected.',
+          warning: 'No tasks detected'
+        })
       }
-      
-      // Create task records in database
+
+      // Create task records even if required fields are missing
       const tasks = await Promise.all(
-        validTasks.map(task => 
+        extractedTasks.map((task) =>
           prisma.task.create({
             data: {
               userId: session.user.id,
               uploadId: upload.id,
-              title: task.title,
+              title: task.title?.trim() || 'Untitled task',
               description: task.description,
               dueDate: task.dueDate ? parseDateInput(task.dueDate) : null,
-              priority: task.priority,
+              priority: task.priority || 'medium',
               category: task.category,
               estimatedDuration: task.estimatedDuration,
               weightPercent: task.weightPercent ?? null,
-              className: task.className?.trim(),
+              className: task.className?.trim() || null,
               status: 'pending'
             }
           })
