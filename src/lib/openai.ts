@@ -18,13 +18,14 @@ export interface ExtractedTask {
 
 export async function extractTasksFromContent(content: string): Promise<ExtractedTask[]> {
   const currentYear = new Date().getFullYear()
+  const detectedClassName = extractClassNameFromContent(content)
 
   try {
     if (!openai) {
       throw new Error('OpenAI API key not configured')
     }
 
-    const basePrompt: string = "You are an AI assistant that extracts academic tasks and deadlines from syllabus content. Analyze the following text and extract all assignments, exams, projects, and other academic tasks. For each task, provide: title (clear, concise title), description (brief description), dueDate (YYYY-MM-DD format), priority (low/medium/high), category (assignment/exam/project/quiz/homework), estimatedDuration (minutes, optional), weightPercent (number 0-100 if a grading weight is specified), className (course name, e.g., \"Biology 101\"). If the syllabus uses a dated schedule table (e.g., a date column with items on the same row), treat the row's date as the dueDate for each task listed in that row, even if it doesn't say 'due'. If a date is given as month/day without a year, infer the year from the syllabus; if no year is present, use the current year (" + currentYear + "). Return as JSON array. If no date is mentioned anywhere for a task, omit dueDate. If no weight is mentioned, omit weightPercent. If no class name is mentioned, omit className."
+    const basePrompt: string = "You are an AI assistant that extracts academic tasks and deadlines from syllabus content. Analyze the following text and extract all assignments, exams, projects, and other academic tasks. For each task, provide: title (clear, concise title), description (brief description), dueDate (YYYY-MM-DD format), priority (low/medium/high), category (assignment/exam/project/quiz/homework), estimatedDuration (minutes, optional), weightPercent (number 0-100 if a grading weight is specified), className (course name, e.g., \"Biology 101\"). If the syllabus uses a dated schedule table (e.g., a date column with items on the same row), treat the row's date as the dueDate for each task listed in that row, even if it doesn't say 'due'. If a date is given as month/day without a year, infer the year from the syllabus; if no year is present, use the current year (" + currentYear + "). Return as JSON array. If no date is mentioned anywhere for a task, omit dueDate. If no weight is mentioned, omit weightPercent. If a class name appears near the top of the syllabus, use it for className on all tasks."
     
     const exampleFormat: string = "Example format: [{\"title\": \"Midterm Exam\", \"description\": \"Comprehensive exam covering chapters 1-8\", \"dueDate\": \"2024-03-15\", \"priority\": \"high\", \"category\": \"exam\", \"estimatedDuration\": 120, \"weightPercent\": 25, \"className\": \"Biology 101\"}]. If the text says '1/14 Problem Set 1', output dueDate as \"" + currentYear + "-01-14\"."
     
@@ -37,7 +38,13 @@ export async function extractTasksFromContent(content: string): Promise<Extracte
         },
         {
           role: "user",
-          content: basePrompt + "\n\nText to analyze:\n" + content + "\n\n" + exampleFormat
+          content:
+            basePrompt +
+            (detectedClassName ? `\n\nDetected class name: ${detectedClassName}` : "") +
+            "\n\nText to analyze:\n" +
+            content +
+            "\n\n" +
+            exampleFormat
         }
       ],
       temperature: 0.1,
@@ -60,17 +67,17 @@ export async function extractTasksFromContent(content: string): Promise<Extracte
       priority: ['low', 'medium', 'high'].includes(task.priority) ? task.priority : 'medium',
       category: task.category?.trim() || 'assignment',
       weightPercent: normalizeWeightPercent(task.weightPercent),
-      className: task.className?.trim()
+      className: task.className?.trim() || detectedClassName || undefined
     }))
 
     if (cleaned.length === 0) {
-      return fallbackExtractTasks(content, currentYear)
+      return fallbackExtractTasks(content, currentYear, detectedClassName)
     }
 
     return cleaned
   } catch (error) {
     console.error('Error extracting tasks:', error)
-    const fallback = fallbackExtractTasks(content, currentYear)
+    const fallback = fallbackExtractTasks(content, currentYear, detectedClassName)
     if (fallback.length > 0) {
       return fallback
     }
@@ -128,7 +135,11 @@ function parseJsonFromModel(raw: string): unknown {
   return JSON.parse(trimmed)
 }
 
-function fallbackExtractTasks(content: string, fallbackYear: number): ExtractedTask[] {
+function fallbackExtractTasks(
+  content: string,
+  fallbackYear: number,
+  className?: string
+): ExtractedTask[] {
   const lines = content
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -154,11 +165,43 @@ function fallbackExtractTasks(content: string, fallbackYear: number): ExtractedT
       description: line,
       dueDate,
       priority: keyword.priority,
-      category: keyword.category
+      category: keyword.category,
+      className
     })
   }
 
   return tasks
+}
+
+function extractClassNameFromContent(content: string): string | undefined {
+  const lines = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 40)
+
+  for (const line of lines) {
+    const labeledMatch = line.match(/(?:course|class)\s*(?:name|title)?\s*[:\-]\s*(.+)/i)
+    if (labeledMatch?.[1]) {
+      const name = labeledMatch[1].trim()
+      if (name.length >= 3 && name.length <= 80) {
+        return name
+      }
+    }
+  }
+
+  for (const line of lines) {
+    const codeMatch = line.match(/\b([A-Z]{2,4}\s?\d{3}[A-Z]?)\b/)
+    if (codeMatch) {
+      const rest = line.replace(codeMatch[0], "").replace(/^[\s:\-–]+/, "").trim()
+      const name = rest ? `${codeMatch[0]} ${rest}` : codeMatch[0]
+      if (name.length >= 3 && name.length <= 80) {
+        return name
+      }
+    }
+  }
+
+  return undefined
 }
 
 function findDateInText(text: string, fallbackYear: number): string | undefined {
