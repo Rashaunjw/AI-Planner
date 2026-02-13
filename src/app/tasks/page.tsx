@@ -66,6 +66,21 @@ export default function TasksPage() {
     }
   }, [router, session, status])
 
+  const weightKey = (value: number) =>
+    (Math.round(value * 100) / 100).toFixed(2)
+
+  const weightGroups = useMemo(() => {
+    const map = new Map<string, Task[]>()
+    tasks.forEach((task) => {
+      if (task.weightPercent === null || task.weightPercent === undefined) return
+      const key = weightKey(task.weightPercent)
+      const existing = map.get(key) || []
+      existing.push(task)
+      map.set(key, existing)
+    })
+    return map
+  }, [tasks])
+
   if (status === "loading") {
     return <div>Loading...</div>
   }
@@ -239,21 +254,6 @@ export default function TasksPage() {
       : rounded.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")
     return `${formatted}%`
   }
-
-  const weightKey = (value: number) =>
-    (Math.round(value * 100) / 100).toFixed(2)
-
-  const weightGroups = useMemo(() => {
-    const map = new Map<string, Task[]>()
-    tasks.forEach((task) => {
-      if (task.weightPercent === null || task.weightPercent === undefined) return
-      const key = weightKey(task.weightPercent)
-      const existing = map.get(key) || []
-      existing.push(task)
-      map.set(key, existing)
-    })
-    return map
-  }, [tasks])
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
