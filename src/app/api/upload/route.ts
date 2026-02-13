@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     const text = formData.get('text')
+    const context = formData.get('context')
 
     if (!file && !text) {
       return NextResponse.json({ error: 'No file or text provided' }, { status: 400 })
@@ -102,7 +103,10 @@ export async function POST(request: NextRequest) {
 
     // Extract tasks using AI
     try {
-      const extractedTasks = await extractTasksFromContent(content)
+      const extractedTasks = await extractTasksFromContent(
+        content,
+        typeof context === 'string' ? context : undefined
+      )
       if (!extractedTasks.length) {
         return NextResponse.json({
           success: true,

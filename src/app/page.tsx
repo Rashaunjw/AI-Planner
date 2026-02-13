@@ -1,17 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Calendar, FileText, Brain } from "lucide-react"
 import Link from "next/link"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { redirect } from "next/navigation"
-
 export default async function Home() {
-  const session = await getServerSession(authOptions)
-  
-  if (session) {
-    redirect("/dashboard")
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Navigation */}
@@ -20,25 +10,30 @@ export default async function Home() {
           <Brain className="h-8 w-8 text-blue-600" />
           <span className="text-2xl font-bold text-gray-900">PlanEra</span>
         </div>
-        <Link href="/auth/signin" className="cursor-pointer">
-          <Button variant="outline">Sign In</Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/about" className="text-gray-700 hover:text-gray-900">
+            About
+          </Link>
+          <Link href="/auth/signin" className="cursor-pointer">
+            <Button variant="outline">Sign In</Button>
+          </Link>
+        </div>
       </nav>
 
       {/* Hero Section */}
       <div className="container mx-auto px-6 py-20">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            Smart Study Planning
-            <span className="text-blue-600"> Made Simple</span>
+            PlanEra
+            <span className="text-blue-600"> for Smarter Scheduling</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Upload your syllabus, work schedule, or any other document. Our AI creates personalized study plans 
-            and syncs them with your calendar with smart reminders.
+            PlanEra helps students turn syllabi and schedules into organized tasks, study plans, and calendar events.
+            Upload your documents, let AI extract deadlines, and keep everything synced with reminders.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Link href="/dashboard" className="cursor-pointer">
+            <Link href="/auth/signin" className="cursor-pointer">
               <Button size="lg" className="text-lg px-8 py-4">
                 Get Started Free
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -119,7 +114,18 @@ export default async function Home() {
             <Brain className="h-6 w-6" />
             <span className="text-xl font-bold">PlanEra</span>
           </div>
-          <p className="text-gray-400">Smart study planning for college students</p>
+          <p className="text-gray-400">AI-powered study planning and calendar sync for students</p>
+          <div className="mt-4 flex items-center justify-center gap-4 text-sm text-gray-400">
+            <Link href="/about" className="hover:text-white">
+              About
+            </Link>
+            <Link href="/privacy" className="hover:text-white">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-white">
+              Terms
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

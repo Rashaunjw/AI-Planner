@@ -16,12 +16,23 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null)
   const [pastedText, setPastedText] = useState("")
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadContext, setUploadContext] = useState<string | null>(null)
+  const [showContextPrompt, setShowContextPrompt] = useState(false)
 
   useEffect(() => {
     if (status !== "loading" && !session) {
       router.replace("/auth/signin")
     }
   }, [router, session, status])
+
+  useEffect(() => {
+    const savedContext = window.localStorage.getItem("uploadContext")
+    if (savedContext) {
+      setUploadContext(savedContext)
+    } else {
+      setShowContextPrompt(true)
+    }
+  }, [])
 
   if (status === "loading") {
     return <div>Loading...</div>
@@ -78,8 +89,18 @@ export default function UploadPage() {
     }
   }
 
+  const handleContextSelect = (context: string) => {
+    setUploadContext(context)
+    window.localStorage.setItem("uploadContext", context)
+    setShowContextPrompt(false)
+  }
+
   const handleUpload = async () => {
     if (!file && !pastedText.trim()) return
+    if (!uploadContext) {
+      setShowContextPrompt(true)
+      return
+    }
 
     setUploading(true)
     setUploaded(false)
@@ -93,6 +114,7 @@ export default function UploadPage() {
       if (pastedText.trim()) {
         formData.append('text', pastedText.trim())
       }
+      formData.append('context', uploadContext)
 
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -145,6 +167,27 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {showContextPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">What is this for?</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Choose a context so we can tag tasks correctly.
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              {["school", "work", "sports", "greek life"].map((option) => (
+                <Button
+                  key={option}
+                  variant="outline"
+                  onClick={() => handleContextSelect(option)}
+                >
+                  {option[0].toUpperCase() + option.slice(1)}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Navigation */}
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -176,6 +219,16 @@ export default function UploadPage() {
             Upload PDF, Word documents, or paste text to extract assignments and deadlines
           </p>
         </div>
+        {uploadContext && (
+          <div className="mb-6 flex items-center justify-between rounded-lg border bg-white px-4 py-3 text-sm text-gray-700">
+            <span>
+              This upload is for <span className="font-semibold">{uploadContext}</span>.
+            </span>
+            <Button variant="outline" size="sm" onClick={() => setShowContextPrompt(true)}>
+              Change
+            </Button>
+          </div>
+        )}
         {uploadError && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {uploadError}
@@ -186,8 +239,8 @@ export default function UploadPage() {
         <div className="bg-white rounded-xl shadow-sm border p-8">
           <div
             className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${dragActive
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-300 hover:border-gray-400'
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-300 hover:border-gray-400'
               }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}

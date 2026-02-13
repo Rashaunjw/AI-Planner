@@ -16,19 +16,22 @@ export interface ExtractedTask {
   className?: string
 }
 
-export async function extractTasksFromContent(content: string): Promise<ExtractedTask[]> {
+export async function extractTasksFromContent(
+  content: string,
+  context?: string
+): Promise<ExtractedTask[]> {
   const currentYear = new Date().getFullYear()
-  const detectedClassName = extractClassNameFromContent(content)
+  const detectedGroupName = extractGroupNameFromContent(content, context)
 
   try {
     if (!openai) {
       throw new Error('OpenAI API key not configured')
     }
 
-    const basePrompt: string = "You are an AI assistant that extracts academic tasks and deadlines from syllabus or schedule content. Analyze the following text and extract all assignments, exams, projects, and other academic tasks. For each task, provide: title (clear, concise title), description (brief description), dueDate (YYYY-MM-DD format), priority (low/medium/high), category (assignment/exam/project/quiz/homework), estimatedDuration (minutes, optional), weightPercent (number 0-100 if a grading weight is specified), className (course name, e.g., \"Biology 101\"). If the syllabus or schedule uses a dated schedule table (e.g., a date column with items on the same row), treat the row's date as the dueDate for each task listed in that row, even if it doesn't say 'due'. If a date is given as month/day without a year, infer the year from the syllabus or schedule; if no year is present, use the current year (" + currentYear + "). Return as JSON array. If no date is mentioned anywhere for a task, omit dueDate. If no weight is mentioned, omit weightPercent. If a class name appears near the top of the syllabus or schedule, use it for className on all tasks."
-    
+    const basePrompt: string = "You are an AI assistant that extracts tasks and deadlines from syllabus or schedule content. Analyze the following text and extract all assignments, exams, projects, meetings, practices, and other tasks. For each task, provide: title (clear, concise title), description (brief description), dueDate (YYYY-MM-DD format), priority (low/medium/high), category (assignment/exam/project/quiz/homework/meeting/practice), estimatedDuration (minutes, optional), weightPercent (number 0-100 if a grading weight is specified), className (course, team, organization, or project name, e.g., \"Biology 101\" or \"Alpha Phi\" or \"Lakers\"). If the syllabus or schedule uses a dated schedule table (e.g., a date column with items on the same row), treat the row's date as the dueDate for each task listed in that row, even if it doesn't say 'due'. If a date is given as month/day without a year, infer the year from the syllabus or schedule; if no year is present, use the current year (" + currentYear + "). Return as JSON array. If no date is mentioned anywhere for a task, omit dueDate. If no weight is mentioned, omit weightPercent. If a group name appears near the top of the document, use it for className on all tasks."
+
     const exampleFormat: string = "Example format: [{\"title\": \"Midterm Exam\", \"description\": \"Comprehensive exam covering chapters 1-8\", \"dueDate\": \"2024-03-15\", \"priority\": \"high\", \"category\": \"exam\", \"estimatedDuration\": 120, \"weightPercent\": 25, \"className\": \"Biology 101\"}]. If the text says '1/14 Problem Set 1', output dueDate as \"" + currentYear + "-01-14\"."
-    
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -40,7 +43,8 @@ export async function extractTasksFromContent(content: string): Promise<Extracte
           role: "user",
           content:
             basePrompt +
-            (detectedClassName ? `\n\nDetected class name: ${detectedClassName}` : "") +
+            (context ? `\n\nContext: ${context}` : "") +
+            (detectedGroupName ? `\n\nDetected group name: ${detectedGroupName}` : "") +
             "\n\nText to analyze:\n" +
             content +
             "\n\n" +
@@ -58,7 +62,7 @@ export async function extractTasksFromContent(content: string): Promise<Extracte
 
     // Parse the JSON response (handle code fences or extra text)
     const tasks = parseJsonFromModel(responseContent) as ExtractedTask[]
-    
+
     // Validate and clean the tasks
     const cleaned = tasks.map(task => ({
       ...task,
@@ -67,17 +71,17 @@ export async function extractTasksFromContent(content: string): Promise<Extracte
       priority: ['low', 'medium', 'high'].includes(task.priority) ? task.priority : 'medium',
       category: task.category?.trim() || 'assignment',
       weightPercent: normalizeWeightPercent(task.weightPercent),
-      className: task.className?.trim() || detectedClassName || undefined
+      className: task.className?.trim() || detectedGroupName || undefined
     }))
 
     if (cleaned.length === 0) {
-      return fallbackExtractTasks(content, currentYear, detectedClassName)
+      return fallbackExtractTasks(content, currentYear, detectedGroupName)
     }
 
     return cleaned
   } catch (error) {
     console.error('Error extracting tasks:', error)
-    const fallback = fallbackExtractTasks(content, currentYear, detectedClassName)
+    const fallback = fallbackExtractTasks(content, currentYear, detectedGroupName)
     if (fallback.length > 0) {
       return fallback
     }
@@ -94,7 +98,7 @@ export async function generateStudyPlan(tasks: ExtractedTask[]): Promise<string>
     const basePrompt: string = "You are an AI study planner. Given the following academic tasks, create a personalized study plan."
     const tasksJson: string = JSON.stringify(tasks, null, 2)
     const requirements: string = "Create a study plan that: 1. Prioritizes tasks by due date and importance, 2. Suggests realistic time blocks for studying, 3. Includes buffer time for unexpected delays, 4. Considers workload distribution, 5. Provides specific study strategies for each task type. Return a detailed study plan as a structured text response."
-    
+
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
@@ -173,7 +177,7 @@ function fallbackExtractTasks(
   return tasks
 }
 
-function extractClassNameFromContent(content: string): string | undefined {
+function extractGroupNameFromContent(content: string, context?: string): string | undefined {
   const lines = content
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -181,11 +185,25 @@ function extractClassNameFromContent(content: string): string | undefined {
     .slice(0, 40)
 
   for (const line of lines) {
-    const labeledMatch = line.match(/(?:course|class)\s*(?:name|title)?\s*[:\-]\s*(.+)/i)
+    const labeledMatch = line.match(
+      /(?:course|class|team|organization|org|department|group|project|club|squad)\s*(?:name|title)?\s*[:\-]\s*(.+)/i
+    )
     if (labeledMatch?.[1]) {
       const name = labeledMatch[1].trim()
       if (name.length >= 3 && name.length <= 80) {
         return name
+      }
+    }
+  }
+
+  if (context === "greek life") {
+    for (const line of lines) {
+      const greekMatch = line.match(/\b(?:alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega)\b/i)
+      if (greekMatch) {
+        const name = line.trim()
+        if (name.length >= 3 && name.length <= 80) {
+          return name
+        }
       }
     }
   }
