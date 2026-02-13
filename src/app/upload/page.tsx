@@ -15,6 +15,7 @@ export default function UploadPage() {
   const [uploaded, setUploaded] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [pastedText, setPastedText] = useState("")
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -44,7 +45,7 @@ export default function UploadPage() {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFile(e.dataTransfer.files[0])
     }
@@ -57,7 +58,7 @@ export default function UploadPage() {
       'application/msword',
       'text/plain'
     ]
-    
+
     if (!allowedTypes.includes(file.type)) {
       alert('Please upload a PDF, Word document, or text file.')
       return
@@ -81,8 +82,9 @@ export default function UploadPage() {
     if (!file && !pastedText.trim()) return
 
     setUploading(true)
-    setUploaded(true)
-    
+    setUploaded(false)
+    setUploadError(null)
+
     try {
       const formData = new FormData()
       if (file) {
@@ -91,24 +93,30 @@ export default function UploadPage() {
       if (pastedText.trim()) {
         formData.append('text', pastedText.trim())
       }
-      
+
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       })
+      const responseBody = await response.json().catch(() => null)
 
       if (response.ok) {
+        setUploaded(true)
         // Redirect to task review after a short delay
         setTimeout(() => {
           window.location.href = '/tasks'
         }, 2000)
       } else {
-        throw new Error('Upload failed')
+        const message =
+          responseBody?.error || `Upload failed with status ${response.status}`
+        throw new Error(message)
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Upload failed'
       console.error('Upload error:', error)
       setUploaded(false)
-      alert('Upload failed. Please try again.')
+      setUploadError(message)
+      alert(message)
     } finally {
       setUploading(false)
     }
@@ -147,7 +155,7 @@ export default function UploadPage() {
                 <span className="text-xl font-bold text-gray-900">PlanEra</span>
               </Link>
             </div>
-            
+
             <div className="flex items-center">
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm">
@@ -168,15 +176,19 @@ export default function UploadPage() {
             Upload PDF, Word documents, or paste text to extract assignments and deadlines
           </p>
         </div>
+        {uploadError && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {uploadError}
+          </div>
+        )}
 
         {/* Upload Area */}
         <div className="bg-white rounded-xl shadow-sm border p-8">
           <div
-            className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
-              dragActive 
-                ? 'border-blue-500 bg-blue-50' 
+            className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${dragActive
+                ? 'border-blue-500 bg-blue-50'
                 : 'border-gray-300 hover:border-gray-400'
-            }`}
+              }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
@@ -191,15 +203,15 @@ export default function UploadPage() {
                     {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                 </div>
-                <Button 
+                <Button
                   onClick={handleUpload}
                   disabled={uploading}
                   className="w-full"
                 >
                   {uploading ? "Processing..." : "Process File"}
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setFile(null)}
                   disabled={uploading}
                 >
