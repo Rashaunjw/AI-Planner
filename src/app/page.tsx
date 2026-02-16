@@ -21,7 +21,7 @@ export default async function Home() {
       </nav>
 
       {/* Hero Section */}
-      <div className="container mx-auto px-6 py-20">
+      <div className="container mx-auto px-6 py-16">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
             PlanEra
@@ -32,7 +32,7 @@ export default async function Home() {
             Upload your documents, let AI extract deadlines, and keep everything synced with reminders.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Link href="/auth/signup" className="cursor-pointer">
               <Button size="lg" className="text-lg px-8 py-4">
                 Get Started Free
@@ -42,7 +42,7 @@ export default async function Home() {
           </div>
 
           {/* Features Grid */}
-          <div className="grid md:grid-cols-3 gap-8 mt-20">
+          <div className="grid md:grid-cols-3 gap-8 mt-16">
             <div className="bg-white rounded-xl p-6 shadow-lg">
               <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 mx-auto">
                 <FileText className="h-6 w-6 text-blue-600" />
@@ -77,7 +77,7 @@ export default async function Home() {
       </div>
 
       {/* How it Works */}
-      <div className="bg-white py-20">
+      <div className="bg-white py-16">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>

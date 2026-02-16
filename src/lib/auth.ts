@@ -1,34 +1,50 @@
 import { NextAuthOptions } from "next-auth"
-import EmailProvider from "next-auth/providers/email"
+import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
+import { compare } from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
-    EmailProvider({
-      from: process.env.FROM_EMAIL || process.env.EMAIL_FROM,
-      sendVerificationRequest: async ({ identifier, url }) => {
-        const apiKey = process.env.RESEND_API_KEY
-        const from =
-          process.env.RESEND_FROM || process.env.FROM_EMAIL || process.env.EMAIL_FROM
-        if (!apiKey || !from) {
-          throw new Error("Email provider not configured")
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = credentials?.email?.trim()
+        const password = credentials?.password
+
+        if (!email || !password) {
+          return null
         }
 
-        const { Resend } = await import("resend")
-        const resend = new Resend(apiKey)
-        const host = new URL(url).host
-
-        await resend.emails.send({
-          to: identifier,
-          from,
-          subject: `Sign in to ${host}`,
-          text: `Sign in to ${host}\n${url}\n\n`,
-          html: `<p>Sign in to <strong>${host}</strong></p><p><a href="${url}">Click here to sign in</a></p>`,
+        const user = await prisma.user.findUnique({
+          where: { email },
         })
+
+        if (!user?.passwordHash) {
+          return null
+        }
+
+        if (!user.emailVerified) {
+          throw new Error("EmailNotVerified")
+        }
+
+        const isValid = await compare(password, user.passwordHash)
+        if (!isValid) {
+          return null
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        }
       },
     }),
     GoogleProvider({

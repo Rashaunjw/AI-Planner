@@ -27,7 +27,7 @@ export default async function SignUp() {
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Create your account</h1>
             <p className="text-gray-600">
-              Start with your name and email, then check your inbox.
+              Use your name, email, and a password to get started.
             </p>
           </div>
 

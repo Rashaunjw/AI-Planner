@@ -3,12 +3,12 @@ import Link from "next/link"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import EmailSignInForm from "@/components/auth/email-signin-form"
+import CredentialsSignInForm from "@/components/auth/credentials-signin-form"
 import GoogleSignInButton from "@/components/auth/google-signin-button"
 
 export default async function SignIn() {
   const session = await getServerSession(authOptions)
-  
+
   if (session) {
     redirect("/dashboard")
   }
@@ -27,11 +27,20 @@ export default async function SignIn() {
         {/* Sign In Card */}
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome</h1>
-            <p className="text-gray-600">Sign in to your account to continue</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome back</h1>
+            <p className="text-gray-600">Sign in with your email and password</p>
           </div>
 
-          <EmailSignInForm />
+          <CredentialsSignInForm />
+
+          <div className="text-right mt-2">
+            <Link
+              href="/auth/forgot-password"
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Forgot password?
+            </Link>
+          </div>
 
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
@@ -46,7 +55,7 @@ export default async function SignIn() {
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Use email to sign in without Google. You can still use Google if you prefer.
+              Forgot your password? Contact support for help resetting it.
             </p>
           </div>
         </div>

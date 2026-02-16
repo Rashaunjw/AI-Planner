@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { hash } from "bcryptjs"
 import { randomBytes } from "crypto"
 import {
   createVerificationLink,
@@ -11,41 +10,27 @@ import {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const name = typeof body?.name === "string" ? body.name.trim() : ""
     const email = typeof body?.email === "string" ? body.email.trim() : ""
-    const password = typeof body?.password === "string" ? body.password : ""
 
-    if (!name || !email || !password) {
+    if (!email) {
       return NextResponse.json(
-        { error: "Name, email, and password are required." },
+        { error: "Email is required." },
         { status: 400 }
       )
     }
 
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters." },
-        { status: 400 }
-      )
-    }
-
-    const existingUser = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true },
+      select: { emailVerified: true },
     })
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "An account already exists for this email." },
-        { status: 409 }
-      )
+    if (!user) {
+      return NextResponse.json({ ok: true })
     }
 
-    const passwordHash = await hash(password, 10)
-
-    await prisma.user.create({
-      data: { name, email, passwordHash },
-    })
+    if (user.emailVerified) {
+      return NextResponse.json({ ok: true })
+    }
 
     await prisma.emailVerificationToken.deleteMany({
       where: { email },
@@ -66,7 +51,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true })
   } catch (error) {
     return NextResponse.json(
-      { error: "Unable to create your account." },
+      { error: "Unable to resend verification email." },
       { status: 500 }
     )
   }

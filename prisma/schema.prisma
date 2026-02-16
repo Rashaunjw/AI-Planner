@@ -38,6 +38,7 @@ model User {
   id            String     @id @default(cuid())
   name          String?
   email         String     @unique
+  passwordHash  String?
   emailVerified DateTime?
   image         String?
   emailReminders Boolean   @default(true)
@@ -59,6 +60,26 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
 }
 
 model Upload {
