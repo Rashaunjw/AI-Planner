@@ -74,7 +74,7 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
   },
   session: {
-    strategy: "database",
+    strategy: "jwt",
   },
 }
 
