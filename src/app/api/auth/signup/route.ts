@@ -11,13 +11,16 @@ import {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const name = typeof body?.name === "string" ? body.name.trim() : ""
+    const firstName =
+      typeof body?.firstName === "string" ? body.firstName.trim() : ""
+    const lastName = typeof body?.lastName === "string" ? body.lastName.trim() : ""
     const email = typeof body?.email === "string" ? body.email.trim() : ""
     const password = typeof body?.password === "string" ? body.password : ""
+    const name = [firstName, lastName].filter(Boolean).join(" ").trim()
 
-    if (!name || !email || !password) {
+    if (!firstName || !lastName || !email || !password) {
       return NextResponse.json(
-        { error: "Name, email, and password are required." },
+        { error: "First name, last name, email, and password are required." },
         { status: 400 }
       )
     }
@@ -61,10 +64,17 @@ export async function POST(request: Request) {
       },
     })
 
-    await sendVerificationEmail(email, createVerificationLink(token, email))
+    let emailSent = true
+    try {
+      await sendVerificationEmail(email, createVerificationLink(token, email))
+    } catch (error) {
+      emailSent = false
+      console.error("Signup verification email error:", error)
+    }
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, emailSent })
   } catch (error) {
+    console.error("Signup error:", error)
     return NextResponse.json(
       { error: "Unable to create your account." },
       { status: 500 }

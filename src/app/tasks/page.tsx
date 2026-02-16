@@ -141,7 +141,7 @@ export default function TasksPage() {
       })
 
       if (response.ok) {
-        setTasks(tasks.map(task => 
+        setTasks(tasks.map(task =>
           task.id === taskId ? { ...task, ...editForm } : task
         ))
         setEditingTask(null)
@@ -195,18 +195,18 @@ export default function TasksPage() {
 
     setCreating(true)
     try {
-    const payload = {
-      title: createForm.title.trim(),
-      description: createForm.description.trim() || undefined,
-      dueDate: createForm.dueDate || undefined,
-      priority: createForm.priority,
-      category: createForm.category.trim() || undefined,
-      estimatedDuration: createForm.estimatedDuration
-        ? Number(createForm.estimatedDuration)
-        : undefined,
-      weightPercent: parseWeightInput(createForm.weightPercent),
-      className: createForm.className.trim()
-    }
+      const payload = {
+        title: createForm.title.trim(),
+        description: createForm.description.trim() || undefined,
+        dueDate: createForm.dueDate || undefined,
+        priority: createForm.priority,
+        category: createForm.category.trim() || undefined,
+        estimatedDuration: createForm.estimatedDuration
+          ? Number(createForm.estimatedDuration)
+          : undefined,
+        weightPercent: parseWeightInput(createForm.weightPercent),
+        className: createForm.className.trim()
+      }
 
       const response = await fetch('/api/tasks', {
         method: 'POST',
@@ -249,7 +249,7 @@ export default function TasksPage() {
       })
 
       if (response.ok) {
-        setTasks(tasks.map(task => 
+        setTasks(tasks.map(task =>
           task.id === taskId ? { ...task, status } : task
         ))
       }
@@ -315,7 +315,7 @@ export default function TasksPage() {
                 <span className="text-xl font-bold text-gray-900">PlanEra</span>
               </Link>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <Link href="/upload">
                 <Button size="sm">Upload</Button>
@@ -515,9 +515,8 @@ export default function TasksPage() {
               return (
                 <div
                   key={task.id}
-                  className={`rounded-lg shadow-sm border p-6 ${
-                    isIncomplete ? "border-yellow-300 bg-yellow-50" : "bg-white"
-                  }`}
+                  className={`rounded-lg shadow-sm border p-6 ${isIncomplete ? "border-yellow-300 bg-yellow-50" : "bg-white"
+                    }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -526,23 +525,23 @@ export default function TasksPage() {
                           <input
                             type="text"
                             value={editForm.title || ''}
-                            onChange={(e) => setEditForm({...editForm, title: e.target.value})}
+                            onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                             className="w-full text-lg font-semibold border rounded px-3 py-2"
                           />
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Class Name</label>
-                          <input
-                            type="text"
-                            value={editForm.className || ''}
-                            onChange={(e) => setEditForm({...editForm, className: e.target.value})}
-                            className="w-full border rounded px-3 py-2"
-                            placeholder="Class name"
-                            required
-                          />
-                        </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Class Name</label>
+                            <input
+                              type="text"
+                              value={editForm.className || ''}
+                              onChange={(e) => setEditForm({ ...editForm, className: e.target.value })}
+                              className="w-full border rounded px-3 py-2"
+                              placeholder="Class name"
+                              required
+                            />
+                          </div>
                           <textarea
                             value={editForm.description || ''}
-                            onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                             className="w-full border rounded px-3 py-2"
                             rows={3}
                           />
@@ -552,7 +551,7 @@ export default function TasksPage() {
                               <input
                                 type="date"
                                 value={editForm.dueDate || ''}
-                                onChange={(e) => setEditForm({...editForm, dueDate: e.target.value})}
+                                onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })}
                                 className="w-full border rounded px-3 py-2"
                               />
                             </div>
@@ -560,7 +559,7 @@ export default function TasksPage() {
                               <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
                               <select
                                 value={editForm.priority || 'medium'}
-                                onChange={(e) => setEditForm({...editForm, priority: e.target.value})}
+                                onChange={(e) => setEditForm({ ...editForm, priority: e.target.value })}
                                 className="w-full border rounded px-3 py-2"
                               >
                                 <option value="low">Low</option>
@@ -591,9 +590,9 @@ export default function TasksPage() {
                             <Button onClick={() => handleSave(task.id)} size="sm">
                               Save
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              onClick={() => setEditingTask(null)} 
+                            <Button
+                              variant="outline"
+                              onClick={() => setEditingTask(null)}
                               size="sm"
                             >
                               Cancel
@@ -617,11 +616,11 @@ export default function TasksPage() {
                               with Google Calendar.
                             </div>
                           )}
-                          
+
                           {task.description && (
                             <p className="text-gray-600 mb-3">{task.description}</p>
                           )}
-                          
+
                           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                             {task.dueDate && (
                               <div className="flex items-center space-x-1">
@@ -658,7 +657,7 @@ export default function TasksPage() {
                         </>
                       )}
                     </div>
-                    
+
                     {editingTask !== task.id && (
                       <div className="flex items-center space-x-2 ml-4">
                         <Button

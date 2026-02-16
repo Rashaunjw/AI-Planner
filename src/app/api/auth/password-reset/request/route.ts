@@ -46,10 +46,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    return NextResponse.json(
-      { error: "Unable to send password reset email." },
-      { status: 500 }
-    )
+    console.error("Password reset request error:", error)
+    const message =
+      error instanceof Error &&
+      (error.message.includes("RESEND_API_KEY") ||
+        error.message.includes("Email sender is not configured."))
+        ? "Email service is not configured."
+        : "Unable to send password reset email."
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 

@@ -31,10 +31,6 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        if (!user.emailVerified) {
-          throw new Error("EmailNotVerified")
-        }
-
         const isValid = await compare(password, user.passwordHash)
         if (!isValid) {
           return null

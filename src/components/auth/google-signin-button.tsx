@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react"
 
 export default function GoogleSignInButton() {
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
+  const callbackUrl = searchParams.get("callbackUrl") || "/"
 
   return (
     <button
