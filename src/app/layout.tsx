@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PlanEra - Smart Study Planning",
   description: "Upload your syllabus or schedule and get AI-powered study plans with calendar integration",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
