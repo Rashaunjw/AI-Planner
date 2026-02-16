@@ -2,12 +2,12 @@ import { NextAuthOptions } from "next-auth"
 import EmailProvider from "next-auth/providers/email"
 import GoogleProvider from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/prisma"
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
+  secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
   providers: [
     EmailProvider({
       from: process.env.FROM_EMAIL || process.env.EMAIL_FROM,
@@ -36,7 +36,7 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          scope: "openid email profile https://www.googleapis.com/auth/calendar",
+          scope: "openid email profile https://www.googleapis.com/auth/calendar.events",
           prompt: "consent",
           access_type: "offline",
         },
@@ -45,9 +45,9 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
+    async session({ session, user, token }) {
       if (session.user) {
-        session.user.id = user.id
+        session.user.id = user?.id ?? (token.id as string | undefined)
       }
       return session
     },
