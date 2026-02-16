@@ -28,6 +28,16 @@ export default function EmailSignUpForm() {
         setErrorMessage(null)
         setStatusMessage(null)
 
+        if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+            setErrorMessage("First name, last name, and email are required.")
+            return
+        }
+
+        if (password.length < 8) {
+            setErrorMessage("Password must be at least 8 characters.")
+            return
+        }
+
         if (password !== confirmPassword) {
             setErrorMessage("Passwords do not match.")
             return
@@ -161,14 +171,7 @@ export default function EmailSignUpForm() {
                 type="submit"
                 variant="outline"
                 className="w-full"
-                disabled={
-                    !firstName.trim() ||
-                    !lastName.trim() ||
-                    !email.trim() ||
-                    password.length < 8 ||
-                    password !== confirmPassword ||
-                    isSubmitting
-                }
+                disabled={isSubmitting}
             >
                 {isSubmitting ? "Creating account..." : "Create account"}
             </Button>
