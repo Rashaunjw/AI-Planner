@@ -7,7 +7,6 @@ import { prisma } from "@/lib/prisma"
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.NEXTAUTH_SECRET,
-  trustHost: true,
   providers: [
     EmailProvider({
       from: process.env.FROM_EMAIL || process.env.EMAIL_FROM,
