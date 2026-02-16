@@ -8,6 +8,7 @@ import { compare } from "bcryptjs"
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
   debug: true,
   logger: {
     error(code, metadata) {
@@ -72,6 +73,14 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      console.debug("NextAuth signIn callback:", {
+        provider: account?.provider,
+        hasUser: Boolean(user?.id),
+        hasProfile: Boolean(profile),
+      })
+      return true
+    },
     async session({ session, user, token }) {
       if (session.user) {
         session.user.id = user?.id ?? (token.id as string | undefined)
