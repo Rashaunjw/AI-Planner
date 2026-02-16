@@ -10,7 +10,7 @@ export default function GoogleSignInButton() {
   return (
     <button
       type="button"
-      className="w-full inline-flex items-center justify-center gap-3 rounded-md border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      className="w-full inline-flex items-center justify-center gap-3 rounded-md border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-sm transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       onClick={() =>
         signIn("google", {
           callbackUrl,
@@ -19,7 +19,7 @@ export default function GoogleSignInButton() {
         })
       }
     >
-      <svg className="w-5 h-5" viewBox="0 0 24 24">
+      <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
         <path
           fill="#EA4335"
           d="M12 10.2v3.9h5.4c-.2 1.3-1.5 3.8-5.4 3.8-3.2 0-5.8-2.6-5.8-5.8S8.8 6.3 12 6.3c1.8 0 3 .8 3.7 1.5l2.5-2.4C16.7 3.9 14.6 3 12 3 7.6 3 4 6.6 4 11s3.6 8 8 8c4.6 0 7.7-3.2 7.7-7.7 0-.5-.1-.9-.2-1.1z"

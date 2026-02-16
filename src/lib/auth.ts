@@ -8,6 +8,18 @@ import { compare } from "bcryptjs"
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.NEXTAUTH_SECRET,
+  debug: true,
+  logger: {
+    error(code, metadata) {
+      console.error("NextAuth error:", code, metadata)
+    },
+    warn(code) {
+      console.warn("NextAuth warning:", code)
+    },
+    debug(code, metadata) {
+      console.debug("NextAuth debug:", code, metadata)
+    },
+  },
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -20,6 +32,7 @@ export const authOptions: NextAuthOptions = {
         const password = credentials?.password
 
         if (!email || !password) {
+          console.warn("Credentials sign-in missing email or password.")
           return null
         }
 
@@ -28,11 +41,13 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!user?.passwordHash) {
+          console.warn("Credentials sign-in failed: no password hash for email.")
           return null
         }
 
         const isValid = await compare(password, user.passwordHash)
         if (!isValid) {
+          console.warn("Credentials sign-in failed: invalid password.")
           return null
         }
 
