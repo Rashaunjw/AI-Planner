@@ -11,17 +11,18 @@ export const authOptions: NextAuthOptions = {
     EmailProvider({
       from: process.env.FROM_EMAIL || process.env.EMAIL_FROM,
       sendVerificationRequest: async ({ identifier, url }) => {
-        const apiKey = process.env.SENDGRID_API_KEY
-        const from = process.env.FROM_EMAIL || process.env.EMAIL_FROM
+        const apiKey = process.env.RESEND_API_KEY
+        const from =
+          process.env.RESEND_FROM || process.env.FROM_EMAIL || process.env.EMAIL_FROM
         if (!apiKey || !from) {
           throw new Error("Email provider not configured")
         }
 
-        const { default: sgMail } = await import("@sendgrid/mail")
-        sgMail.setApiKey(apiKey)
+        const { Resend } = await import("resend")
+        const resend = new Resend(apiKey)
         const host = new URL(url).host
 
-        await sgMail.send({
+        await resend.emails.send({
           to: identifier,
           from,
           subject: `Sign in to ${host}`,
