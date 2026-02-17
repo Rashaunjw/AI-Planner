@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Privacy Policy
           </h1>
-          <p className="text-sm text-gray-500 mb-8">Last updated: Feb 13, 2026</p>
+          <p className="text-sm text-gray-500 mb-8">Last updated: Feb 17, 2026</p>
 
           <div className="space-y-6 text-gray-700">
             <section>
@@ -60,6 +60,23 @@ export default function PrivacyPolicyPage() {
               <p>
                 We share data only with service providers necessary to run PlanEra
                 (such as hosting, email, and calendar APIs).
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold mb-2">Data Protection</h2>
+              <p>
+                We protect sensitive data using industry-standard safeguards,
+                including encryption in transit (TLS) and access controls that
+                limit data access to authorized personnel and services only. Tokens
+                used for Google Calendar sync are stored securely and can be revoked
+                at any time by disconnecting your calendar. We minimize access to
+                data and follow least-privilege principles for internal services.
+              </p>
+              <p>
+                We retain data only as long as needed to provide the service or as
+                required by law. You can request deletion of your account and data
+                by contacting support.
               </p>
             </section>
 

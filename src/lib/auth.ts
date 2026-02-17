@@ -20,11 +20,6 @@ export const authOptions: NextAuthOptions = {
       console.debug("NextAuth debug:", code, metadata)
     },
   },
-  events: {
-    error(message) {
-      console.error("NextAuth event error:", message)
-    },
-  },
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -68,7 +63,8 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          scope: "openid email profile https://www.googleapis.com/auth/calendar.events",
+          scope:
+            "openid email profile https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.events.readonly",
           prompt: "consent",
           access_type: "offline",
         },
