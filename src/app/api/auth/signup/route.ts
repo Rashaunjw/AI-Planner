@@ -75,10 +75,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, emailSent })
   } catch (error) {
     console.error("Signup error:", error)
-    return NextResponse.json(
-      { error: "Unable to create your account." },
-      { status: 500 }
-    )
+    const message =
+      error instanceof Error &&
+      error.message.includes("User.passwordHash does not exist")
+        ? "Database is missing the password column. Please run the latest migrations."
+        : "Unable to create your account."
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
