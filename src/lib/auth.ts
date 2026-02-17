@@ -20,6 +20,11 @@ export const authOptions: NextAuthOptions = {
       console.debug("NextAuth debug:", code, metadata)
     },
   },
+  events: {
+    error(message) {
+      console.error("NextAuth event error:", message)
+    },
+  },
   providers: [
     CredentialsProvider({
       name: "Credentials",
