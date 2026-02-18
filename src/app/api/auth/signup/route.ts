@@ -50,26 +50,33 @@ export async function POST(request: Request) {
       data: { name, email, passwordHash },
     })
 
-    await prisma.emailVerificationToken.deleteMany({
-      where: { email },
-    })
-
-    const token = randomBytes(32).toString("hex")
-
-    await prisma.emailVerificationToken.create({
-      data: {
-        email,
-        token,
-        expires: verificationExpiry(),
-      },
-    })
-
-    let emailSent = true
+    // User is now created. Wrap all post-creation steps so that a failure here
+    // (e.g. missing migration for EmailVerificationToken, email service down)
+    // does not surface a 500 "Unable to create account" to the client.
+    let emailSent = false
     try {
-      await sendVerificationEmail(email, createVerificationLink(token, email))
-    } catch (error) {
-      emailSent = false
-      console.error("Signup verification email error:", error)
+      await prisma.emailVerificationToken.deleteMany({
+        where: { email },
+      })
+
+      const token = randomBytes(32).toString("hex")
+
+      await prisma.emailVerificationToken.create({
+        data: {
+          email,
+          token,
+          expires: verificationExpiry(),
+        },
+      })
+
+      try {
+        await sendVerificationEmail(email, createVerificationLink(token, email))
+        emailSent = true
+      } catch (emailError) {
+        console.error("Signup verification email error:", emailError)
+      }
+    } catch (tokenError) {
+      console.error("Signup verification token error:", tokenError)
     }
 
     return NextResponse.json({ ok: true, emailSent })

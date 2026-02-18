@@ -63,17 +63,29 @@ export default function EmailSignUpForm() {
             }
 
             const payload = await response.json().catch(() => null)
-            const result = await signIn("credentials", {
-                email: email.trim(),
-                password,
-                callbackUrl: "/",
-                redirect: false,
-            })
+
+            let result: Awaited<ReturnType<typeof signIn>> | null = null
+            try {
+                result = await signIn("credentials", {
+                    email: email.trim(),
+                    password,
+                    callbackUrl: "/",
+                    redirect: false,
+                })
+            } catch {
+                // signIn threw — account was created but auto sign-in failed.
+                const message =
+                    payload?.emailSent === false
+                        ? "Account created, but verification email could not be sent. Please sign in."
+                        : "Account created. Please sign in to continue."
+                setStatusMessage(message)
+                return
+            }
 
             if (result?.error) {
                 const message =
                     payload?.emailSent === false
-                        ? "Account created, but verification email could not be sent."
+                        ? "Account created, but verification email could not be sent. Please sign in."
                         : "Account created. Please sign in to continue."
                 setStatusMessage(message)
                 return
