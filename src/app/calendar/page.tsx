@@ -133,17 +133,17 @@ export default function CalendarPage() {
               </Link>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-1 sm:space-x-4">
               <Link href="/upload">
                 <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Tasks
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Add Tasks</span>
                 </Button>
               </Link>
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Dashboard
+                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Dashboard</span>
                 </Button>
               </Link>
             </div>
@@ -154,7 +154,7 @@ export default function CalendarPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Calendar View</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Calendar View</h1>
           <p className="text-gray-600">
             View your tasks and study schedule in calendar format
           </p>
@@ -199,42 +199,53 @@ export default function CalendarPage() {
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
             </div>
           ) : (
-            <div className="mt-6 grid grid-cols-7 gap-2 text-sm">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <div key={day} className="text-center font-semibold text-gray-600">
-                  {day}
-                </div>
-              ))}
-              {calendarWeeks.flat().map((date) => {
-                const isCurrentMonth = date.getMonth() === currentMonth.getMonth()
-                const key = formatDateKey(date)
-                const dayTasks = taskByDate.get(key) || []
-                return (
-                  <div
-                    key={key}
-                    className={`min-h-[96px] rounded border p-2 ${isCurrentMonth ? "bg-white" : "bg-gray-50 text-gray-400"
-                      }`}
-                  >
-                    <div className="text-xs font-semibold">{date.getDate()}</div>
-                    <div className="mt-1 space-y-1">
-                      {dayTasks.slice(0, 3).map((task) => (
-                        <div
-                          key={task.id}
-                          className="truncate rounded bg-blue-50 px-2 py-1 text-[11px] text-blue-700"
-                          title={task.title}
-                        >
-                          {task.title}
-                        </div>
-                      ))}
-                      {dayTasks.length > 3 && (
-                        <div className="text-[11px] text-gray-500">
-                          +{dayTasks.length - 3} more
-                        </div>
-                      )}
-                    </div>
+            <div className="mt-6 overflow-x-auto -mx-6 px-6">
+              <div className="grid grid-cols-7 gap-1 sm:gap-2 text-sm min-w-[420px]">
+                {[
+                  { short: "S", full: "Sun" },
+                  { short: "M", full: "Mon" },
+                  { short: "T", full: "Tue" },
+                  { short: "W", full: "Wed" },
+                  { short: "T", full: "Thu" },
+                  { short: "F", full: "Fri" },
+                  { short: "S", full: "Sat" },
+                ].map((day, i) => (
+                  <div key={i} className="text-center font-semibold text-gray-600">
+                    <span className="sm:hidden">{day.short}</span>
+                    <span className="hidden sm:inline">{day.full}</span>
                   </div>
-                )
-              })}
+                ))}
+                {calendarWeeks.flat().map((date) => {
+                  const isCurrentMonth = date.getMonth() === currentMonth.getMonth()
+                  const key = formatDateKey(date)
+                  const dayTasks = taskByDate.get(key) || []
+                  return (
+                    <div
+                      key={key}
+                      className={`min-h-[64px] sm:min-h-[96px] rounded border p-1 sm:p-2 ${isCurrentMonth ? "bg-white" : "bg-gray-50 text-gray-400"
+                        }`}
+                    >
+                      <div className="text-xs font-semibold">{date.getDate()}</div>
+                      <div className="mt-1 space-y-1">
+                        {dayTasks.slice(0, 2).map((task) => (
+                          <div
+                            key={task.id}
+                            className="truncate rounded bg-blue-50 px-1 py-0.5 sm:px-2 sm:py-1 text-[10px] sm:text-[11px] text-blue-700"
+                            title={task.title}
+                          >
+                            {task.title}
+                          </div>
+                        ))}
+                        {dayTasks.length > 2 && (
+                          <div className="text-[10px] sm:text-[11px] text-gray-500">
+                            +{dayTasks.length - 2} more
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
 

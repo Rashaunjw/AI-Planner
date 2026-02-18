@@ -110,8 +110,8 @@ export default function SettingsPage() {
             <div className="flex items-center">
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
+                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Back to Dashboard</span>
                 </Button>
               </Link>
             </div>
@@ -122,7 +122,7 @@ export default function SettingsPage() {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Settings</h1>
           <p className="text-gray-600">
             Manage your account preferences and notification settings
           </p>
@@ -242,9 +242,9 @@ export default function SettingsPage() {
                 />
               </div>
               {settings.calendarSync ? (
-                <div className="flex items-center justify-between rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-800">
                   <span>Automatic sync is enabled. We will sync nightly.</span>
-                  <Button variant="outline" size="sm" onClick={() => fetch("/api/calendar/sync", { method: "POST" })}>
+                  <Button variant="outline" size="sm" className="self-start sm:self-auto" onClick={() => fetch("/api/calendar/sync", { method: "POST" })}>
                     Sync Now
                   </Button>
                 </div>
@@ -253,11 +253,12 @@ export default function SettingsPage() {
                   Enable to sync your tasks to Google Calendar each night.
                 </p>
               )}
-              <div className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
                 <span>Having trouble syncing? Reconnect your Google account.</span>
                 <Button
                   variant="outline"
                   size="sm"
+                  className="self-start sm:self-auto"
                   onClick={async () => {
                     await fetch("/api/calendar/reconnect", { method: "POST" })
                     signOut({ callbackUrl: "/auth/signin" })

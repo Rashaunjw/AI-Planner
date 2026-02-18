@@ -316,14 +316,14 @@ export default function TasksPage() {
               </Link>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-1 sm:space-x-4">
               <Link href="/upload">
                 <Button size="sm">Upload</Button>
               </Link>
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Dashboard
+                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Dashboard</span>
                 </Button>
               </Link>
             </div>
@@ -335,7 +335,7 @@ export default function TasksPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Tasks</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Your Tasks</h1>
             <p className="text-gray-600">
               Review, edit, or add tasks manually
             </p>
@@ -377,7 +377,7 @@ export default function TasksPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Class Name
+                  Class/Organization Name
                 </label>
                 <input
                   type="text"
@@ -518,8 +518,8 @@ export default function TasksPage() {
                   className={`rounded-lg shadow-sm border p-6 ${isIncomplete ? "border-yellow-300 bg-yellow-50" : "bg-white"
                     }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex-1 min-w-0">
                       {editingTask === task.id ? (
                         <div className="space-y-4">
                           <input
@@ -529,13 +529,13 @@ export default function TasksPage() {
                             className="w-full text-lg font-semibold border rounded px-3 py-2"
                           />
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Class Name</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Class/Organization Name</label>
                             <input
                               type="text"
                               value={editForm.className || ''}
                               onChange={(e) => setEditForm({ ...editForm, className: e.target.value })}
                               className="w-full border rounded px-3 py-2"
-                              placeholder="Class name"
+                              placeholder="Class/Organization name"
                               required
                             />
                           </div>
@@ -601,12 +601,12 @@ export default function TasksPage() {
                         </div>
                       ) : (
                         <>
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">{task.title}</h3>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 break-words">{task.title}</h3>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium shrink-0 ${getPriorityColor(task.priority)}`}>
                               {task.priority}
                             </span>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium shrink-0 ${getStatusColor(task.status)}`}>
                               {task.status}
                             </span>
                           </div>
@@ -659,7 +659,7 @@ export default function TasksPage() {
                     </div>
 
                     {editingTask !== task.id && (
-                      <div className="flex items-center space-x-2 ml-4">
+                      <div className="flex items-center gap-2 sm:ml-4 sm:shrink-0">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -680,8 +680,8 @@ export default function TasksPage() {
                             size="sm"
                             onClick={() => handleStatusChange(task.id, 'completed')}
                           >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Complete
+                            <CheckCircle className="h-4 w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">Complete</span>
                           </Button>
                         )}
                       </div>

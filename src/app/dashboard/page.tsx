@@ -43,19 +43,19 @@ export default async function Dashboard() {
                 <span className="text-xl font-bold text-gray-900">PlanEra</span>
               </Link>
             </div>
-            
-            <div className="flex items-center space-x-4">
+
+            <div className="flex items-center space-x-1 sm:space-x-4">
               <Link href="/settings">
                 <Button variant="ghost" size="sm">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
+                  <Settings className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Settings</span>
                 </Button>
               </Link>
               <form action="/api/auth/signout" method="post">
                 <input type="hidden" name="callbackUrl" value="/" />
                 <Button variant="ghost" size="sm" type="submit">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
+                  <LogOut className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Sign Out</span>
                 </Button>
               </form>
             </div>
@@ -67,10 +67,10 @@ export default async function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             Welcome, {session.user?.name || "Student"}!
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Ready to organize your academic schedule? Upload your syllabus or schedule to get started.
           </p>
         </div>

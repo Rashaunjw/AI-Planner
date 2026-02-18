@@ -14,29 +14,29 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Navigation */}
-      <nav className="flex items-center justify-between p-6">
+      <nav className="flex items-center justify-between px-4 py-4 sm:px-6">
         <div className="flex items-center space-x-2">
-          <Brain className="h-8 w-8 text-blue-600" />
-          <span className="text-2xl font-bold text-gray-900">PlanEra</span>
+          <Brain className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600" />
+          <span className="text-xl sm:text-2xl font-bold text-gray-900">PlanEra</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Link href="/about" className="text-gray-700 hover:text-gray-900">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link href="/about" className="text-sm sm:text-base text-gray-700 hover:text-gray-900">
             About
           </Link>
           <Link href="/auth/signin" className="cursor-pointer">
-            <Button variant="outline">Sign In</Button>
+            <Button variant="outline" size="sm">Sign In</Button>
           </Link>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <div className="container mx-auto px-6 py-16">
+      <div className="container mx-auto px-4 sm:px-6 py-10 sm:py-16">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-6">
             PlanEra
             <span className="text-blue-600"> for Smarter Scheduling</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             PlanEra helps students turn syllabi and schedules into organized tasks, study plans, and calendar events.
             Upload your documents, let AI extract deadlines, and keep everything synced with reminders.
           </p>
@@ -90,7 +90,7 @@ export default async function Home() {
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
-            <div className="grid md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
               <div className="text-center">
                 <div className="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">1</div>
                 <h3 className="font-semibold mb-2">Upload</h3>

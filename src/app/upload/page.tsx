@@ -202,8 +202,8 @@ export default function UploadPage() {
             <div className="flex items-center">
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
+                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Back to Dashboard</span>
                 </Button>
               </Link>
             </div>
@@ -214,7 +214,7 @@ export default function UploadPage() {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Your Syllabus or Schedule</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Upload Your Syllabus or Schedule</h1>
           <p className="text-gray-600">
             Upload PDF, Word documents, or paste text to extract assignments and deadlines
           </p>
@@ -238,7 +238,7 @@ export default function UploadPage() {
         {/* Upload Area */}
         <div className="bg-white rounded-xl shadow-sm border p-8">
           <div
-            className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${dragActive
+            className={`border-2 border-dashed rounded-lg p-6 sm:p-12 text-center transition-colors ${dragActive
               ? 'border-blue-500 bg-blue-50'
               : 'border-gray-300 hover:border-gray-400'
               }`}
