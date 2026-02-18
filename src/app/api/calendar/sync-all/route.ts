@@ -85,8 +85,12 @@ export async function POST(request: NextRequest) {
         const endDate = new Date(startDate)
         endDate.setDate(startDate.getDate() + 1)
 
+        const summary = task.className?.trim()
+          ? `[${task.className.trim()}] ${task.title}`
+          : task.title
+
         const payload = {
-          summary: task.title,
+          summary,
           description: task.description || undefined,
           start: { date: formatDate(startDate) },
           end: { date: formatDate(endDate) },

@@ -102,7 +102,7 @@ export async function POST() {
       endDate.setDate(startDate.getDate() + 1)
 
       const payload = {
-        summary: task.title,
+        summary: `[${task.className}] ${task.title}`,
         description: task.description || undefined,
         start: { date: formatDate(startDate) },
         end: { date: formatDate(endDate) },
