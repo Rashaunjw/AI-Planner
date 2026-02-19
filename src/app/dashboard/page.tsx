@@ -80,10 +80,6 @@ export default async function Dashboard() {
   const weekHours = Math.round(
     weekTasks.reduce((sum, t) => sum + (t.estimatedDuration ?? 60), 0) / 60
   )
-  const weekGrade = Math.round(
-    weekTasks.reduce((sum, t) => sum + (t.weightPercent ?? 0), 0)
-  )
-
   // ── 7-day workload bar data ──────────────────────────────────────
   // For each of the next 7 days, sum estimated hours from pending tasks due that day
   const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]

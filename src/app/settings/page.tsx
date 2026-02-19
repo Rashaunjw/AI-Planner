@@ -191,7 +191,7 @@ export default function SettingsPage() {
                   You have unlimited uploads, study block scheduling, and crunch week reports.
                 </span>
               ) : (
-                <>You're on the <strong>Free</strong> plan: 10 uploads per month. Upgrade to Pro for unlimited uploads, study block scheduling, and crunch week reports.</>
+                <>You are on the <strong>Free</strong> plan: 10 uploads per month. Upgrade to Pro for unlimited uploads, study block scheduling, and crunch week reports.</>
               )}
             </p>
             {plan === "free" && (
