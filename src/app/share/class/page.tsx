@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { GraduationCap, Calendar, AlertCircle } from "lucide-react"
@@ -15,7 +15,7 @@ type Task = {
   category: string | null
 }
 
-export default function ShareClassPage() {
+function ShareClassContent() {
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
   const [data, setData] = useState<{ className: string; tasks: Task[] } | null>(null)
@@ -124,5 +124,19 @@ export default function ShareClassPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function ShareClassPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50 flex items-center justify-center p-6">
+          <p className="text-gray-500">Loading shared class view...</p>
+        </div>
+      }
+    >
+      <ShareClassContent />
+    </Suspense>
   )
 }
