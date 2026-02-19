@@ -230,7 +230,7 @@ export default function UploadPage() {
             Upload Your Syllabus or Schedule
           </h1>
           <p className="text-gray-500 text-sm">
-            Upload a PDF, Word document, or paste text — AI will extract your assignments and deadlines
+            Upload a PDF, Word document, or paste text. AI will extract your assignments and deadlines
           </p>
         </div>
 
@@ -306,7 +306,7 @@ export default function UploadPage() {
                     </Button>
                   </label>
                 </div>
-                <p className="text-xs text-gray-400">PDF, Word documents, or text files — up to 10MB</p>
+                <p className="text-xs text-gray-400">PDF, Word documents, or text files, up to 10MB</p>
               </div>
             )}
           </div>

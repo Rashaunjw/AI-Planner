@@ -104,13 +104,13 @@ async function sendReminderEmail(
   const resend = new Resend(apiKey)
 
   const dayLabel = reminderDays === 1 ? "tomorrow" : `in ${reminderDays} days`
-  const subject = `${tasks.length} assignment${tasks.length !== 1 ? "s" : ""} due ${dayLabel} — PlanEra`
+  const subject = `${tasks.length} assignment${tasks.length !== 1 ? "s" : ""} due ${dayLabel} (PlanEra)`
 
   // Plain-text fallback
   const textLines = tasks
     .map((t) => `• ${t.title}  (due ${formatDateDisplay(t.dueDate)})`)
     .join("\n")
-  const text = `Hi,\n\nYou have ${tasks.length} assignment${tasks.length !== 1 ? "s" : ""} due ${dayLabel}:\n\n${textLines}\n\nStay on top of it at https://planera.app/tasks\n\n— PlanEra`
+  const text = `Hi,\n\nYou have ${tasks.length} assignment${tasks.length !== 1 ? "s" : ""} due ${dayLabel}:\n\n${textLines}\n\nStay on top of it at https://planera.app/tasks\n\n- PlanEra`
 
   // Branded HTML email
   const taskRows = tasks

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 /**
- * ICS calendar feed — GET /api/calendar/ics?userId=<id>
+ * ICS calendar feed: GET /api/calendar/ics?userId=<id>
  *
  * Returns a standards-compliant iCalendar (.ics) feed of the user's pending
  * tasks. Any calendar app that supports URL subscriptions (Apple Calendar,
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     'PRODID:-//PlanEra//Assignments//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    `X-WR-CALNAME:PlanEra — ${user.name ?? 'Assignments'}`,
+    `X-WR-CALNAME:PlanEra ${user.name ?? 'Assignments'}`,
     'X-WR-TIMEZONE:UTC',
     'X-WR-CALDESC:Your assignments from PlanEra',
   ]

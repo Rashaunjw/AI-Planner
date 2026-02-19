@@ -1065,7 +1065,7 @@ export default function TasksPage() {
 
                                   {isIncomplete && (
                                     <div className="mb-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
-                                      ⚠️ Missing: {missingFields.join(", ")} — fill these in to
+                                      ⚠️ Missing: {missingFields.join(", ")}. Fill these in to
                                       sync with Google Calendar.
                                     </div>
                                   )}

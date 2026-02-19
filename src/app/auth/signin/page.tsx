@@ -10,7 +10,7 @@ const FEATURES = [
   {
     icon: Zap,
     title: "AI parses your syllabus in seconds",
-    desc: "Upload a PDF or paste text — every deadline, exam, and assignment gets extracted automatically.",
+    desc: "Upload a PDF or paste text; every deadline, exam, and assignment gets extracted automatically.",
   },
   {
     icon: Calendar,
@@ -25,7 +25,7 @@ const FEATURES = [
   {
     icon: CheckCircle,
     title: "Track progress across every class",
-    desc: "See completion rates, grade weight at stake, and what needs attention — at a glance.",
+    desc: "See completion rates, grade weight at stake, and what needs attention at a glance.",
   },
 ]
 
@@ -39,7 +39,7 @@ export default async function SignIn() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex">
 
-      {/* ── Left panel — feature highlights (hidden on mobile) ─────── */}
+      {/* Left panel: feature highlights (hidden on mobile) */}
       <div className="hidden lg:flex lg:w-[52%] flex-col justify-between p-12 xl:p-16">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
@@ -83,7 +83,7 @@ export default async function SignIn() {
         </div>
       </div>
 
-      {/* ── Right panel — sign-in form ─────────────────────────────── */}
+      {/* Right panel: sign-in form */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 lg:bg-slate-50 lg:rounded-l-3xl">
         <div className="w-full max-w-md">
 

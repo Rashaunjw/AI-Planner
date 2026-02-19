@@ -6,7 +6,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
 
-      {/* ── Navigation — matches landing page exactly ──────────── */}
+      {/* Navigation: matches landing page exactly */}
       <nav className="bg-indigo-900 shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -71,8 +71,8 @@ export default function AboutPage() {
                 Stress builds up when it doesn&apos;t have to.
               </p>
               <p className="text-gray-500 leading-relaxed">
-                PlanEra uses AI to do the reading for you. Upload your syllabus in any format —
-                PDF, Word doc, or plain text — and in under a minute you have every assignment,
+                PlanEra uses AI to do the reading for you. Upload your syllabus in any format
+                (PDF, Word doc, or plain text) and in under a minute you have every assignment,
                 exam, and deadline organized, prioritized, and ready to review.
               </p>
             </div>
@@ -119,7 +119,7 @@ export default function AboutPage() {
           <div className="text-center mb-14">
             <h2 className="text-3xl font-bold text-gray-900 mb-3">What PlanEra actually does</h2>
             <p className="text-gray-500 max-w-xl mx-auto">
-              Not magic — just smart automation applied to the most tedious parts of student life.
+              Not magic, just smart automation applied to the most tedious parts of student life.
             </p>
           </div>
 
@@ -144,7 +144,7 @@ export default function AboutPage() {
                 title: "Task Management",
                 points: [
                   "Assignments grouped and color-coded by class",
-                  "Urgency tinting — red means act now",
+                  "Urgency tinting: red means act now",
                   "Grade weight shown next to each task",
                   "Filter by class, status, or search by name",
                 ],
@@ -203,7 +203,7 @@ export default function AboutPage() {
               {
                 icon: Clock,
                 title: "Chronic deadline-missers",
-                desc: "Not because you don't care — because nothing surfaced what was actually urgent. The dashboard fixes that.",
+                desc: "Not because you don't care; because nothing surfaced what was actually urgent. The dashboard fixes that.",
               },
               {
                 icon: LayoutList,
@@ -263,7 +263,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── Footer — matches landing page ──────────────────────── */}
+      {/* Footer: matches landing page */}
       <footer className="bg-indigo-950 text-white py-10">
         <div className="container mx-auto px-6 text-center">
           <div className="flex items-center justify-center space-x-2 mb-3">

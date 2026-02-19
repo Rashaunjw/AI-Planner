@@ -59,7 +59,7 @@ export default async function Dashboard() {
       t.dueDate <= fiveDaysOut
   )
 
-  // ── Today's Focus — top 5 by urgency score ───────────────────────
+  // Today's Focus: top 5 by urgency score
   // urgencyScore = days until due − weight bonus (lower = more urgent)
   const focusTasks = pendingTasks
     .filter((t) => t.dueDate)
@@ -137,7 +137,7 @@ export default async function Dashboard() {
     select: { calendarSync: true, emailReminders: true },
   })
 
-  // ── Weekly wins — tasks completed in the last 7 days ─────────────
+  // Weekly wins: tasks completed in the last 7 days
   const weekStart = new Date(now)
   weekStart.setDate(now.getDate() - 7)
   const weeklyWins = allTasks.filter(
@@ -430,7 +430,7 @@ export default async function Dashboard() {
                   {focusTasks.length === 0 ? (
                     <div className="text-center py-6">
                       <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">No upcoming deadlines — all clear!</p>
+                      <p className="text-sm text-gray-500">No upcoming deadlines; all clear!</p>
                     </div>
                   ) : (
                     focusTasks.map((task) => {

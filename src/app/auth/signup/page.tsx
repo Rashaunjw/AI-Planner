@@ -11,13 +11,13 @@ const STEPS = [
     icon: Upload,
     step: "01",
     title: "Upload a syllabus",
-    desc: "PDF, image, or plain text — any format works.",
+    desc: "PDF, image, or plain text; any format works.",
   },
   {
     icon: Brain,
     step: "02",
     title: "AI extracts everything",
-    desc: "Assignments, exams, projects, and due dates — all in one place.",
+    desc: "Assignments, exams, projects, and due dates, all in one place.",
   },
   {
     icon: BarChart2,
@@ -37,7 +37,7 @@ export default async function SignUp() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex">
 
-      {/* ── Left panel — how it works (hidden on mobile) ────────────── */}
+      {/* Left panel: how it works (hidden on mobile) */}
       <div className="hidden lg:flex lg:w-[52%] flex-col justify-between p-12 xl:p-16">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
@@ -83,7 +83,7 @@ export default async function SignUp() {
         </div>
       </div>
 
-      {/* ── Right panel — sign-up form ─────────────────────────────── */}
+      {/* Right panel: sign-up form */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 lg:bg-slate-50 lg:rounded-l-3xl">
         <div className="w-full max-w-md">
 

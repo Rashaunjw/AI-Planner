@@ -65,7 +65,7 @@ export default async function Home() {
 
           <p className="text-lg sm:text-xl text-indigo-200 mb-10 max-w-2xl mx-auto leading-relaxed">
             Upload your syllabus, let AI extract every deadline and assignment, and see your
-            entire semester laid out in seconds — not hours.
+            entire semester laid out in seconds, not hours.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -144,7 +144,7 @@ export default async function Home() {
                 iconBg: "bg-indigo-100",
                 iconColor: "text-indigo-600",
                 title: "AI Syllabus Parsing",
-                desc: "Upload a PDF, Word doc, or paste text. Our AI reads it and pulls out every assignment, exam, and due date — even messy, unstructured syllabi.",
+                desc: "Upload a PDF, Word doc, or paste text. Our AI reads it and pulls out every assignment, exam, and due date, even messy, unstructured syllabi.",
                 badge: "Core feature",
                 badgeColor: "bg-indigo-100 text-indigo-700",
               },
@@ -153,7 +153,7 @@ export default async function Home() {
                 iconBg: "bg-purple-100",
                 iconColor: "text-purple-600",
                 title: "Smart Task Management",
-                desc: "Assignments are grouped by class, color-coded by urgency, and show grade weight — so you always know what to tackle first.",
+                desc: "Assignments are grouped by class, color-coded by urgency, and show grade weight so you always know what to tackle first.",
                 badge: "Grade-aware",
                 badgeColor: "bg-purple-100 text-purple-700",
               },
@@ -162,7 +162,7 @@ export default async function Home() {
                 iconBg: "bg-emerald-100",
                 iconColor: "text-emerald-600",
                 title: "Visual Calendar",
-                desc: "A full month view with every deadline color-coded by class. Click any day to see exactly what's due — no more counting on your fingers.",
+                desc: "A full month view with every deadline color-coded by class. Click any day to see exactly what's due; no more counting on your fingers.",
                 badge: "Visual planning",
                 badgeColor: "bg-emerald-100 text-emerald-700",
               },
@@ -213,7 +213,7 @@ export default async function Home() {
                 {
                   step: "03",
                   title: "Stay Ahead",
-                  desc: "Review your tasks, mark things done, and never wonder what's due next — your dashboard shows everything.",
+                  desc: "Review your tasks, mark things done, and never wonder what's due next; your dashboard shows everything.",
                   icon: CheckCircle,
                 },
               ].map(({ step, title, desc, icon: Icon }) => (
@@ -247,7 +247,7 @@ export default async function Home() {
                 stars: 5,
               },
               {
-                quote: "The urgency tinting on the tasks page is clutch — red means danger, I get it immediately. Helped me catch a 20% exam I'd forgotten about.",
+                quote: "The urgency tinting on the tasks page is clutch: red means danger, I get it immediately. Helped me catch a 20% exam I'd forgotten about.",
                 name: "Biology major",
                 stars: 5,
               },
@@ -279,7 +279,7 @@ export default async function Home() {
             Start your semester on the right foot.
           </h2>
           <p className="text-indigo-300 mb-8 text-lg">
-            Upload your first syllabus in under a minute — completely free.
+            Upload your first syllabus in under a minute, completely free.
           </p>
           <Link href="/auth/signup">
             <Button size="lg" className="bg-white text-indigo-900 hover:bg-indigo-50 font-bold text-base px-10 py-4 shadow-xl">

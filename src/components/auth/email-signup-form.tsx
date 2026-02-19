@@ -73,7 +73,7 @@ export default function EmailSignUpForm() {
                     redirect: false,
                 })
             } catch {
-                // signIn threw — account was created but auto sign-in failed.
+                // signIn threw; account was created but auto sign-in failed.
                 const message =
                     payload?.emailSent === false
                         ? "Account created, but verification email could not be sent. Please sign in."
