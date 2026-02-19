@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Brain, Upload, Calendar, BookOpen, Clock, Target, TrendingUp, CheckCircle2, ChevronRight, Flame } from "lucide-react"
+import { Brain, Upload, Calendar, BookOpen, Clock, TrendingUp, CheckCircle2, ChevronRight, Flame, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
@@ -131,6 +131,51 @@ export default async function Dashboard() {
     take: 3,
   })
 
+  // ── User settings (for onboarding checklist) ─────────────────────
+  const userSettings = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { calendarSync: true, emailReminders: true },
+  })
+
+  // ── Weekly wins — tasks completed in the last 7 days ─────────────
+  const weekStart = new Date(now)
+  weekStart.setDate(now.getDate() - 7)
+  const weeklyWins = allTasks.filter(
+    (t) => t.status === "completed" && t.updatedAt >= weekStart
+  ).length
+
+  // ── Onboarding checklist steps ───────────────────────────────────
+  const onboardingSteps = [
+    {
+      id: "upload",
+      label: "Upload your first syllabus",
+      desc: "Let AI extract your assignments and deadlines automatically.",
+      href: "/upload",
+      done: recentUploads.length > 0,
+    },
+    {
+      id: "tasks",
+      label: "Review your assignments",
+      desc: "Confirm extracted tasks and add anything that's missing.",
+      href: "/tasks",
+      done: allTasks.length > 0,
+    },
+    {
+      id: "reminders",
+      label: "Turn on email reminders",
+      desc: "Get notified before deadlines so nothing slips through.",
+      href: "/settings",
+      done: userSettings?.emailReminders ?? true,
+    },
+    {
+      id: "calendar",
+      label: "Connect your calendar",
+      desc: "Sync tasks to Google Calendar or subscribe via ICS link.",
+      href: "/settings",
+      done: userSettings?.calendarSync ?? false,
+    },
+  ]
+  const onboardingComplete = onboardingSteps.filter((s) => s.done).length
   const hasNoActivity = allTasks.length === 0
 
   return (
@@ -195,46 +240,61 @@ export default async function Dashboard() {
         )}
 
         {hasNoActivity ? (
-          /* ── Empty state ─────────────────────────────────────────── */
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            {[
-              {
-                href: "/upload",
-                icon: Upload,
-                iconBg: "bg-indigo-100 group-hover:bg-indigo-200",
-                iconColor: "text-indigo-600",
-                title: "Upload Syllabus",
-                desc: "Upload a PDF or paste text — AI extracts assignments and deadlines automatically.",
-              },
-              {
-                href: "/calendar",
-                icon: Calendar,
-                iconBg: "bg-emerald-100 group-hover:bg-emerald-200",
-                iconColor: "text-emerald-600",
-                title: "View Calendar",
-                desc: "See your upcoming tasks and deadlines in calendar format.",
-              },
-              {
-                href: "/tasks",
-                icon: BookOpen,
-                iconBg: "bg-violet-100 group-hover:bg-violet-200",
-                iconColor: "text-violet-600",
-                title: "Manage Tasks",
-                desc: "Review, edit, and track all your AI-generated assignments.",
-              },
-            ].map(({ href, icon: Icon, iconBg, iconColor, title, desc }) => (
-              <Link href={href} key={href}>
-                <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6 hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group h-full">
-                  <div className="flex items-center mb-4">
-                    <div className={`${iconBg} p-3 rounded-lg transition-colors`}>
-                      <Icon className={`h-6 w-6 ${iconColor}`} />
-                    </div>
-                    <h3 className="text-lg font-semibold ml-3 text-gray-900">{title}</h3>
-                  </div>
-                  <p className="text-gray-500 text-sm">{desc}</p>
+          /* ── Onboarding checklist ─────────────────────────────────── */
+          <div className="max-w-2xl">
+            {/* Header */}
+            <div className="bg-indigo-900 rounded-t-2xl px-8 py-6 text-white">
+              <p className="text-indigo-300 text-xs font-semibold uppercase tracking-widest mb-1">Getting started</p>
+              <h2 className="text-xl font-bold mb-1">Welcome to PlanEra</h2>
+              <p className="text-indigo-300 text-sm">
+                Complete these steps to get the most out of your academic planner.
+              </p>
+              {/* Progress bar */}
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs text-indigo-300">{onboardingComplete} of {onboardingSteps.length} complete</span>
+                  <span className="text-xs font-bold text-white">{Math.round((onboardingComplete / onboardingSteps.length) * 100)}%</span>
                 </div>
-              </Link>
-            ))}
+                <div className="h-1.5 bg-indigo-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-white rounded-full transition-all"
+                    style={{ width: `${(onboardingComplete / onboardingSteps.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Steps */}
+            <div className="bg-white rounded-b-2xl shadow-sm border border-indigo-100 border-t-0 divide-y divide-gray-50">
+              {onboardingSteps.map((step, i) => (
+                <Link key={step.id} href={step.href}>
+                  <div className={`flex items-center gap-4 px-8 py-5 hover:bg-indigo-50 transition-colors group ${step.done ? "opacity-60" : ""}`}>
+                    {/* Step number / check */}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${step.done
+                      ? "bg-emerald-100"
+                      : "bg-indigo-100 group-hover:bg-indigo-200 transition-colors"
+                      }`}>
+                      {step.done ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      ) : (
+                        <span className="text-xs font-bold text-indigo-600">{i + 1}</span>
+                      )}
+                    </div>
+                    {/* Text */}
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold ${step.done ? "line-through text-gray-400" : "text-gray-900"}`}>
+                        {step.label}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">{step.desc}</p>
+                    </div>
+                    {/* Arrow */}
+                    {!step.done && (
+                      <ArrowRight className="h-4 w-4 text-indigo-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         ) : (
           <>
@@ -266,12 +326,12 @@ export default async function Dashboard() {
                   bg: "bg-amber-50",
                 },
                 {
-                  icon: Target,
-                  label: "Grade at Stake",
-                  value: `${weekGrade}%`,
-                  sub: "due this week",
-                  color: weekGrade > 40 ? "text-red-600" : "text-purple-600",
-                  bg: weekGrade > 40 ? "bg-red-50" : "bg-purple-50",
+                  icon: CheckCircle2,
+                  label: "Completed This Week",
+                  value: weeklyWins.toString(),
+                  sub: weeklyWins === 1 ? "assignment done" : "assignments done",
+                  color: weeklyWins > 0 ? "text-emerald-600" : "text-gray-400",
+                  bg: weeklyWins > 0 ? "bg-emerald-50" : "bg-gray-50",
                 },
               ].map(({ icon: Icon, label, value, sub, color, bg }) => (
                 <div key={label} className="bg-white rounded-xl shadow-sm border border-indigo-100 p-4">
