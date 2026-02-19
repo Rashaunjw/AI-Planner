@@ -129,7 +129,7 @@ export default function TermsPage() {
                 Disclaimer of Warranties
               </h2>
               <p className="text-sm leading-relaxed">
-                PlanEra is provided "as is" without warranties of any kind. We do not
+                PlanEra is provided &ldquo;as is&rdquo; without warranties of any kind. We do not
                 guarantee uninterrupted availability or the accuracy of AI-extracted
                 content. Use the service at your own discretion.
               </p>
