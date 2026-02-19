@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { PwaInstallWalkthroughTrigger } from "@/components/pwa-install-walkthrough"
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -64,6 +65,8 @@ export default function AppNav() {
                 <span className="hidden sm:inline">Upload Syllabus</span>
               </Button>
             </Link>
+
+            <PwaInstallWalkthroughTrigger />
 
             <Link href="/settings">
               <button
