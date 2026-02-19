@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma"
 import { formatDate } from "@/lib/utils"
 import AppNav from "@/components/app-nav"
 import ActivityClearButton from "@/components/activity-clear-button"
+import StudyPlanButton from "@/components/study-plan-button"
 
 // Color palette matching tasks/page.tsx
 const CLASS_COLORS = [
@@ -83,6 +84,32 @@ export default async function Dashboard() {
     weekTasks.reduce((sum, t) => sum + (t.weightPercent ?? 0), 0)
   )
 
+  // ── 7-day workload bar data ──────────────────────────────────────
+  // For each of the next 7 days, sum estimated hours from pending tasks due that day
+  const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+  const sevenDayData = Array.from({ length: 7 }, (_, offset) => {
+    const day = new Date(now)
+    day.setDate(now.getDate() + offset)
+    const dayStart = new Date(day)
+    dayStart.setHours(0, 0, 0, 0)
+    const dayEnd = new Date(day)
+    dayEnd.setHours(23, 59, 59, 999)
+
+    const dayTasks = pendingTasks.filter(
+      (t) => t.dueDate && t.dueDate >= dayStart && t.dueDate <= dayEnd
+    )
+    const hours = Math.round(
+      (dayTasks.reduce((sum, t) => sum + (t.estimatedDuration ?? 60), 0) / 60) * 10
+    ) / 10
+
+    return {
+      label: offset === 0 ? "Today" : DAY_LABELS[day.getDay()],
+      hours,
+      taskCount: dayTasks.length,
+    }
+  })
+  const maxDayHours = Math.max(...sevenDayData.map((d) => d.hours), 1)
+
   // ── Class progress ───────────────────────────────────────────────
   const classMap = new Map<string, { total: number; done: number }>()
   allTasks.forEach((t) => {
@@ -124,12 +151,15 @@ export default async function Dashboard() {
                 : `You have ${pendingTasks.length} pending assignment${pendingTasks.length !== 1 ? "s" : ""}.`}
             </p>
           </div>
-          <Link href="/upload">
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 shrink-0">
-              <Upload className="h-4 w-4" />
-              Upload Syllabus
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2 flex-wrap">
+            {pendingTasks.length > 0 && <StudyPlanButton />}
+            <Link href="/upload">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 shrink-0">
+                <Upload className="h-4 w-4" />
+                Upload Syllabus
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* ── High Stakes Alert ─────────────────────────────────────── */}
@@ -255,6 +285,71 @@ export default async function Dashboard() {
                   <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
                 </div>
               ))}
+            </div>
+
+            {/* ── 7-Day Workload Bar ────────────────────────────────── */}
+            <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-5 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900">Weekly Workload</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Estimated hours of work due each day</p>
+                </div>
+                <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full">Next 7 days</span>
+              </div>
+              <div className="flex items-end gap-2 h-24">
+                {sevenDayData.map(({ label, hours, taskCount }) => {
+                  const heightPct = maxDayHours === 0 ? 0 : Math.round((hours / maxDayHours) * 100)
+                  const isToday = label === "Today"
+                  const isBusy = hours >= 3
+                  const barColor = isToday
+                    ? "bg-indigo-600"
+                    : isBusy
+                      ? "bg-amber-400"
+                      : hours > 0
+                        ? "bg-indigo-300"
+                        : "bg-gray-100"
+
+                  return (
+                    <div key={label} className="flex-1 flex flex-col items-center gap-1 group relative">
+                      {/* Tooltip */}
+                      {taskCount > 0 && (
+                        <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          {hours}h · {taskCount} task{taskCount !== 1 ? "s" : ""}
+                        </div>
+                      )}
+                      {/* Bar */}
+                      <div className="w-full flex items-end" style={{ height: "72px" }}>
+                        <div
+                          className={`w-full rounded-t-md transition-all ${barColor}`}
+                          style={{ height: `${Math.max(heightPct, hours > 0 ? 8 : 4)}%` }}
+                        />
+                      </div>
+                      {/* Label */}
+                      <span className={`text-xs font-medium ${isToday ? "text-indigo-700" : "text-gray-400"}`}>
+                        {label}
+                      </span>
+                      {hours > 0 && (
+                        <span className="text-xs text-gray-500 font-semibold -mt-0.5">{hours}h</span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              {/* Legend */}
+              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-indigo-600" />
+                  <span className="text-xs text-gray-400">Today</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-amber-400" />
+                  <span className="text-xs text-gray-400">Busy (3h+)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-indigo-300" />
+                  <span className="text-xs text-gray-400">Light</span>
+                </div>
+              </div>
             </div>
 
             {/* ── Today's Focus + Class Progress ───────────────────── */}
