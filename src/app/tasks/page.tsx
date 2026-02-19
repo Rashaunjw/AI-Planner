@@ -783,8 +783,8 @@ export default function TasksPage() {
                 <button
                   onClick={() => setFilterClass(null)}
                   className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors ${filterClass === null
-                      ? "bg-indigo-600 text-white border-indigo-600"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
+                    ? "bg-indigo-600 text-white border-indigo-600"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
                     }`}
                 >
                   All Classes
@@ -797,8 +797,8 @@ export default function TasksPage() {
                       key={name}
                       onClick={() => setFilterClass(isActive ? null : name)}
                       className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors ${isActive
-                          ? color.badge + " border-transparent"
-                          : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
+                        ? color.badge + " border-transparent"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
                         }`}
                     >
                       {name}

@@ -250,21 +250,21 @@ export default function CalendarPage() {
                         key={key}
                         onClick={() => setSelectedDay(isSelected ? null : key)}
                         className={`min-h-[72px] sm:min-h-[96px] rounded-lg border p-1.5 sm:p-2 text-left transition-all ${isSelected
-                            ? "border-indigo-400 bg-indigo-50 shadow-sm"
-                            : isToday
-                              ? "border-indigo-300 bg-indigo-50/60"
-                              : isCurrentMonth
-                                ? "border-gray-100 bg-white hover:border-indigo-200 hover:bg-indigo-50/30"
-                                : "border-transparent bg-gray-50/50"
+                          ? "border-indigo-400 bg-indigo-50 shadow-sm"
+                          : isToday
+                            ? "border-indigo-300 bg-indigo-50/60"
+                            : isCurrentMonth
+                              ? "border-gray-100 bg-white hover:border-indigo-200 hover:bg-indigo-50/30"
+                              : "border-transparent bg-gray-50/50"
                           }`}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <span
                             className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full ${isToday
-                                ? "bg-indigo-600 text-white"
-                                : isCurrentMonth
-                                  ? "text-gray-700"
-                                  : "text-gray-300"
+                              ? "bg-indigo-600 text-white"
+                              : isCurrentMonth
+                                ? "text-gray-700"
+                                : "text-gray-300"
                               }`}
                           >
                             {date.getDate()}
