@@ -57,7 +57,7 @@ export default function CredentialsSignInForm() {
         value={email}
         onChange={(event) => setEmail(event.target.value)}
         placeholder="you@example.com"
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-400"
         required
       />
       <input
@@ -66,22 +66,25 @@ export default function CredentialsSignInForm() {
         value={password}
         onChange={(event) => setPassword(event.target.value)}
         placeholder="Your password"
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-400"
         required
       />
       <Button
         type="submit"
-        variant="outline"
-        className="w-full"
+        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
         disabled={!email.trim() || !password || isSubmitting}
       >
         {isSubmitting ? "Signing in..." : "Sign in"}
       </Button>
-      {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          {errorMessage}
+        </p>
+      )}
       {showVerificationLink && (
         <Link
           href={`/auth/verify?email=${encodeURIComponent(email.trim())}`}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          className="block text-sm text-indigo-600 hover:text-indigo-800 font-medium"
         >
           Resend verification email
         </Link>
@@ -89,4 +92,3 @@ export default function CredentialsSignInForm() {
     </form>
   )
 }
-

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Brain, ArrowLeft, Save, Bell, Calendar, User } from "lucide-react"
+import { GraduationCap, ArrowLeft, Save, Bell, Calendar, User, Link2 } from "lucide-react"
 import Link from "next/link"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -14,7 +14,7 @@ export default function SettingsPage() {
     emailReminders: true,
     reminderDays: 2,
     calendarSync: false,
-    notifications: true
+    notifications: true,
   })
   const [saving, setSaving] = useState(false)
   const [accounts, setAccounts] = useState<Array<{ provider: string }>>([])
@@ -63,7 +63,11 @@ export default function SettingsPage() {
   }, [session])
 
   if (status === "loading") {
-    return <div>Loading...</div>
+    return (
+      <div className="min-h-screen bg-indigo-50 flex items-center justify-center">
+        <GraduationCap className="h-10 w-10 text-indigo-400 animate-pulse" />
+      </div>
+    )
   }
 
   if (!session) {
@@ -95,21 +99,20 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b">
+      <nav className="bg-indigo-900 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/dashboard" className="flex items-center space-x-2">
-                <Brain className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold text-gray-900">PlanEra</span>
+                <GraduationCap className="h-8 w-8 text-indigo-300" />
+                <span className="text-xl font-bold text-white">PlanEra</span>
               </Link>
             </div>
-            
             <div className="flex items-center">
               <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="text-indigo-200 hover:text-white hover:bg-indigo-800">
                   <ArrowLeft className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Back to Dashboard</span>
                 </Button>
@@ -120,89 +123,103 @@ export default function SettingsPage() {
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Settings</h1>
+          <p className="text-gray-500 text-sm">
             Manage your account preferences and notification settings
           </p>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Account Information */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center mb-4">
-              <User className="h-5 w-5 text-gray-600 mr-2" />
-              <h2 className="text-lg font-semibold">Account Information</h2>
+          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
+            <div className="flex items-center mb-5">
+              <div className="bg-indigo-100 p-2 rounded-lg mr-3">
+                <User className="h-5 w-5 text-indigo-600" />
+              </div>
+              <h2 className="text-base font-semibold text-gray-900">Account Information</h2>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <p className="text-gray-900">{session?.user?.name || "Not provided"}</p>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                  Name
+                </label>
+                <p className="text-gray-900 text-sm">{session?.user?.name || "Not provided"}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <p className="text-gray-900">{session?.user?.email || "Not provided"}</p>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                  Email
+                </label>
+                <p className="text-gray-900 text-sm">{session?.user?.email || "Not provided"}</p>
               </div>
             </div>
           </div>
 
           {/* Connected Accounts */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center mb-4">
-              <User className="h-5 w-5 text-gray-600 mr-2" />
-              <h2 className="text-lg font-semibold">Connected Accounts</h2>
+          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
+            <div className="flex items-center mb-5">
+              <div className="bg-indigo-100 p-2 rounded-lg mr-3">
+                <Link2 className="h-5 w-5 text-indigo-600" />
+              </div>
+              <h2 className="text-base font-semibold text-gray-900">Connected Accounts</h2>
             </div>
             {loadingSettings ? (
-              <p className="text-sm text-gray-500">Loading connected accounts...</p>
+              <p className="text-sm text-gray-400">Loading connected accounts...</p>
             ) : accounts.length > 0 ? (
-              <ul className="space-y-2 text-sm text-gray-700">
+              <ul className="space-y-2">
                 {accounts.map((account) => (
-                  <li key={account.provider} className="flex items-center justify-between">
-                    <span className="capitalize">{account.provider}</span>
-                    <span className="text-green-600 font-medium">Connected</span>
+                  <li key={account.provider} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                    <span className="capitalize text-sm text-gray-700">{account.provider}</span>
+                    <span className="text-xs text-green-600 font-semibold bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                      Connected
+                    </span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-gray-500">No connected accounts found.</p>
+              <p className="text-sm text-gray-400">No connected accounts found.</p>
             )}
           </div>
 
           {/* Notification Settings */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center mb-4">
-              <Bell className="h-5 w-5 text-gray-600 mr-2" />
-              <h2 className="text-lg font-semibold">Notification Settings</h2>
+          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
+            <div className="flex items-center mb-5">
+              <div className="bg-indigo-100 p-2 rounded-lg mr-3">
+                <Bell className="h-5 w-5 text-indigo-600" />
+              </div>
+              <h2 className="text-base font-semibold text-gray-900">Notifications</h2>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Email Reminders</label>
-                  <p className="text-sm text-gray-500">Receive email reminders for upcoming tasks</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Receive email reminders for upcoming assignments</p>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.emailReminders}
-                  onChange={(e) => setSettings({...settings, emailReminders: e.target.checked})}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  onChange={(e) => setSettings({ ...settings, emailReminders: e.target.checked })}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
               </div>
-              
+
               {settings.emailReminders && (
-                <div className="ml-6">
+                <div className="ml-4 pl-4 border-l-2 border-indigo-100">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Remind me how many days before due date?
+                    Remind me how many days before the due date?
                   </label>
                   <select
                     value={settings.reminderDays}
-                    onChange={(e) => setSettings({...settings, reminderDays: parseInt(e.target.value)})}
-                    className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    onChange={(e) =>
+                      setSettings({ ...settings, reminderDays: parseInt(e.target.value) })
+                    }
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   >
-                    <option value={1}>1 day</option>
-                    <option value={2}>2 days</option>
-                    <option value={3}>3 days</option>
-                    <option value={7}>1 week</option>
+                    <option value={1}>1 day before</option>
+                    <option value={2}>2 days before</option>
+                    <option value={3}>3 days before</option>
+                    <option value={7}>1 week before</option>
                   </select>
                 </div>
               )}
@@ -210,55 +227,64 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Push Notifications</label>
-                  <p className="text-sm text-gray-500">Receive browser notifications</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Receive browser notifications</p>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.notifications}
-                  onChange={(e) => setSettings({...settings, notifications: e.target.checked})}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  onChange={(e) => setSettings({ ...settings, notifications: e.target.checked })}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
               </div>
             </div>
           </div>
 
           {/* Calendar Integration */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center mb-4">
-              <Calendar className="h-5 w-5 text-gray-600 mr-2" />
-              <h2 className="text-lg font-semibold">Calendar Integration</h2>
+          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
+            <div className="flex items-center mb-5">
+              <div className="bg-indigo-100 p-2 rounded-lg mr-3">
+                <Calendar className="h-5 w-5 text-indigo-600" />
+              </div>
+              <h2 className="text-base font-semibold text-gray-900">Calendar Integration</h2>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Google Calendar Sync</label>
-                  <p className="text-sm text-gray-500">Automatically sync tasks to your Google Calendar</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Automatically sync your assignments to Google Calendar
+                  </p>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.calendarSync}
-                  onChange={(e) => setSettings({...settings, calendarSync: e.target.checked})}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  onChange={(e) => setSettings({ ...settings, calendarSync: e.target.checked })}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
               </div>
               {settings.calendarSync ? (
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
                   <span>Automatic sync is enabled. We will sync nightly.</span>
-                  <Button variant="outline" size="sm" className="self-start sm:self-auto" onClick={() => fetch("/api/calendar/sync", { method: "POST" })}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="self-start sm:self-auto border-green-300 text-green-700 hover:bg-green-100"
+                    onClick={() => fetch("/api/calendar/sync", { method: "POST" })}
+                  >
                     Sync Now
                   </Button>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">
-                  Enable to sync your tasks to Google Calendar each night.
+                <p className="text-xs text-gray-400">
+                  Enable to sync your assignments to Google Calendar each night.
                 </p>
               )}
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
                 <span>Having trouble syncing? Reconnect your Google account.</span>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="self-start sm:self-auto"
+                  className="self-start sm:self-auto border-gray-300"
                   onClick={async () => {
                     await fetch("/api/calendar/reconnect", { method: "POST" })
                     signOut({ callbackUrl: "/auth/signin" })
@@ -272,7 +298,11 @@ export default function SettingsPage() {
 
           {/* Save Button */}
           <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saving}>
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
               {saving ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -287,24 +317,27 @@ export default function SettingsPage() {
             </Button>
           </div>
 
-          {/* Activity */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Activity</h2>
+          {/* Upload Activity */}
+          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Upload Activity</h2>
             {loadingSettings ? (
-              <p className="text-sm text-gray-500">Loading uploads...</p>
+              <p className="text-sm text-gray-400">Loading uploads...</p>
             ) : uploads.length > 0 ? (
-              <ul className="space-y-2 text-sm text-gray-700">
+              <ul className="space-y-2">
                 {uploads.map((upload) => (
-                  <li key={upload.id} className="flex items-center justify-between">
-                    <span className="truncate max-w-[70%]">{upload.fileName}</span>
-                    <span className="text-gray-500">
+                  <li
+                    key={upload.id}
+                    className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+                  >
+                    <span className="truncate max-w-[70%] text-sm text-gray-700">{upload.fileName}</span>
+                    <span className="text-xs text-gray-400">
                       {new Date(upload.createdAt).toLocaleDateString()}
                     </span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-gray-500">No uploads yet.</p>
+              <p className="text-sm text-gray-400">No uploads yet.</p>
             )}
           </div>
         </div>

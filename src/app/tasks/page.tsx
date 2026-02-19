@@ -372,15 +372,15 @@ export default function TasksPage() {
   const getPriorityConfig = (priority: string) => {
     switch (priority) {
       case "high":
-        return { label: "🔴 High", className: "bg-red-100 text-red-800 border border-red-200" }
+        return { label: "High", className: "bg-red-100 text-red-800 border border-red-200" }
       case "medium":
         return {
-          label: "🟡 Medium",
+          label: "Medium",
           className: "bg-yellow-100 text-yellow-800 border border-yellow-200",
         }
       case "low":
         return {
-          label: "🟢 Low",
+          label: "Low",
           className: "bg-green-100 text-green-800 border border-green-200",
         }
       default:
@@ -391,11 +391,11 @@ export default function TasksPage() {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "completed":
-        return { label: "✅ Submitted", className: "bg-green-100 text-green-800 border border-green-200" }
+        return { label: "Submitted", className: "bg-green-100 text-green-800 border border-green-200" }
       case "pending":
-        return { label: "📋 To Do", className: "bg-blue-100 text-blue-800 border border-blue-200" }
+        return { label: "To Do", className: "bg-blue-100 text-blue-800 border border-blue-200" }
       case "cancelled":
-        return { label: "❌ Dropped", className: "bg-gray-100 text-gray-600 border border-gray-200" }
+        return { label: "Dropped", className: "bg-gray-100 text-gray-600 border border-gray-200" }
       default:
         return { label: status, className: "bg-gray-100 text-gray-800" }
     }
@@ -593,9 +593,9 @@ export default function TasksPage() {
                     onChange={(e) => setCreateForm({ ...createForm, priority: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   >
-                    <option value="low">🟢 Low</option>
-                    <option value="medium">🟡 Medium</option>
-                    <option value="high">🔴 High</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
                   </select>
                 </div>
                 <div>
@@ -713,10 +713,10 @@ export default function TasksPage() {
                         <div
                           key={task.id}
                           className={`rounded-lg shadow-sm border-l-4 border border-gray-200 p-5 transition-all ${isCompleted
-                              ? "bg-gray-50 opacity-75 " + color.border
-                              : isIncomplete
-                                ? "border-l-yellow-400 bg-yellow-50"
-                                : "bg-white " + color.border
+                            ? "bg-gray-50 opacity-75 " + color.border
+                            : isIncomplete
+                              ? "border-l-yellow-400 bg-yellow-50"
+                              : "bg-white " + color.border
                             }`}
                         >
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -790,9 +790,9 @@ export default function TasksPage() {
                                         }
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                       >
-                                        <option value="low">🟢 Low</option>
-                                        <option value="medium">🟡 Medium</option>
-                                        <option value="high">🔴 High</option>
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
                                       </select>
                                     </div>
                                     <div>
@@ -842,8 +842,8 @@ export default function TasksPage() {
                                   <div className="flex flex-wrap items-center gap-2 mb-2">
                                     <h3
                                       className={`text-base font-semibold break-words ${isCompleted
-                                          ? "line-through text-gray-400"
-                                          : "text-gray-900"
+                                        ? "line-through text-gray-400"
+                                        : "text-gray-900"
                                         }`}
                                     >
                                       {task.title}

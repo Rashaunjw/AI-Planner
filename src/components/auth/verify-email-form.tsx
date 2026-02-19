@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { GraduationCap } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
@@ -78,54 +79,63 @@ export default function VerifyEmailForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Verify your email</h1>
-          <p className="text-gray-600">
-            {token
-              ? "Verifying your link..."
-              : "Enter your email to resend a verification link."}
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-800 flex items-center justify-center p-6">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex flex-col items-center gap-2">
+            <GraduationCap className="h-10 w-10 text-indigo-300" />
+            <span className="text-2xl font-bold text-white">PlanEra</span>
+          </Link>
         </div>
 
-        {message && (
-          <p
-            className={`text-sm ${
-              status === "success" ? "text-green-700" : "text-red-600"
-            }`}
-          >
-            {message}
-          </p>
-        )}
+        <div className="bg-white rounded-xl shadow-xl p-8">
+          <div className="mb-6">
+            <h1 className="text-xl font-bold text-gray-900 mb-1">Verify your email</h1>
+            <p className="text-gray-500 text-sm">
+              {token
+                ? "Verifying your link..."
+                : "Enter your email to resend a verification link."}
+            </p>
+          </div>
 
-        <form onSubmit={handleResend} className="space-y-3 mt-4">
-          <input
-            type="email"
-            name="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            required
-          />
-          <Button
-            type="submit"
-            variant="outline"
-            className="w-full"
-            disabled={!email.trim() || isSubmitting}
-          >
-            {isSubmitting ? "Sending..." : "Resend verification email"}
-          </Button>
-        </form>
+          {message && (
+            <p
+              className={`text-sm rounded-lg px-3 py-2 mb-4 border ${
+                status === "success"
+                  ? "text-green-700 bg-green-50 border-green-200"
+                  : "text-red-600 bg-red-50 border-red-200"
+              }`}
+            >
+              {message}
+            </p>
+          )}
 
-        <div className="text-center mt-6">
-          <Link href="/auth/signin" className="text-blue-600 hover:text-blue-700 font-medium">
-            Back to sign in
-          </Link>
+          <form onSubmit={handleResend} className="space-y-3">
+            <input
+              type="email"
+              name="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              required
+            />
+            <Button
+              type="submit"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+              disabled={!email.trim() || isSubmitting}
+            >
+              {isSubmitting ? "Sending..." : "Resend verification email"}
+            </Button>
+          </form>
+
+          <div className="text-center mt-6">
+            <Link href="/auth/signin" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+              Back to sign in
+            </Link>
+          </div>
         </div>
       </div>
     </div>
   )
 }
-

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Brain, Upload, FileText, ArrowLeft, CheckCircle } from "lucide-react"
+import { GraduationCap, Upload, FileText, ArrowLeft, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -35,7 +35,11 @@ export default function UploadPage() {
   }, [])
 
   if (status === "loading") {
-    return <div>Loading...</div>
+    return (
+      <div className="min-h-screen bg-indigo-50 flex items-center justify-center">
+        <GraduationCap className="h-10 w-10 text-indigo-400 animate-pulse" />
+      </div>
+    )
   }
 
   if (!session) {
@@ -56,7 +60,6 @@ export default function UploadPage() {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
-
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFile(e.dataTransfer.files[0])
     }
@@ -64,19 +67,19 @@ export default function UploadPage() {
 
   const handleFile = (file: File) => {
     const allowedTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword',
-      'text/plain'
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+      "text/plain",
     ]
 
     if (!allowedTypes.includes(file.type)) {
-      alert('Please upload a PDF, Word document, or text file.')
+      alert("Please upload a PDF, Word document, or text file.")
       return
     }
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
-      alert('File size must be less than 10MB.')
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size must be less than 10MB.")
       return
     }
 
@@ -109,33 +112,31 @@ export default function UploadPage() {
     try {
       const formData = new FormData()
       if (file) {
-        formData.append('file', file)
+        formData.append("file", file)
       }
       if (pastedText.trim()) {
-        formData.append('text', pastedText.trim())
+        formData.append("text", pastedText.trim())
       }
-      formData.append('context', uploadContext)
+      formData.append("context", uploadContext)
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      const response = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       })
       const responseBody = await response.json().catch(() => null)
 
       if (response.ok) {
         setUploaded(true)
-        // Redirect to task review after a short delay
         setTimeout(() => {
-          window.location.href = '/tasks'
+          window.location.href = "/tasks"
         }, 2000)
       } else {
-        const message =
-          responseBody?.error || `Upload failed with status ${response.status}`
+        const message = responseBody?.error || `Upload failed with status ${response.status}`
         throw new Error(message)
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Upload failed'
-      console.error('Upload error:', error)
+      const message = error instanceof Error ? error.message : "Upload failed"
+      console.error("Upload error:", error)
       setUploaded(false)
       setUploadError(message)
       alert(message)
@@ -146,19 +147,19 @@ export default function UploadPage() {
 
   if (uploaded) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50 flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center">
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Upload Successful!</h1>
-            <p className="text-gray-600 mb-6">
-              Your file has been processed. AI is now extracting tasks and deadlines...
+          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-10">
+            <CheckCircle className="h-14 w-14 text-green-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Upload Successful</h1>
+            <p className="text-gray-500 mb-2">
+              Your file has been processed. AI is now extracting your assignments and deadlines...
             </p>
-            <p className="text-sm text-gray-500 mb-4">
-              Please be patient, parsing takes up to 1 minute to finish.
+            <p className="text-sm text-gray-400 mb-6">
+              This can take up to 1 minute. Please be patient.
             </p>
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-sm text-gray-500 mt-4">Redirecting to task review...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+            <p className="text-sm text-gray-400 mt-4">Redirecting to your assignments...</p>
           </div>
         </div>
       </div>
@@ -166,13 +167,15 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50">
+      {/* Context Prompt Modal */}
       {showContextPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">What is this for?</h2>
-            <p className="text-sm text-gray-600 mb-4">
-              Choose a context so we can tag tasks correctly.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-7 shadow-xl border border-indigo-100">
+            <GraduationCap className="h-8 w-8 text-indigo-500 mx-auto mb-3" />
+            <h2 className="text-lg font-bold text-gray-900 text-center mb-1">What is this for?</h2>
+            <p className="text-sm text-gray-500 text-center mb-5">
+              Choose a context so we can tag your assignments correctly.
             </p>
             <div className="grid grid-cols-1 gap-2">
               {["school", "work", "sports", "greek life"].map((option) => (
@@ -180,6 +183,7 @@ export default function UploadPage() {
                   key={option}
                   variant="outline"
                   onClick={() => handleContextSelect(option)}
+                  className="border-indigo-200 hover:bg-indigo-50 hover:border-indigo-400 text-gray-700"
                 >
                   {option[0].toUpperCase() + option.slice(1)}
                 </Button>
@@ -188,20 +192,20 @@ export default function UploadPage() {
           </div>
         </div>
       )}
+
       {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b">
+      <nav className="bg-indigo-900 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/dashboard" className="flex items-center space-x-2">
-                <Brain className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold text-gray-900">PlanEra</span>
+                <GraduationCap className="h-8 w-8 text-indigo-300" />
+                <span className="text-xl font-bold text-white">PlanEra</span>
               </Link>
             </div>
-
             <div className="flex items-center">
               <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="text-indigo-200 hover:text-white hover:bg-indigo-800">
                   <ArrowLeft className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Back to Dashboard</span>
                 </Button>
@@ -212,35 +216,44 @@ export default function UploadPage() {
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Upload Your Syllabus or Schedule</h1>
-          <p className="text-gray-600">
-            Upload PDF, Word documents, or paste text to extract assignments and deadlines
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            Upload Your Syllabus or Schedule
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Upload a PDF, Word document, or paste text — AI will extract your assignments and deadlines
           </p>
         </div>
+
         {uploadContext && (
-          <div className="mb-6 flex items-center justify-between rounded-lg border bg-white px-4 py-3 text-sm text-gray-700">
+          <div className="mb-5 flex items-center justify-between rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-800">
             <span>
-              This upload is for <span className="font-semibold">{uploadContext}</span>.
+              Uploading for: <span className="font-semibold capitalize">{uploadContext}</span>
             </span>
-            <Button variant="outline" size="sm" onClick={() => setShowContextPrompt(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowContextPrompt(true)}
+              className="border-indigo-300 text-indigo-700 hover:bg-indigo-100"
+            >
               Change
             </Button>
           </div>
         )}
+
         {uploadError && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {uploadError}
           </div>
         )}
 
         {/* Upload Area */}
-        <div className="bg-white rounded-xl shadow-sm border p-8">
+        <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-8">
           <div
-            className={`border-2 border-dashed rounded-lg p-6 sm:p-12 text-center transition-colors ${dragActive
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-300 hover:border-gray-400'
+            className={`border-2 border-dashed rounded-xl p-8 sm:p-12 text-center transition-colors ${dragActive
+                ? "border-indigo-500 bg-indigo-50"
+                : "border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50"
               }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -249,17 +262,15 @@ export default function UploadPage() {
           >
             {file ? (
               <div className="space-y-4">
-                <FileText className="h-12 w-12 text-blue-600 mx-auto" />
+                <FileText className="h-12 w-12 text-indigo-500 mx-auto" />
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{file.name}</h3>
-                  <p className="text-gray-600">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
+                  <h3 className="text-base font-semibold text-gray-900">{file.name}</h3>
+                  <p className="text-sm text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                 </div>
                 <Button
                   onClick={handleUpload}
                   disabled={uploading}
-                  className="w-full"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
                   {uploading ? "Processing..." : "Process File"}
                 </Button>
@@ -267,20 +278,19 @@ export default function UploadPage() {
                   variant="outline"
                   onClick={() => setFile(null)}
                   disabled={uploading}
+                  className="border-gray-300"
                 >
-                  Choose Different File
+                  Choose a Different File
                 </Button>
               </div>
             ) : (
               <div className="space-y-4">
-                <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+                <Upload className="h-12 w-12 text-indigo-300 mx-auto" />
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Drop your file here
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">
+                    Drop your syllabus here
                   </h3>
-                  <p className="text-gray-600 mb-4">
-                    or click to browse
-                  </p>
+                  <p className="text-gray-500 text-sm mb-4">or click to browse your files</p>
                   <input
                     type="file"
                     accept=".pdf,.doc,.docx,.txt"
@@ -289,67 +299,74 @@ export default function UploadPage() {
                     id="file-upload"
                   />
                   <label htmlFor="file-upload">
-                    <Button asChild>
+                    <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer">
                       <span>Choose File</span>
                     </Button>
                   </label>
                 </div>
-                <p className="text-sm text-gray-500">
-                  Supports PDF, Word documents, and text files up to 10MB
-                </p>
+                <p className="text-xs text-gray-400">PDF, Word documents, or text files — up to 10MB</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Paste Text */}
-        <div className="mt-8 bg-white rounded-xl shadow-sm border p-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Or paste syllabus or schedule text
+        <div className="mt-6 bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Or paste syllabus / schedule text directly
           </label>
           <textarea
             value={pastedText}
             onChange={(e) => setPastedText(e.target.value)}
             rows={6}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Paste syllabus or schedule text here..."
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            placeholder="Paste your syllabus or schedule text here..."
           />
-          <div className="mt-4">
+          <div className="mt-3">
             <Button
               onClick={handleUpload}
               disabled={!pastedText.trim() || uploading}
               variant="outline"
+              className="border-indigo-300 text-indigo-700 hover:bg-indigo-50"
             >
               {uploading ? "Processing..." : "Process Text"}
             </Button>
           </div>
         </div>
 
-        {/* Instructions */}
-        <div className="mt-8 bg-blue-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-3">What happens next?</h3>
-          <div className="grid md:grid-cols-3 gap-4 text-sm text-blue-800">
-            <div className="flex items-start space-x-2">
-              <div className="bg-blue-200 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</div>
-              <div>
-                <p className="font-medium">AI Analysis</p>
-                <p>Our AI extracts assignments, exams, and deadlines from your document</p>
+        {/* What happens next */}
+        <div className="mt-6 bg-indigo-50 rounded-xl border border-indigo-100 p-6">
+          <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-wide mb-4">
+            What happens next
+          </h3>
+          <div className="grid md:grid-cols-3 gap-4 text-sm text-indigo-800">
+            {[
+              {
+                step: "1",
+                title: "AI Analysis",
+                desc: "Our AI extracts assignments, exams, and deadlines from your document",
+              },
+              {
+                step: "2",
+                title: "Review",
+                desc: "You can review and edit the extracted assignments before saving",
+              },
+              {
+                step: "3",
+                title: "Calendar Sync",
+                desc: "Assignments are added to your calendar with smart reminders",
+              },
+            ].map(({ step, title, desc }) => (
+              <div key={step} className="flex items-start space-x-3">
+                <div className="bg-indigo-200 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold text-indigo-900 shrink-0">
+                  {step}
+                </div>
+                <div>
+                  <p className="font-semibold text-indigo-900">{title}</p>
+                  <p className="text-indigo-700 text-xs mt-0.5">{desc}</p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-start space-x-2">
-              <div className="bg-blue-200 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">2</div>
-              <div>
-                <p className="font-medium">Review & Edit</p>
-                <p>You can review and modify the extracted tasks before saving</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-2">
-              <div className="bg-blue-200 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">3</div>
-              <div>
-                <p className="font-medium">Calendar Sync</p>
-                <p>Tasks are added to your calendar with smart reminders</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
