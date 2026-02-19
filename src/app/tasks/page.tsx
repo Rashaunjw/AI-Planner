@@ -12,6 +12,8 @@ import {
   Clock,
   Trophy,
   Pencil,
+  Search,
+  SlidersHorizontal,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -127,6 +129,12 @@ export default function TasksPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [showConfirmDeleteAll, setShowConfirmDeleteAll] = useState(false)
 
+  // Filter & sort state
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filterClass, setFilterClass] = useState<string | null>(null)
+  const [sortBy, setSortBy] = useState<"dueDate" | "priority" | "weight">("dueDate")
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed">("all")
+
   const fetchTasks = async () => {
     try {
       const response = await fetch("/api/tasks")
@@ -197,6 +205,59 @@ export default function TasksPage() {
     })
     return map
   }, [tasks])
+
+  // Unique class names for filter pills
+  const classNames = useMemo(() => Array.from(groupedTasks.keys()), [groupedTasks])
+
+  // Filtered + sorted task list
+  const filteredSortedTasks = useMemo(() => {
+    let result = [...tasks]
+    // Search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          t.className?.toLowerCase().includes(q) ||
+          t.category?.toLowerCase().includes(q)
+      )
+    }
+    // Status
+    if (statusFilter !== "all") {
+      result = result.filter((t) => t.status === statusFilter)
+    }
+    // Sort
+    if (sortBy === "dueDate") {
+      result.sort((a, b) => {
+        if (!a.dueDate) return 1
+        if (!b.dueDate) return -1
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+      })
+    } else if (sortBy === "priority") {
+      const order: Record<string, number> = { high: 0, medium: 1, low: 2 }
+      result.sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3))
+    } else if (sortBy === "weight") {
+      result.sort((a, b) => (b.weightPercent ?? 0) - (a.weightPercent ?? 0))
+    }
+    return result
+  }, [tasks, searchQuery, statusFilter, sortBy])
+
+  // Re-group filtered tasks by class (respecting class filter pill)
+  const filteredGroupedTasks = useMemo(() => {
+    const map = new Map<string, Task[]>()
+    const source = filterClass
+      ? filteredSortedTasks.filter(
+        (t) => (t.className?.trim() || "No Class") === filterClass
+      )
+      : filteredSortedTasks
+    source.forEach((task) => {
+      const key = task.className?.trim() || "No Class"
+      const existing = map.get(key) || []
+      existing.push(task)
+      map.set(key, existing)
+    })
+    return map
+  }, [filteredSortedTasks, filterClass])
 
   const getMissingFields = (task: Task) => {
     const missing: string[] = []
@@ -672,6 +733,102 @@ export default function TasksPage() {
           </div>
         )}
 
+        {/* ── Filter & Sort Bar ─────────────────────────────────── */}
+        {tasks.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search assignments..."
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                />
+              </div>
+              {/* Status Filter */}
+              <div className="flex items-center gap-2 shrink-0">
+                <SlidersHorizontal className="h-4 w-4 text-gray-400" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) =>
+                    setStatusFilter(e.target.value as "all" | "pending" | "completed")
+                  }
+                  className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="pending">To Do</option>
+                  <option value="completed">Submitted</option>
+                </select>
+              </div>
+              {/* Sort */}
+              <select
+                value={sortBy}
+                onChange={(e) =>
+                  setSortBy(e.target.value as "dueDate" | "priority" | "weight")
+                }
+                className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 shrink-0"
+              >
+                <option value="dueDate">Sort: Due Date</option>
+                <option value="priority">Sort: Priority</option>
+                <option value="weight">Sort: Grade Weight</option>
+              </select>
+            </div>
+
+            {/* Class Filter Pills */}
+            {classNames.length > 1 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  onClick={() => setFilterClass(null)}
+                  className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors ${filterClass === null
+                      ? "bg-indigo-600 text-white border-indigo-600"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
+                    }`}
+                >
+                  All Classes
+                </button>
+                {classNames.map((name) => {
+                  const color = getClassColor(name === "No Class" ? null : name)
+                  const isActive = filterClass === name
+                  return (
+                    <button
+                      key={name}
+                      onClick={() => setFilterClass(isActive ? null : name)}
+                      className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors ${isActive
+                          ? color.badge + " border-transparent"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
+                        }`}
+                    >
+                      {name}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Active filter summary */}
+            {(searchQuery || filterClass || statusFilter !== "all") && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-xs text-gray-400">
+                  Showing {Array.from(filteredGroupedTasks.values()).flat().length} of {tasks.length} assignments
+                </span>
+                <button
+                  onClick={() => {
+                    setSearchQuery("")
+                    setFilterClass(null)
+                    setStatusFilter("all")
+                  }}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Empty State */}
         {tasks.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-16 text-center">
@@ -684,7 +841,18 @@ export default function TasksPage() {
         ) : (
           /* Grouped by Class */
           <div className="space-y-8">
-            {Array.from(groupedTasks.entries()).map(([className, classTasks]) => {
+            {filteredGroupedTasks.size === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                <Search className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 font-medium">No assignments match your filters.</p>
+                <button
+                  onClick={() => { setSearchQuery(""); setFilterClass(null); setStatusFilter("all") }}
+                  className="mt-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : Array.from(filteredGroupedTasks.entries()).map(([className, classTasks]) => {
               const color = getClassColor(className === "No Class" ? null : className)
               const classCompleted = classTasks.filter((t) => t.status === "completed").length
               const progressPct = Math.round((classCompleted / classTasks.length) * 100)
@@ -876,8 +1044,8 @@ export default function TasksPage() {
                                   <div className="flex flex-wrap items-center gap-2 mb-2">
                                     <h3
                                       className={`text-base font-semibold break-words ${isCompleted
-                                          ? "line-through text-gray-400"
-                                          : "text-gray-900"
+                                        ? "line-through text-gray-400"
+                                        : "text-gray-900"
                                         }`}
                                     >
                                       {task.title}

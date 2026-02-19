@@ -1,13 +1,24 @@
 import { Button } from "@/components/ui/button"
-import { Brain, Upload, Calendar } from "lucide-react"
+import { AlertTriangle, Brain, Upload, Calendar, BookOpen, Clock, Target, TrendingUp, CheckCircle2, ChevronRight, Flame } from "lucide-react"
 import Link from "next/link"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { formatDate } from "@/lib/utils"
-import ActivityClearButton from "@/components/activity-clear-button"
 import AppNav from "@/components/app-nav"
+
+// Color palette matching tasks/page.tsx
+const CLASS_COLORS = [
+  { bar: "bg-blue-500", text: "text-blue-700", light: "bg-blue-50", border: "border-blue-200" },
+  { bar: "bg-purple-500", text: "text-purple-700", light: "bg-purple-50", border: "border-purple-200" },
+  { bar: "bg-emerald-500", text: "text-emerald-700", light: "bg-emerald-50", border: "border-emerald-200" },
+  { bar: "bg-rose-500", text: "text-rose-700", light: "bg-rose-50", border: "border-rose-200" },
+  { bar: "bg-amber-500", text: "text-amber-700", light: "bg-amber-50", border: "border-amber-200" },
+  { bar: "bg-cyan-500", text: "text-cyan-700", light: "bg-cyan-50", border: "border-cyan-200" },
+  { bar: "bg-indigo-500", text: "text-indigo-700", light: "bg-indigo-50", border: "border-indigo-200" },
+  { bar: "bg-teal-500", text: "text-teal-700", light: "bg-teal-50", border: "border-teal-200" },
+]
 
 export default async function Dashboard() {
   const session = await getServerSession(authOptions)
@@ -16,155 +27,412 @@ export default async function Dashboard() {
     redirect("/auth/signin")
   }
 
-  const [recentUploads, upcomingTasks] = await Promise.all([
-    prisma.upload.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-    prisma.task.findMany({
-      where: {
-        userId: session.user.id,
-        dueDate: { not: null },
-      },
-      orderBy: { dueDate: "asc" },
-      take: 5,
-    }),
-  ])
+  // Fetch all tasks for this user (all statuses) for comprehensive stats
+  const allTasks = await prisma.task.findMany({
+    where: { userId: session.user.id },
+    orderBy: { dueDate: "asc" },
+  })
+
+  // ── Date boundaries ──────────────────────────────────────────────
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  const todayEnd = new Date(now)
+  todayEnd.setHours(23, 59, 59, 999)
+  const weekEnd = new Date(now)
+  weekEnd.setDate(now.getDate() + 7)
+  const fiveDaysOut = new Date(now)
+  fiveDaysOut.setDate(now.getDate() + 5)
+
+  // ── Derived task lists ───────────────────────────────────────────
+  const pendingTasks = allTasks.filter((t) => t.status === "pending")
+  const todayTasks = pendingTasks.filter(
+    (t) => t.dueDate && t.dueDate >= now && t.dueDate <= todayEnd
+  )
+  const weekTasks = pendingTasks.filter((t) => t.dueDate && t.dueDate <= weekEnd)
+  const highStakesTasks = pendingTasks.filter(
+    (t) =>
+      t.weightPercent &&
+      t.weightPercent > 20 &&
+      t.dueDate &&
+      t.dueDate <= fiveDaysOut
+  )
+
+  // ── Today's Focus — top 5 by urgency score ───────────────────────
+  // urgencyScore = days until due − weight bonus (lower = more urgent)
+  const focusTasks = pendingTasks
+    .filter((t) => t.dueDate)
+    .map((t) => {
+      const daysLeft = Math.ceil(
+        (t.dueDate!.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+      )
+      return {
+        ...t,
+        daysLeft,
+        urgencyScore: daysLeft - (t.weightPercent || 0) / 10,
+      }
+    })
+    .sort((a, b) => a.urgencyScore - b.urgencyScore)
+    .slice(0, 5)
+
+  // ── Workload stats this week ─────────────────────────────────────
+  const weekHours = Math.round(
+    weekTasks.reduce((sum, t) => sum + (t.estimatedDuration ?? 60), 0) / 60
+  )
+  const weekGrade = Math.round(
+    weekTasks.reduce((sum, t) => sum + (t.weightPercent ?? 0), 0)
+  )
+
+  // ── Class progress ───────────────────────────────────────────────
+  const classMap = new Map<string, { total: number; done: number }>()
+  allTasks.forEach((t) => {
+    const cls = t.className?.trim() || "No Class"
+    const existing = classMap.get(cls) || { total: 0, done: 0 }
+    existing.total++
+    if (t.status === "completed") existing.done++
+    classMap.set(cls, existing)
+  })
+  // Sort classes by least completion first
+  const classProgress = Array.from(classMap.entries())
+    .map(([name, data], i) => ({ name, ...data, colorIdx: i % CLASS_COLORS.length }))
+    .sort((a, b) => a.done / a.total - b.done / b.total)
+
+  // ── Recent uploads ───────────────────────────────────────────────
+  const recentUploads = await prisma.upload.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: "desc" },
+    take: 3,
+  })
+
+  const hasNoActivity = allTasks.length === 0
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50">
       <AppNav />
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {session.user?.name?.split(" ")[0] || "Student"}!
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600">
-            Ready to organize your academic schedule? Upload your syllabus or schedule to get started.
-          </p>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Link href="/upload">
-            <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6 hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
-              <div className="flex items-center mb-4">
-                <div className="bg-indigo-100 p-3 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                  <Upload className="h-6 w-6 text-indigo-600" />
-                </div>
-                <h3 className="text-lg font-semibold ml-3 text-gray-900">Upload Syllabus</h3>
-              </div>
-              <p className="text-gray-500 text-sm">
-                Upload a PDF or paste text — AI extracts assignments and deadlines automatically.
-              </p>
-            </div>
-          </Link>
-
-          <Link href="/calendar">
-            <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6 hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
-              <div className="flex items-center mb-4">
-                <div className="bg-emerald-100 p-3 rounded-lg group-hover:bg-emerald-200 transition-colors">
-                  <Calendar className="h-6 w-6 text-emerald-600" />
-                </div>
-                <h3 className="text-lg font-semibold ml-3 text-gray-900">View Calendar</h3>
-              </div>
-              <p className="text-gray-500 text-sm">
-                See your upcoming tasks and deadlines in calendar format.
-              </p>
-            </div>
-          </Link>
-
-          <Link href="/tasks">
-            <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6 hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group">
-              <div className="flex items-center mb-4">
-                <div className="bg-violet-100 p-3 rounded-lg group-hover:bg-violet-200 transition-colors">
-                  <Brain className="h-6 w-6 text-violet-600" />
-                </div>
-                <h3 className="text-lg font-semibold ml-3 text-gray-900">Manage Tasks</h3>
-              </div>
-              <p className="text-gray-500 text-sm">
-                Review, edit, and track all your AI-generated assignments.
-              </p>
-            </div>
-          </Link>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-sm border border-indigo-100">
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-            <ActivityClearButton />
+        {/* ── Welcome header ───────────────────────────────────────── */}
+        <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Welcome back, {session.user?.name?.split(" ")[0] || "Student"} 👋
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {pendingTasks.length === 0
+                ? "You're all caught up! Upload a syllabus to get started."
+                : `You have ${pendingTasks.length} pending assignment${pendingTasks.length !== 1 ? "s" : ""}.`}
+            </p>
           </div>
-          <div className="p-6">
-            {recentUploads.length === 0 && upcomingTasks.length === 0 ? (
-              <div className="text-center py-8">
-                <Brain className="h-12 w-12 text-indigo-200 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
-                <p className="text-gray-500 mb-4 text-sm">
-                  Upload your first syllabus or schedule to see your study plan here.
-                </p>
-                <Link href="/upload">
-                  <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                    Get Started
-                  </Button>
-                </Link>
+          <Link href="/upload">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 shrink-0">
+              <Upload className="h-4 w-4" />
+              Upload Syllabus
+            </Button>
+          </Link>
+        </div>
+
+        {/* ── High Stakes Alert ─────────────────────────────────────── */}
+        {highStakesTasks.length > 0 && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+            <div className="bg-red-100 p-2 rounded-lg shrink-0">
+              <Flame className="h-5 w-5 text-red-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-red-800 mb-1">
+                🚨 High-stakes deadline{highStakesTasks.length > 1 ? "s" : ""} in the next 5 days
+              </p>
+              <ul className="space-y-0.5">
+                {highStakesTasks.map((t) => (
+                  <li key={t.id} className="text-xs text-red-700 flex items-center gap-1.5">
+                    <span className="font-medium truncate">{t.title}</span>
+                    {t.dueDate && (
+                      <span className="text-red-500 shrink-0">· due {formatDate(new Date(t.dueDate))}</span>
+                    )}
+                    {t.weightPercent && (
+                      <span className="bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded shrink-0">
+                        {t.weightPercent}%
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Link href="/tasks" className="shrink-0 text-xs font-medium text-red-700 hover:text-red-900 flex items-center gap-0.5">
+              View <ChevronRight className="h-3 w-3" />
+            </Link>
+          </div>
+        )}
+
+        {hasNoActivity ? (
+          /* ── Empty state ─────────────────────────────────────────── */
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            {[
+              {
+                href: "/upload",
+                icon: Upload,
+                iconBg: "bg-indigo-100 group-hover:bg-indigo-200",
+                iconColor: "text-indigo-600",
+                title: "Upload Syllabus",
+                desc: "Upload a PDF or paste text — AI extracts assignments and deadlines automatically.",
+              },
+              {
+                href: "/calendar",
+                icon: Calendar,
+                iconBg: "bg-emerald-100 group-hover:bg-emerald-200",
+                iconColor: "text-emerald-600",
+                title: "View Calendar",
+                desc: "See your upcoming tasks and deadlines in calendar format.",
+              },
+              {
+                href: "/tasks",
+                icon: BookOpen,
+                iconBg: "bg-violet-100 group-hover:bg-violet-200",
+                iconColor: "text-violet-600",
+                title: "Manage Tasks",
+                desc: "Review, edit, and track all your AI-generated assignments.",
+              },
+            ].map(({ href, icon: Icon, iconBg, iconColor, title, desc }) => (
+              <Link href={href} key={href}>
+                <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6 hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group h-full">
+                  <div className="flex items-center mb-4">
+                    <div className={`${iconBg} p-3 rounded-lg transition-colors`}>
+                      <Icon className={`h-6 w-6 ${iconColor}`} />
+                    </div>
+                    <h3 className="text-lg font-semibold ml-3 text-gray-900">{title}</h3>
+                  </div>
+                  <p className="text-gray-500 text-sm">{desc}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <>
+            {/* ── Workload Stats ────────────────────────────────────── */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {[
+                {
+                  icon: Brain,
+                  label: "Pending",
+                  value: pendingTasks.length.toString(),
+                  sub: "assignments",
+                  color: "text-indigo-600",
+                  bg: "bg-indigo-50",
+                },
+                {
+                  icon: Clock,
+                  label: "Due Today",
+                  value: todayTasks.length.toString(),
+                  sub: todayTasks.length === 1 ? "assignment" : "assignments",
+                  color: todayTasks.length > 0 ? "text-red-600" : "text-emerald-600",
+                  bg: todayTasks.length > 0 ? "bg-red-50" : "bg-emerald-50",
+                },
+                {
+                  icon: TrendingUp,
+                  label: "Hours This Week",
+                  value: weekHours.toString(),
+                  sub: `across ${weekTasks.length} tasks`,
+                  color: "text-amber-600",
+                  bg: "bg-amber-50",
+                },
+                {
+                  icon: Target,
+                  label: "Grade at Stake",
+                  value: `${weekGrade}%`,
+                  sub: "due this week",
+                  color: weekGrade > 40 ? "text-red-600" : "text-purple-600",
+                  bg: weekGrade > 40 ? "bg-red-50" : "bg-purple-50",
+                },
+              ].map(({ icon: Icon, label, value, sub, color, bg }) => (
+                <div key={label} className="bg-white rounded-xl shadow-sm border border-indigo-100 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`${bg} p-1.5 rounded-lg`}>
+                      <Icon className={`h-4 w-4 ${color}`} />
+                    </div>
+                    <span className="text-xs text-gray-400 font-medium">{label}</span>
+                  </div>
+                  <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Today's Focus + Class Progress ───────────────────── */}
+            <div className="grid lg:grid-cols-5 gap-6 mb-6">
+
+              {/* Today's Focus */}
+              <div className="lg:col-span-3 bg-white rounded-xl shadow-sm border border-indigo-100">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Flame className="h-4 w-4 text-orange-500" />
+                    <h2 className="text-base font-semibold text-gray-900">Today&apos;s Focus</h2>
+                  </div>
+                  <Link href="/tasks" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                    See all →
+                  </Link>
+                </div>
+                <div className="p-4 space-y-2">
+                  {focusTasks.length === 0 ? (
+                    <div className="text-center py-6">
+                      <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">No upcoming deadlines — all clear!</p>
+                    </div>
+                  ) : (
+                    focusTasks.map((task) => {
+                      const isOverdue = task.daysLeft < 0
+                      const isCritical = task.daysLeft <= 2
+                      const isWarning = task.daysLeft <= 6
+                      const urgencyBg = isOverdue
+                        ? "bg-red-50 border-red-200"
+                        : isCritical
+                          ? "bg-red-50 border-red-100"
+                          : isWarning
+                            ? "bg-amber-50 border-amber-100"
+                            : "bg-gray-50 border-gray-100"
+                      const dayLabel = isOverdue
+                        ? `${Math.abs(task.daysLeft)}d overdue`
+                        : task.daysLeft === 0
+                          ? "Due today"
+                          : `${task.daysLeft}d left`
+                      const dayColor = isOverdue
+                        ? "text-red-700 bg-red-100"
+                        : isCritical
+                          ? "text-red-600 bg-red-100"
+                          : isWarning
+                            ? "text-amber-700 bg-amber-100"
+                            : "text-gray-500 bg-gray-100"
+
+                      return (
+                        <div
+                          key={task.id}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${urgencyBg}`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{task.title}</p>
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              {task.className && (
+                                <span className="text-xs text-gray-500 truncate">{task.className}</span>
+                              )}
+                              {task.weightPercent && (
+                                <span className="text-xs font-semibold text-indigo-600">
+                                  {task.weightPercent}% of grade
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${dayColor}`}>
+                            {dayLabel}
+                          </span>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
               </div>
-            ) : (
-              <div className="space-y-6">
-                {upcomingTasks.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-                      Upcoming Tasks
-                    </h3>
-                    <ul className="space-y-2">
-                      {upcomingTasks.map((task) => (
-                        <li key={task.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                          <div>
-                            <p className="text-gray-900 font-medium text-sm">{task.title}</p>
-                            {task.dueDate && (
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                Due {formatDate(new Date(task.dueDate))}
-                              </p>
-                            )}
+
+              {/* Class Progress */}
+              <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-indigo-100">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <h2 className="text-base font-semibold text-gray-900">Class Progress</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Assignments completed per class</p>
+                </div>
+                <div className="p-4 space-y-4">
+                  {classProgress.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-4">No classes yet</p>
+                  ) : (
+                    classProgress.slice(0, 5).map(({ name, total, done, colorIdx }) => {
+                      const color = CLASS_COLORS[colorIdx]
+                      const pct = total === 0 ? 0 : Math.round((done / total) * 100)
+                      return (
+                        <div key={name}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs font-medium text-gray-700 truncate max-w-[70%]">
+                              {name}
+                            </span>
+                            <span className="text-xs text-gray-400 shrink-0">
+                              {done}/{total}
+                            </span>
                           </div>
-                          <Link href="/tasks" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-                            View →
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {recentUploads.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-                      Recent Uploads
-                    </h3>
-                    <ul className="space-y-2">
-                      {recentUploads.map((upload) => (
-                        <li key={upload.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                          <div>
-                            <p className="text-gray-900 font-medium text-sm">{upload.fileName}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">
-                              Uploaded {formatDate(new Date(upload.createdAt))}
-                            </p>
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${color.bar}`}
+                              style={{ width: `${pct}%` }}
+                            />
                           </div>
-                          <Link href="/tasks" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-                            Review →
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Quick Actions ─────────────────────────────────────── */}
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              {[
+                {
+                  href: "/upload",
+                  icon: Upload,
+                  iconBg: "bg-indigo-100 group-hover:bg-indigo-200",
+                  iconColor: "text-indigo-600",
+                  title: "Upload Syllabus",
+                  desc: "Add another class or update existing tasks.",
+                },
+                {
+                  href: "/calendar",
+                  icon: Calendar,
+                  iconBg: "bg-emerald-100 group-hover:bg-emerald-200",
+                  iconColor: "text-emerald-600",
+                  title: "View Calendar",
+                  desc: "See deadlines laid out across the month.",
+                },
+                {
+                  href: "/tasks",
+                  icon: BookOpen,
+                  iconBg: "bg-violet-100 group-hover:bg-violet-200",
+                  iconColor: "text-violet-600",
+                  title: "All Assignments",
+                  desc: "Filter, edit, and track your full task list.",
+                },
+              ].map(({ href, icon: Icon, iconBg, iconColor, title, desc }) => (
+                <Link href={href} key={href}>
+                  <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-5 hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group h-full">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`${iconBg} p-2.5 rounded-lg transition-colors shrink-0`}>
+                        <Icon className={`h-5 w-5 ${iconColor}`} />
+                      </div>
+                      <h3 className="font-semibold text-gray-900 text-sm">{title}</h3>
+                    </div>
+                    <p className="text-gray-500 text-xs">{desc}</p>
                   </div>
-                )}
+                </Link>
+              ))}
+            </div>
+
+            {/* ── Recent Uploads ────────────────────────────────────── */}
+            {recentUploads.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm border border-indigo-100">
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <h2 className="text-base font-semibold text-gray-900">Recent Uploads</h2>
+                </div>
+                <div className="p-4 space-y-2">
+                  {recentUploads.map((upload) => (
+                    <div key={upload.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{upload.fileName}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Uploaded {formatDate(new Date(upload.createdAt))}
+                        </p>
+                      </div>
+                      <Link href="/tasks" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                        Review →
+                      </Link>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   )

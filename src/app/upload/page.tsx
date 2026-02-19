@@ -15,6 +15,7 @@ export default function UploadPage() {
   const [dragActive, setDragActive] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploaded, setUploaded] = useState(false)
+  const [extractedCount, setExtractedCount] = useState<number | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [pastedText, setPastedText] = useState("")
   const [uploadContext, setUploadContext] = useState<string | null>(null)
@@ -122,10 +123,11 @@ export default function UploadPage() {
       const responseBody = await response.json().catch(() => null)
 
       if (response.ok) {
+        setExtractedCount(responseBody?.taskCount ?? null)
         setUploaded(true)
         setTimeout(() => {
           window.location.href = "/tasks"
-        }, 2000)
+        }, 3000)
       } else {
         const message = responseBody?.error || `Upload failed with status ${response.status}`
         toast.error(message)
@@ -142,18 +144,40 @@ export default function UploadPage() {
   if (uploaded) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full text-center">
-          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-10">
-            <CheckCircle className="h-14 w-14 text-green-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Upload Successful</h1>
-            <p className="text-gray-500 mb-2">
-              Your file has been processed. AI is now extracting your assignments and deadlines...
-            </p>
-            <p className="text-sm text-gray-400 mb-6">
-              This can take up to 1 minute. Please be patient.
-            </p>
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="text-sm text-gray-400 mt-4">Redirecting to your assignments...</p>
+        <div className="max-w-sm w-full text-center">
+          <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 p-10">
+            {/* Animated checkmark */}
+            <div className="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5">
+              <CheckCircle className="h-10 w-10 text-green-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              {extractedCount === 0 ? "Upload Complete" : "Done! 🎉"}
+            </h1>
+
+            {extractedCount !== null && extractedCount > 0 ? (
+              <>
+                <div className="my-4 bg-indigo-50 rounded-xl px-6 py-4 border border-indigo-100">
+                  <p className="text-4xl font-bold text-indigo-700">{extractedCount}</p>
+                  <p className="text-sm text-indigo-500 font-medium mt-0.5">
+                    assignment{extractedCount !== 1 ? "s" : ""} extracted
+                  </p>
+                </div>
+                <p className="text-sm text-gray-500 mb-1">
+                  Your assignments are ready to review.
+                </p>
+              </>
+            ) : (
+              <p className="text-gray-500 my-4 text-sm">
+                {extractedCount === 0
+                  ? "No tasks were detected. You can add assignments manually."
+                  : "AI is extracting your assignments and deadlines..."}
+              </p>
+            )}
+
+            <div className="flex items-center justify-center gap-2 mt-4 text-sm text-gray-400">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
+              Redirecting to assignments...
+            </div>
           </div>
         </div>
       </div>
@@ -229,8 +253,8 @@ export default function UploadPage() {
         <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-8">
           <div
             className={`border-2 border-dashed rounded-xl p-8 sm:p-12 text-center transition-colors ${dragActive
-                ? "border-indigo-500 bg-indigo-50"
-                : "border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50"
+              ? "border-indigo-500 bg-indigo-50"
+              : "border-gray-200 hover:border-indigo-300 hover:bg-indigo-50/50"
               }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
