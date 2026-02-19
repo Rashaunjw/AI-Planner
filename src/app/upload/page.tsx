@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { GraduationCap, Upload, FileText, ArrowLeft, CheckCircle } from "lucide-react"
-import Link from "next/link"
+import { Upload, FileText, CheckCircle } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import AppNav from "@/components/app-nav"
+import LoadingScreen from "@/components/loading-screen"
 
 export default function UploadPage() {
   const { data: session, status } = useSession()
@@ -15,7 +17,6 @@ export default function UploadPage() {
   const [uploaded, setUploaded] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [pastedText, setPastedText] = useState("")
-  const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploadContext, setUploadContext] = useState<string | null>(null)
   const [showContextPrompt, setShowContextPrompt] = useState(false)
 
@@ -35,11 +36,7 @@ export default function UploadPage() {
   }, [])
 
   if (status === "loading") {
-    return (
-      <div className="min-h-screen bg-indigo-50 flex items-center justify-center">
-        <GraduationCap className="h-10 w-10 text-indigo-400 animate-pulse" />
-      </div>
-    )
+    return <LoadingScreen message="Loading..." />
   }
 
   if (!session) {
@@ -74,12 +71,12 @@ export default function UploadPage() {
     ]
 
     if (!allowedTypes.includes(file.type)) {
-      alert("Please upload a PDF, Word document, or text file.")
+      toast.error("Please upload a PDF, Word document, or text file.")
       return
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      alert("File size must be less than 10MB.")
+      toast.error("File size must be less than 10MB.")
       return
     }
 
@@ -107,7 +104,6 @@ export default function UploadPage() {
 
     setUploading(true)
     setUploaded(false)
-    setUploadError(null)
 
     try {
       const formData = new FormData()
@@ -132,14 +128,12 @@ export default function UploadPage() {
         }, 2000)
       } else {
         const message = responseBody?.error || `Upload failed with status ${response.status}`
-        throw new Error(message)
+        toast.error(message)
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Upload failed"
       console.error("Upload error:", error)
-      setUploaded(false)
-      setUploadError(message)
-      alert(message)
+      toast.error(message)
     } finally {
       setUploading(false)
     }
@@ -170,50 +164,39 @@ export default function UploadPage() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50">
       {/* Context Prompt Modal */}
       {showContextPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-7 shadow-xl border border-indigo-100">
-            <GraduationCap className="h-8 w-8 text-indigo-500 mx-auto mb-3" />
-            <h2 className="text-lg font-bold text-gray-900 text-center mb-1">What is this for?</h2>
-            <p className="text-sm text-gray-500 text-center mb-5">
-              Choose a context so we can tag your assignments correctly.
-            </p>
+            <div className="text-center mb-5">
+              <div className="bg-indigo-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Upload className="h-6 w-6 text-indigo-600" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900 mb-1">What is this for?</h2>
+              <p className="text-sm text-gray-500">
+                Choose a context so we can tag your assignments correctly.
+              </p>
+            </div>
             <div className="grid grid-cols-1 gap-2">
-              {["school", "work", "sports", "greek life"].map((option) => (
-                <Button
-                  key={option}
-                  variant="outline"
-                  onClick={() => handleContextSelect(option)}
-                  className="border-indigo-200 hover:bg-indigo-50 hover:border-indigo-400 text-gray-700"
+              {[
+                { id: "school", label: "🎓 School", desc: "Classes, syllabi, exams" },
+                { id: "work", label: "💼 Work", desc: "Projects, meetings, deadlines" },
+                { id: "sports", label: "🏆 Sports", desc: "Practice, games, training" },
+                { id: "greek life", label: "🏛️ Greek Life", desc: "Events, chapters, activities" },
+              ].map(({ id, label, desc }) => (
+                <button
+                  key={id}
+                  onClick={() => handleContextSelect(id)}
+                  className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
                 >
-                  {option[0].toUpperCase() + option.slice(1)}
-                </Button>
+                  <span className="text-base">{label}</span>
+                  <span className="text-xs text-gray-400 ml-auto">{desc}</span>
+                </button>
               ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* Navigation */}
-      <nav className="bg-indigo-900 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="flex items-center space-x-2">
-                <GraduationCap className="h-8 w-8 text-indigo-300" />
-                <span className="text-xl font-bold text-white">PlanEra</span>
-              </Link>
-            </div>
-            <div className="flex items-center">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="text-indigo-200 hover:text-white hover:bg-indigo-800">
-                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Back to Dashboard</span>
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <AppNav />
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -239,12 +222,6 @@ export default function UploadPage() {
             >
               Change
             </Button>
-          </div>
-        )}
-
-        {uploadError && (
-          <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {uploadError}
           </div>
         )}
 

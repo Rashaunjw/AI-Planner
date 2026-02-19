@@ -8,16 +8,18 @@ import {
   Calendar,
   Edit,
   Trash2,
-  ArrowLeft,
   CheckCircle,
   Clock,
   Trophy,
   Pencil,
 } from "lucide-react"
-import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { getRelativeTime } from "@/lib/utils"
+import { toast } from "sonner"
+import AppNav from "@/components/app-nav"
+import LoadingScreen from "@/components/loading-screen"
+import ConfirmDialog from "@/components/confirm-dialog"
 
 interface Task {
   id: string
@@ -121,6 +123,10 @@ export default function TasksPage() {
     className: "",
   })
 
+  // Confirm dialog state
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [showConfirmDeleteAll, setShowConfirmDeleteAll] = useState(false)
+
   const fetchTasks = async () => {
     try {
       const response = await fetch("/api/tasks")
@@ -130,6 +136,7 @@ export default function TasksPage() {
       }
     } catch (error) {
       console.error("Error fetching tasks:", error)
+      toast.error("Failed to load assignments.")
     } finally {
       setLoading(false)
     }
@@ -214,7 +221,7 @@ export default function TasksPage() {
   }
 
   if (status === "loading") {
-    return <div>Loading...</div>
+    return <LoadingScreen message="Loading your assignments..." />
   }
 
   if (!session) {
@@ -238,7 +245,7 @@ export default function TasksPage() {
   const handleSave = async (taskId: string) => {
     try {
       if (!editForm.title?.trim() || !editForm.dueDate || !editForm.className?.trim()) {
-        alert("Assignment name, due date, and class name are required.")
+        toast.error("Assignment name, due date, and class name are required.")
         return
       }
 
@@ -252,36 +259,47 @@ export default function TasksPage() {
         setTasks(tasks.map((task) => (task.id === taskId ? { ...task, ...editForm } : task)))
         setEditingTask(null)
         setEditForm({})
+        toast.success("Assignment updated.")
+      } else {
+        toast.error("Failed to update assignment.")
       }
     } catch (error) {
       console.error("Error updating task:", error)
+      toast.error("Failed to update assignment.")
     }
   }
 
   const handleDelete = async (taskId: string) => {
-    if (!confirm("Are you sure you want to delete this assignment?")) return
-
     try {
       const response = await fetch(`/api/tasks/${taskId}`, { method: "DELETE" })
       if (response.ok) {
         setTasks(tasks.filter((task) => task.id !== taskId))
+        toast.success("Assignment deleted.")
+      } else {
+        toast.error("Failed to delete assignment.")
       }
     } catch (error) {
       console.error("Error deleting task:", error)
+      toast.error("Failed to delete assignment.")
+    } finally {
+      setConfirmDeleteId(null)
     }
   }
 
   const handleDeleteAll = async () => {
-    if (!confirm("Delete all assignments? This action cannot be undone.")) return
-
+    setShowConfirmDeleteAll(false)
     setDeletingAll(true)
     try {
       const response = await fetch("/api/tasks", { method: "DELETE" })
       if (response.ok) {
         setTasks([])
+        toast.success("All assignments cleared.")
+      } else {
+        toast.error("Failed to clear assignments.")
       }
     } catch (error) {
       console.error("Error deleting tasks:", error)
+      toast.error("Failed to clear assignments.")
     } finally {
       setDeletingAll(false)
     }
@@ -328,9 +346,13 @@ export default function TasksPage() {
           className: "",
         })
         setShowCreateForm(false)
+        toast.success("Assignment added.")
+      } else {
+        toast.error("Failed to add assignment.")
       }
     } catch (error) {
       console.error("Error creating task:", error)
+      toast.error("Failed to add assignment.")
     } finally {
       setCreating(false)
     }
@@ -346,9 +368,15 @@ export default function TasksPage() {
 
       if (response.ok) {
         setTasks(tasks.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task)))
+        if (newStatus === "completed") {
+          toast.success("Marked as submitted! 🎉")
+        }
+      } else {
+        toast.error("Failed to update status.")
       }
     } catch (error) {
       console.error("Error updating task status:", error)
+      toast.error("Failed to update status.")
     }
   }
 
@@ -372,15 +400,15 @@ export default function TasksPage() {
   const getPriorityConfig = (priority: string) => {
     switch (priority) {
       case "high":
-        return { label: "High", className: "bg-red-100 text-red-800 border border-red-200" }
+        return { label: "🔴 High", className: "bg-red-100 text-red-800 border border-red-200" }
       case "medium":
         return {
-          label: "Medium",
+          label: "🟡 Medium",
           className: "bg-yellow-100 text-yellow-800 border border-yellow-200",
         }
       case "low":
         return {
-          label: "Low",
+          label: "🟢 Low",
           className: "bg-green-100 text-green-800 border border-green-200",
         }
       default:
@@ -391,11 +419,11 @@ export default function TasksPage() {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "completed":
-        return { label: "Submitted", className: "bg-green-100 text-green-800 border border-green-200" }
+        return { label: "✅ Submitted", className: "bg-green-100 text-green-800 border border-green-200" }
       case "pending":
-        return { label: "To Do", className: "bg-blue-100 text-blue-800 border border-blue-200" }
+        return { label: "📋 To Do", className: "bg-blue-100 text-blue-800 border border-blue-200" }
       case "cancelled":
-        return { label: "Dropped", className: "bg-gray-100 text-gray-600 border border-gray-200" }
+        return { label: "❌ Dropped", className: "bg-gray-100 text-gray-600 border border-gray-200" }
       default:
         return { label: status, className: "bg-gray-100 text-gray-800" }
     }
@@ -406,49 +434,34 @@ export default function TasksPage() {
   const pendingAssignments = tasks.filter((t) => t.status === "pending").length
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-indigo-50 flex items-center justify-center">
-        <div className="text-center">
-          <GraduationCap className="h-12 w-12 text-indigo-500 mx-auto mb-3 animate-pulse" />
-          <p className="text-indigo-600 font-medium">Loading your assignments...</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen message="Loading your assignments..." />
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50">
-      {/* Navigation */}
-      <nav className="bg-indigo-900 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="flex items-center space-x-2">
-                <GraduationCap className="h-8 w-8 text-indigo-300" />
-                <span className="text-xl font-bold text-white">PlanEra</span>
-              </Link>
-            </div>
+      <AppNav />
 
-            <div className="flex items-center space-x-1 sm:space-x-3">
-              <Link href="/upload">
-                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white border-0">
-                  Upload Syllabus
-                </Button>
-              </Link>
-              <Link href="/dashboard">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-indigo-200 hover:text-white hover:bg-indigo-800"
-                >
-                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Dashboard</span>
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      {/* Confirm: Delete single */}
+      <ConfirmDialog
+        isOpen={confirmDeleteId !== null}
+        title="Delete Assignment"
+        message="Are you sure you want to delete this assignment? This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => confirmDeleteId && handleDelete(confirmDeleteId)}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
+
+      {/* Confirm: Delete all */}
+      <ConfirmDialog
+        isOpen={showConfirmDeleteAll}
+        title="Clear All Assignments"
+        message="This will permanently delete all your assignments. This action cannot be undone."
+        confirmLabel="Clear All"
+        variant="danger"
+        onConfirm={handleDeleteAll}
+        onCancel={() => setShowConfirmDeleteAll(false)}
+      />
 
       {/* Page Header */}
       <div className="bg-white border-b shadow-sm">
@@ -493,10 +506,11 @@ export default function TasksPage() {
               {showCreateForm ? "Hide Form" : "Add Assignment"}
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
               size="sm"
-              onClick={handleDeleteAll}
+              onClick={() => setShowConfirmDeleteAll(true)}
               disabled={tasks.length === 0 || deletingAll}
+              className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
             >
               {deletingAll ? "Clearing..." : "Clear All"}
             </Button>
@@ -593,9 +607,9 @@ export default function TasksPage() {
                     onChange={(e) => setCreateForm({ ...createForm, priority: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
+                    <option value="low">🟢 Low</option>
+                    <option value="medium">🟡 Medium</option>
+                    <option value="high">🔴 High</option>
                   </select>
                 </div>
                 <div>
@@ -646,11 +660,13 @@ export default function TasksPage() {
                 >
                   {creating ? "Adding..." : "Add Assignment"}
                 </Button>
-                <Link href="/upload">
-                  <Button type="button" variant="outline">
-                    Upload Syllabus
-                  </Button>
-                </Link>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreateForm(false)}
+                >
+                  Cancel
+                </Button>
               </div>
             </form>
           </div>
@@ -664,11 +680,6 @@ export default function TasksPage() {
             <p className="text-gray-500 mb-6 max-w-sm mx-auto">
               Upload a syllabus to auto-extract your assignments, or add them manually above.
             </p>
-            <Link href="/upload">
-              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                Upload Syllabus / Schedule
-              </Button>
-            </Link>
           </div>
         ) : (
           /* Grouped by Class */
@@ -676,11 +687,12 @@ export default function TasksPage() {
             {Array.from(groupedTasks.entries()).map(([className, classTasks]) => {
               const color = getClassColor(className === "No Class" ? null : className)
               const classCompleted = classTasks.filter((t) => t.status === "completed").length
+              const progressPct = Math.round((classCompleted / classTasks.length) * 100)
 
               return (
                 <div key={className}>
                   {/* Class Header */}
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${color.dot}`} />
                       <h2 className="text-base font-bold text-gray-800 uppercase tracking-wide">
@@ -693,6 +705,14 @@ export default function TasksPage() {
                     <span className="text-xs text-gray-400">
                       {classCompleted}/{classTasks.length} done
                     </span>
+                  </div>
+
+                  {/* Class Progress Bar */}
+                  <div className="mb-3 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${color.dot}`}
+                      style={{ width: `${progressPct}%` }}
+                    />
                   </div>
 
                   {/* Task Cards */}
@@ -709,15 +729,29 @@ export default function TasksPage() {
                       const priorityConfig = getPriorityConfig(task.priority)
                       const statusConfig = getStatusConfig(task.status)
 
-                      return (
-                        <div
-                          key={task.id}
-                          className={`rounded-lg shadow-sm border-l-4 border border-gray-200 p-5 transition-all ${isCompleted
+                      // Urgency tinting based on due date
+                      const daysUntilDue = task.dueDate
+                        ? Math.ceil(
+                          (new Date(task.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                        )
+                        : null
+                      const urgencyClass =
+                        !isCompleted && daysUntilDue !== null
+                          ? daysUntilDue <= 3
+                            ? "bg-red-50 border-l-red-500"
+                            : daysUntilDue <= 7
+                              ? "bg-amber-50 border-l-amber-400"
+                              : "bg-white " + color.border
+                          : isCompleted
                             ? "bg-gray-50 opacity-75 " + color.border
                             : isIncomplete
                               ? "border-l-yellow-400 bg-yellow-50"
                               : "bg-white " + color.border
-                            }`}
+
+                      return (
+                        <div
+                          key={task.id}
+                          className={`rounded-lg shadow-sm border-l-4 border border-gray-200 p-5 transition-all ${urgencyClass}`}
                         >
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div className="flex-1 min-w-0">
@@ -790,9 +824,9 @@ export default function TasksPage() {
                                         }
                                         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                       >
-                                        <option value="low">Low</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
+                                        <option value="low">🟢 Low</option>
+                                        <option value="medium">🟡 Medium</option>
+                                        <option value="high">🔴 High</option>
                                       </select>
                                     </div>
                                     <div>
@@ -842,8 +876,8 @@ export default function TasksPage() {
                                   <div className="flex flex-wrap items-center gap-2 mb-2">
                                     <h3
                                       className={`text-base font-semibold break-words ${isCompleted
-                                        ? "line-through text-gray-400"
-                                        : "text-gray-900"
+                                          ? "line-through text-gray-400"
+                                          : "text-gray-900"
                                         }`}
                                     >
                                       {task.title}
@@ -851,6 +885,12 @@ export default function TasksPage() {
                                     {task.category && (
                                       <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200 shrink-0">
                                         {task.category}
+                                      </span>
+                                    )}
+                                    {/* Urgency badge */}
+                                    {!isCompleted && daysUntilDue !== null && daysUntilDue <= 3 && (
+                                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200 shrink-0">
+                                        {daysUntilDue <= 0 ? "Overdue!" : `Due in ${daysUntilDue}d`}
                                       </span>
                                     )}
                                   </div>
@@ -924,7 +964,7 @@ export default function TasksPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleDelete(task.id)}
+                                  onClick={() => setConfirmDeleteId(task.id)}
                                   className="text-gray-400 hover:text-red-600"
                                 >
                                   <Trash2 className="h-4 w-4" />

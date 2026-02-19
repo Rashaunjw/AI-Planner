@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { GraduationCap, ArrowLeft, Save, Bell, Calendar, User, Link2 } from "lucide-react"
-import Link from "next/link"
+import { Save, Bell, Calendar, User, Link2 } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import AppNav from "@/components/app-nav"
+import LoadingScreen from "@/components/loading-screen"
 
 export default function SettingsPage() {
   const { data: session, status } = useSession()
@@ -50,6 +52,7 @@ export default function SettingsPage() {
         }
       } catch (error) {
         console.error("Error fetching settings:", error)
+        toast.error("Failed to load settings.")
       } finally {
         setLoadingSettings(false)
       }
@@ -63,11 +66,7 @@ export default function SettingsPage() {
   }, [session])
 
   if (status === "loading") {
-    return (
-      <div className="min-h-screen bg-indigo-50 flex items-center justify-center">
-        <GraduationCap className="h-10 w-10 text-indigo-400 animate-pulse" />
-      </div>
-    )
+    return <LoadingScreen message="Loading settings..." />
   }
 
   if (!session) {
@@ -89,41 +88,46 @@ export default function SettingsPage() {
       if (!response.ok) {
         throw new Error("Settings update failed")
       }
-      alert("Settings saved successfully!")
+      toast.success("Settings saved successfully!")
     } catch (error) {
       console.error("Error saving settings:", error)
-      alert("Failed to save settings. Please try again.")
+      toast.error("Failed to save settings. Please try again.")
     } finally {
       setSaving(false)
     }
   }
 
+  // Reusable toggle switch
+  const Toggle = ({
+    checked,
+    onChange,
+  }: {
+    checked: boolean
+    onChange: (v: boolean) => void
+  }) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+        checked ? "bg-indigo-600" : "bg-gray-200"
+      }`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+          checked ? "translate-x-5" : "translate-x-0"
+        }`}
+      />
+    </button>
+  )
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50">
-      {/* Navigation */}
-      <nav className="bg-indigo-900 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="flex items-center space-x-2">
-                <GraduationCap className="h-8 w-8 text-indigo-300" />
-                <span className="text-xl font-bold text-white">PlanEra</span>
-              </Link>
-            </div>
-            <div className="flex items-center">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="text-indigo-200 hover:text-white hover:bg-indigo-800">
-                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Back to Dashboard</span>
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <AppNav />
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Settings</h1>
           <p className="text-gray-500 text-sm">
@@ -131,7 +135,7 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Account Information */}
           <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
             <div className="flex items-center mb-5">
@@ -140,18 +144,28 @@ export default function SettingsPage() {
               </div>
               <h2 className="text-base font-semibold text-gray-900">Account Information</h2>
             </div>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                  Name
-                </label>
-                <p className="text-gray-900 text-sm">{session?.user?.name || "Not provided"}</p>
+            <div className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                    Name
+                  </label>
+                  <p className="text-gray-900 text-sm font-medium">{session?.user?.name || "Not provided"}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                    Email
+                  </label>
+                  <p className="text-gray-900 text-sm font-medium">{session?.user?.email || "Not provided"}</p>
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                  Email
-                </label>
-                <p className="text-gray-900 text-sm">{session?.user?.email || "Not provided"}</p>
+              <div className="pt-2 border-t border-gray-50">
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="text-sm text-red-500 hover:text-red-700 font-medium transition-colors"
+                >
+                  Sign out of PlanEra
+                </button>
               </div>
             </div>
           </div>
@@ -165,12 +179,17 @@ export default function SettingsPage() {
               <h2 className="text-base font-semibold text-gray-900">Connected Accounts</h2>
             </div>
             {loadingSettings ? (
-              <p className="text-sm text-gray-400">Loading connected accounts...</p>
+              <p className="text-sm text-gray-400">Loading...</p>
             ) : accounts.length > 0 ? (
               <ul className="space-y-2">
                 {accounts.map((account) => (
-                  <li key={account.provider} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                    <span className="capitalize text-sm text-gray-700">{account.provider}</span>
+                  <li
+                    key={account.provider}
+                    className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0"
+                  >
+                    <span className="capitalize text-sm text-gray-700 font-medium">
+                      {account.provider}
+                    </span>
                     <span className="text-xs text-green-600 font-semibold bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
                       Connected
                     </span>
@@ -194,13 +213,13 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Email Reminders</label>
-                  <p className="text-xs text-gray-400 mt-0.5">Receive email reminders for upcoming assignments</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Receive email reminders for upcoming assignments
+                  </p>
                 </div>
-                <input
-                  type="checkbox"
+                <Toggle
                   checked={settings.emailReminders}
-                  onChange={(e) => setSettings({ ...settings, emailReminders: e.target.checked })}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  onChange={(v) => setSettings({ ...settings, emailReminders: v })}
                 />
               </div>
 
@@ -224,16 +243,14 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-1">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Push Notifications</label>
                   <p className="text-xs text-gray-400 mt-0.5">Receive browser notifications</p>
                 </div>
-                <input
-                  type="checkbox"
+                <Toggle
                   checked={settings.notifications}
-                  onChange={(e) => setSettings({ ...settings, notifications: e.target.checked })}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  onChange={(v) => setSettings({ ...settings, notifications: v })}
                 />
               </div>
             </div>
@@ -255,11 +272,9 @@ export default function SettingsPage() {
                     Automatically sync your assignments to Google Calendar
                   </p>
                 </div>
-                <input
-                  type="checkbox"
+                <Toggle
                   checked={settings.calendarSync}
-                  onChange={(e) => setSettings({ ...settings, calendarSync: e.target.checked })}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  onChange={(v) => setSettings({ ...settings, calendarSync: v })}
                 />
               </div>
               {settings.calendarSync ? (
@@ -269,7 +284,10 @@ export default function SettingsPage() {
                     variant="outline"
                     size="sm"
                     className="self-start sm:self-auto border-green-300 text-green-700 hover:bg-green-100"
-                    onClick={() => fetch("/api/calendar/sync", { method: "POST" })}
+                    onClick={() => {
+                      fetch("/api/calendar/sync", { method: "POST" })
+                      toast.success("Sync started!")
+                    }}
                   >
                     Sync Now
                   </Button>
@@ -279,7 +297,7 @@ export default function SettingsPage() {
                   Enable to sync your assignments to Google Calendar each night.
                 </p>
               )}
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600">
                 <span>Having trouble syncing? Reconnect your Google account.</span>
                 <Button
                   variant="outline"
@@ -323,14 +341,14 @@ export default function SettingsPage() {
             {loadingSettings ? (
               <p className="text-sm text-gray-400">Loading uploads...</p>
             ) : uploads.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 {uploads.map((upload) => (
                   <li
                     key={upload.id}
-                    className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+                    className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0"
                   >
                     <span className="truncate max-w-[70%] text-sm text-gray-700">{upload.fileName}</span>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-400 shrink-0">
                       {new Date(upload.createdAt).toLocaleDateString()}
                     </span>
                   </li>
