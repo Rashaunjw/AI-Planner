@@ -128,6 +128,10 @@ export default function UploadPage() {
         setTimeout(() => {
           window.location.href = "/tasks"
         }, 3000)
+      } else if (response.status === 403 && responseBody?.upgrade) {
+        toast.error(responseBody?.message || "Upload limit reached. Upgrade to Pro for unlimited uploads.", {
+          action: { label: "View plans", onClick: () => router.push("/pricing") },
+        })
       } else {
         const message = responseBody?.error || `Upload failed with status ${response.status}`
         toast.error(message)

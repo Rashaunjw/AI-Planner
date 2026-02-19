@@ -13,7 +13,7 @@ export async function GET() {
     const [user, accounts] = await Promise.all([
       prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { emailReminders: true, reminderDays: true, calendarSync: true },
+        select: { emailReminders: true, reminderDays: true, calendarSync: true, plan: true },
       }),
       prisma.account.findMany({
         where: { userId: session.user.id },

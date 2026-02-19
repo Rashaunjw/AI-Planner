@@ -14,6 +14,7 @@ import {
   Pencil,
   Search,
   SlidersHorizontal,
+  Share2,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -134,6 +135,8 @@ export default function TasksPage() {
   const [filterClass, setFilterClass] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<"dueDate" | "priority" | "weight">("dueDate")
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed">("all")
+  const [showShareDropdown, setShowShareDropdown] = useState(false)
+  const [sharingClass, setSharingClass] = useState<string | null>(null)
 
   const fetchTasks = async () => {
     try {
@@ -557,7 +560,7 @@ export default function TasksPage() {
             )}
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2 items-center">
             <Button
               size="sm"
               onClick={() => setShowCreateForm((prev) => !prev)}
@@ -575,6 +578,67 @@ export default function TasksPage() {
             >
               {deletingAll ? "Clearing..." : "Clear All"}
             </Button>
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowShareDropdown((prev) => !prev)}
+                disabled={classNames.length === 0}
+                className="border-gray-200"
+              >
+                <Share2 className="h-4 w-4 mr-1" />
+                Share class view
+              </Button>
+              {showShareDropdown && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    aria-hidden
+                    onClick={() => setShowShareDropdown(false)}
+                  />
+                  <div className="absolute left-0 top-full mt-1 z-20 bg-white rounded-lg border border-gray-200 shadow-lg py-1 min-w-[180px]">
+                    <p className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
+                      Share read-only view with study group
+                    </p>
+                    {classNames.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        disabled={sharingClass !== null}
+                        onClick={async () => {
+                          setSharingClass(name)
+                          try {
+                            const res = await fetch("/api/share/class", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ className: name }),
+                            })
+                            const data = await res.json().catch(() => ({}))
+                            if (!res.ok) throw new Error(data?.error || "Failed to create link")
+                            const url = data.url
+                            if (url) {
+                              await navigator.clipboard.writeText(url)
+                              toast.success(`Link for "${name}" copied to clipboard`)
+                            }
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Failed to create share link")
+                          } finally {
+                            setSharingClass(null)
+                            setShowShareDropdown(false)
+                          }
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between"
+                      >
+                        <span className="truncate">{name}</span>
+                        {sharingClass === name ? (
+                          <span className="text-xs text-gray-400">Copying...</span>
+                        ) : null}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

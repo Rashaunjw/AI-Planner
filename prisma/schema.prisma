@@ -4,8 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -35,23 +34,37 @@ model Session {
 }
 
 model User {
-  id            String     @id @default(cuid())
-  name          String?
-  email         String     @unique
-  passwordHash  String?
-  emailVerified DateTime?
-  image         String?
+  id             String     @id @default(cuid())
+  name           String?
+  email          String     @unique
+  passwordHash   String?
+  emailVerified  DateTime?
+  image          String?
+  plan           String     @default("free")
   emailReminders Boolean   @default(true)
   reminderDays   Int       @default(2)
   calendarSync   Boolean   @default(false)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  accounts      Account[]
-  calendars     Calendar[]
-  reminders     Reminder[]
-  sessions      Session[]
-  tasks         Task[]
-  uploads       Upload[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  accounts       Account[]
+  calendars      Calendar[]
+  reminders      Reminder[]
+  sessions       Session[]
+  tasks          Task[]
+  uploads        Upload[]
+  classShares    ClassShare[]
+}
+
+model ClassShare {
+  id        String   @id @default(cuid())
+  userId    String
+  className String
+  token     String   @unique
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
 }
 
 model VerificationToken {

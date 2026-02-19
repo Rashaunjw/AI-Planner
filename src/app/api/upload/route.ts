@@ -24,6 +24,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file or text provided' }, { status: 400 })
     }
 
+    const FREE_UPLOADS_PER_MONTH = 10
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { plan: true },
+    })
+    if (user?.plan !== 'pro') {
+      const startOfMonth = new Date()
+      startOfMonth.setDate(1)
+      startOfMonth.setHours(0, 0, 0, 0)
+      const count = await prisma.upload.count({
+        where: {
+          userId: session.user.id,
+          createdAt: { gte: startOfMonth },
+        },
+      })
+      if (count >= FREE_UPLOADS_PER_MONTH) {
+        return NextResponse.json(
+          {
+            error: 'Upload limit reached',
+            upgrade: true,
+            message: `Free plan allows ${FREE_UPLOADS_PER_MONTH} uploads per month. Upgrade to Pro for unlimited uploads.`,
+          },
+          { status: 403 }
+        )
+      }
+    }
+
     let content = ''
     let fileName = ''
     let fileType = ''

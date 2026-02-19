@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Save, Bell, Calendar, User, Link2, Copy, Check, ExternalLink, Monitor, Smartphone, Mail } from "lucide-react"
+import { Save, Bell, Calendar, User, Link2, Copy, Check, ExternalLink, Monitor, Smartphone, Mail, Sparkles } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { toast } from "sonner"
 import AppNav from "@/components/app-nav"
 import LoadingScreen from "@/components/loading-screen"
@@ -18,6 +19,7 @@ export default function SettingsPage() {
     calendarSync: false,
     notifications: true,
   })
+  const [plan, setPlan] = useState<"free" | "pro">("free")
   const [saving, setSaving] = useState(false)
   const [accounts, setAccounts] = useState<Array<{ provider: string }>>([])
   const [loadingSettings, setLoadingSettings] = useState(true)
@@ -43,6 +45,9 @@ export default function SettingsPage() {
               reminderDays: Number(data.settings.reminderDays) || 2,
               calendarSync: Boolean(data.settings.calendarSync),
             }))
+            if (data.settings.plan === "pro" || data.settings.plan === "free") {
+              setPlan(data.settings.plan)
+            }
           }
           if (Array.isArray(data.accounts)) {
             setAccounts(data.accounts)
@@ -169,6 +174,33 @@ export default function SettingsPage() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Plan & Upgrade */}
+          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
+            <div className="flex items-center mb-5">
+              <div className="bg-indigo-100 p-2 rounded-lg mr-3">
+                <Sparkles className="h-5 w-5 text-indigo-600" />
+              </div>
+              <h2 className="text-base font-semibold text-gray-900">Plan</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              {plan === "pro" ? (
+                <span className="inline-flex items-center gap-1.5 text-indigo-600 font-medium">
+                  <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs">Pro</span>
+                  You have unlimited uploads, study block scheduling, and crunch week reports.
+                </span>
+              ) : (
+                <>You're on the <strong>Free</strong> plan: 10 uploads per month. Upgrade to Pro for unlimited uploads, study block scheduling, and crunch week reports.</>
+              )}
+            </p>
+            {plan === "free" && (
+              <Link href="/pricing">
+                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                  View plans and upgrade
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Connected Accounts */}
