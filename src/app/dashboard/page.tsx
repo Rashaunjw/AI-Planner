@@ -7,6 +7,7 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { formatDate } from "@/lib/utils"
 import AppNav from "@/components/app-nav"
+import ActivityClearButton from "@/components/activity-clear-button"
 
 // Color palette matching tasks/page.tsx
 const CLASS_COLORS = [
@@ -411,8 +412,9 @@ export default async function Dashboard() {
             {/* ── Recent Uploads ────────────────────────────────────── */}
             {recentUploads.length > 0 && (
               <div className="bg-white rounded-xl shadow-sm border border-indigo-100">
-                <div className="px-6 py-4 border-b border-gray-100">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                   <h2 className="text-base font-semibold text-gray-900">Recent Uploads</h2>
+                  <ActivityClearButton />
                 </div>
                 <div className="p-4 space-y-2">
                   {recentUploads.map((upload) => (

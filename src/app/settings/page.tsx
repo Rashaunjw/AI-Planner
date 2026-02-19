@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Save, Bell, Calendar, User, Link2 } from "lucide-react"
+import { Save, Bell, Calendar, User, Link2, Copy, Check, ExternalLink } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -22,6 +22,7 @@ export default function SettingsPage() {
   const [accounts, setAccounts] = useState<Array<{ provider: string }>>([])
   const [loadingSettings, setLoadingSettings] = useState(true)
   const [uploads, setUploads] = useState<Array<{ id: string; fileName: string; createdAt: string }>>([])
+  const [icsCopied, setIcsCopied] = useState(false)
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -311,6 +312,95 @@ export default function SettingsPage() {
                   Reconnect Google
                 </Button>
               </div>
+            </div>
+          </div>
+
+          {/* ICS Calendar Feed */}
+          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
+            <div className="flex items-center mb-5">
+              <div className="bg-indigo-100 p-2 rounded-lg mr-3">
+                <ExternalLink className="h-5 w-5 text-indigo-600" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">Subscribe in Any Calendar</h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Works with Apple Calendar, Outlook, Fantastical, and more
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-4">
+              Copy the link below and paste it into any calendar app that supports
+              URL subscriptions. Your assignments will sync automatically.
+            </p>
+
+            {/* URL display + copy button */}
+            <div className="flex items-center gap-2 mb-5">
+              <code className="flex-1 min-w-0 text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-gray-600 truncate">
+                {typeof window !== "undefined"
+                  ? `${window.location.origin}/api/calendar/ics?userId=${session?.user?.id}`
+                  : `/api/calendar/ics?userId=${session?.user?.id}`}
+              </code>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`shrink-0 gap-1.5 transition-colors ${
+                  icsCopied
+                    ? "border-green-300 text-green-700 bg-green-50"
+                    : "border-gray-300"
+                }`}
+                onClick={() => {
+                  const url = `${window.location.origin}/api/calendar/ics?userId=${session?.user?.id}`
+                  navigator.clipboard.writeText(url).then(() => {
+                    setIcsCopied(true)
+                    toast.success("Calendar link copied!")
+                    setTimeout(() => setIcsCopied(false), 2500)
+                  })
+                }}
+              >
+                {icsCopied ? (
+                  <><Check className="h-3.5 w-3.5" /> Copied</>
+                ) : (
+                  <><Copy className="h-3.5 w-3.5" /> Copy</>
+                )}
+              </Button>
+            </div>
+
+            {/* Per-app instructions */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                How to subscribe
+              </p>
+              {[
+                {
+                  emoji: "🍎",
+                  name: "Apple Calendar (Mac)",
+                  steps: "File → New Calendar Subscription → paste the link",
+                },
+                {
+                  emoji: "📱",
+                  name: "Apple Calendar (iPhone)",
+                  steps: "Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar",
+                },
+                {
+                  emoji: "📧",
+                  name: "Outlook (desktop or web)",
+                  steps: "Add Calendar → Subscribe from web → paste the link",
+                },
+                {
+                  emoji: "📅",
+                  name: "Google Calendar",
+                  steps: "⚙️ Settings → Add calendar → From URL → paste the link",
+                },
+              ].map(({ emoji, name, steps }) => (
+                <div key={name} className="flex items-start gap-2.5 text-sm py-2 border-b border-gray-50 last:border-0">
+                  <span className="text-base shrink-0">{emoji}</span>
+                  <div>
+                    <p className="font-medium text-gray-700 text-xs">{name}</p>
+                    <p className="text-gray-400 text-xs mt-0.5">{steps}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
