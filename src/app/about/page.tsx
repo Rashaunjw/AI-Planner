@@ -1,4 +1,4 @@
-import { GraduationCap, FileText, BookOpen, Calendar, Zap, Heart, ArrowRight, CheckCircle } from "lucide-react"
+import { GraduationCap, FileText, BookOpen, Calendar, Zap, Heart, ArrowRight, CheckCircle, Users, Clock, LayoutList } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -191,28 +191,30 @@ export default function AboutPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             {[
               {
-                emoji: "📚",
+                icon: BookOpen,
                 title: "Heavy course loads",
                 desc: "Taking 4–5 classes with syllabi that look like legal documents. PlanEra reads them all.",
               },
               {
-                emoji: "🏃",
+                icon: Users,
                 title: "Student athletes & Greek life",
                 desc: "Your time is split between practice, events, and classes. PlanEra keeps academics from falling through the cracks.",
               },
               {
-                emoji: "🔁",
+                icon: Clock,
                 title: "Chronic deadline-missers",
                 desc: "Not because you don't care — because nothing surfaced what was actually urgent. The dashboard fixes that.",
               },
               {
-                emoji: "🗂️",
+                icon: LayoutList,
                 title: "Organized students who want to stay that way",
                 desc: "You already use a planner. PlanEra automates the part that takes 30 minutes every semester start.",
               },
-            ].map(({ emoji, title, desc }) => (
+            ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-start gap-4 p-5 rounded-xl border border-gray-100 bg-gray-50">
-                <span className="text-2xl shrink-0">{emoji}</span>
+                <div className="bg-indigo-100 p-2 rounded-lg shrink-0">
+                  <Icon className="h-5 w-5 text-indigo-600" />
+                </div>
                 <div>
                   <p className="font-semibold text-gray-900 mb-1">{title}</p>
                   <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>

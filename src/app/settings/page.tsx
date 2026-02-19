@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Save, Bell, Calendar, User, Link2, Copy, Check, ExternalLink } from "lucide-react"
+import { Save, Bell, Calendar, User, Link2, Copy, Check, ExternalLink, Monitor, Smartphone, Mail } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -373,28 +373,28 @@ export default function SettingsPage() {
               </p>
               {[
                 {
-                  emoji: "🍎",
+                  icon: Monitor,
                   name: "Apple Calendar (Mac)",
                   steps: "File → New Calendar Subscription → paste the link",
                 },
                 {
-                  emoji: "📱",
+                  icon: Smartphone,
                   name: "Apple Calendar (iPhone)",
                   steps: "Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar",
                 },
                 {
-                  emoji: "📧",
+                  icon: Mail,
                   name: "Outlook (desktop or web)",
                   steps: "Add Calendar → Subscribe from web → paste the link",
                 },
                 {
-                  emoji: "📅",
+                  icon: Calendar,
                   name: "Google Calendar",
-                  steps: "⚙️ Settings → Add calendar → From URL → paste the link",
+                  steps: "Settings → Add calendar → From URL → paste the link",
                 },
-              ].map(({ emoji, name, steps }) => (
+              ].map(({ icon: Icon, name, steps }) => (
                 <div key={name} className="flex items-start gap-2.5 text-sm py-2 border-b border-gray-50 last:border-0">
-                  <span className="text-base shrink-0">{emoji}</span>
+                  <Icon className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
                   <div>
                     <p className="font-medium text-gray-700 text-xs">{name}</p>
                     <p className="text-gray-400 text-xs mt-0.5">{steps}</p>

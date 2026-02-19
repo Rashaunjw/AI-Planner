@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Upload, FileText, CheckCircle } from "lucide-react"
+import { Upload, FileText, CheckCircle, GraduationCap, Briefcase, Trophy, Users } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -201,17 +201,18 @@ export default function UploadPage() {
             </div>
             <div className="grid grid-cols-1 gap-2">
               {[
-                { id: "school", label: "🎓 School", desc: "Classes, syllabi, exams" },
-                { id: "work", label: "💼 Work", desc: "Projects, meetings, deadlines" },
-                { id: "sports", label: "🏆 Sports", desc: "Practice, games, training" },
-                { id: "greek life", label: "🏛️ Greek Life", desc: "Events, chapters, activities" },
-              ].map(({ id, label, desc }) => (
+                { id: "school", icon: GraduationCap, label: "School", desc: "Classes, syllabi, exams" },
+                { id: "work", icon: Briefcase, label: "Work", desc: "Projects, meetings, deadlines" },
+                { id: "sports", icon: Trophy, label: "Sports", desc: "Practice, games, training" },
+                { id: "greek life", icon: Users, label: "Greek Life", desc: "Events, chapters, activities" },
+              ].map(({ id, icon: Icon, label, desc }) => (
                 <button
                   key={id}
                   onClick={() => handleContextSelect(id)}
                   className="flex items-center gap-3 w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
                 >
-                  <span className="text-base">{label}</span>
+                  <Icon className="h-4 w-4 text-indigo-500 shrink-0" />
+                  <span className="text-sm font-medium text-gray-700">{label}</span>
                   <span className="text-xs text-gray-400 ml-auto">{desc}</span>
                 </button>
               ))}

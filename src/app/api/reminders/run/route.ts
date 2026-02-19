@@ -104,7 +104,7 @@ async function sendReminderEmail(
   const resend = new Resend(apiKey)
 
   const dayLabel = reminderDays === 1 ? "tomorrow" : `in ${reminderDays} days`
-  const subject = `⏰ ${tasks.length} assignment${tasks.length !== 1 ? "s" : ""} due ${dayLabel} — PlanEra`
+  const subject = `${tasks.length} assignment${tasks.length !== 1 ? "s" : ""} due ${dayLabel} — PlanEra`
 
   // Plain-text fallback
   const textLines = tasks
@@ -138,7 +138,7 @@ async function sendReminderEmail(
         <!-- Header -->
         <tr>
           <td style="background:#312e81;padding:28px 32px;text-align:center;">
-            <p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.3px;">🎓 PlanEra</p>
+            <p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.3px;">PlanEra</p>
             <p style="margin:6px 0 0;font-size:14px;color:#a5b4fc;">Deadline reminder</p>
           </td>
         </tr>

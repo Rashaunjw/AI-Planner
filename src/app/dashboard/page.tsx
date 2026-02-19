@@ -143,7 +143,7 @@ export default async function Dashboard() {
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Welcome back, {session.user?.name?.split(" ")[0] || "Student"} 👋
+              Welcome back, {session.user?.name?.split(" ")[0] || "Student"}
             </h1>
             <p className="text-sm text-gray-500 mt-1">
               {pendingTasks.length === 0
@@ -170,7 +170,7 @@ export default async function Dashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-red-800 mb-1">
-                🚨 High-stakes deadline{highStakesTasks.length > 1 ? "s" : ""} in the next 5 days
+                High-stakes deadline{highStakesTasks.length > 1 ? "s" : ""} in the next 5 days
               </p>
               <ul className="space-y-0.5">
                 {highStakesTasks.map((t) => (
