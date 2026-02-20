@@ -24,9 +24,15 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email: email.trim() }),
       })
 
+      const payload = await response.json().catch(() => null)
+
       if (!response.ok) {
-        const payload = await response.json().catch(() => null)
-        throw new Error(payload?.error || "Unable to send reset email.")
+        throw new Error(
+          payload?.error ||
+            (response.status === 503
+              ? "Password reset is temporarily unavailable. Please try again later."
+              : "Unable to send reset email.")
+        )
       }
 
       setMessage("If an account exists for that email, a reset link has been sent.")

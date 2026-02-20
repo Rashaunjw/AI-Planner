@@ -77,9 +77,14 @@ export default function CredentialsSignInForm() {
         {isSubmitting ? "Signing in..." : "Sign in"}
       </Button>
       {errorMessage && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-          {errorMessage}
-        </p>
+        <div className="text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2 space-y-1">
+          <p className="text-red-600">{errorMessage}</p>
+          {errorMessage === "Invalid email or password." && (
+            <p className="text-red-700/90 text-xs">
+              If you signed up with Google, use &quot;Continue with Google&quot; below to sign in.
+            </p>
+          )}
+        </div>
       )}
       {showVerificationLink && (
         <Link
