@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
         )
       }
 
-      setMessage("If an account exists for that email, a reset link has been sent.")
+      setMessage("A reset link has been sent.")
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to send reset email."

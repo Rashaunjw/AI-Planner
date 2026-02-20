@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Calendar, FileText, GraduationCap, BookOpen, CheckCircle, Clock, Zap, Shield, Star } from "lucide-react"
+import { ArrowRight, Calendar, FileText, GraduationCap, BookOpen, CheckCircle, Clock, Zap, Shield, Star, Smartphone, Monitor } from "lucide-react"
 import Link from "next/link"
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
@@ -58,14 +58,13 @@ export default async function Home() {
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
             Stop drowning in
-            <span className="text-indigo-300"> syllabi.</span>
+            <span className="text-indigo-300"> schedules.</span>
             <br />
             Start staying ahead.
           </h1>
 
           <p className="text-lg sm:text-xl text-indigo-200 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Upload your syllabus, let AI extract every deadline and assignment, and see your
-            entire semester laid out in seconds, not hours.
+            Upload your syllabus, work schedule, practice calendar, or any schedule. AI extracts every deadline and assignment so you see everything laid out in seconds, not hours.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -104,6 +103,12 @@ export default async function Home() {
               Setup in under 2 minutes
             </span>
           </div>
+
+          <p className="mt-6 text-sm text-indigo-300/90 flex items-center justify-center gap-2 flex-wrap">
+            <Smartphone className="h-4 w-4" />
+            <Monitor className="h-4 w-4" />
+            Install PlanEra on your phone or desktop for quick access from your home screen.
+          </p>
         </div>
       </section>
 
