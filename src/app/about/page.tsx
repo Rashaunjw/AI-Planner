@@ -123,10 +123,10 @@ export default function AboutPage() {
             Your data, one click, built-in calendar
           </h2>
           <p className="text-gray-600 leading-relaxed mb-6">
-            ChatGPT can write a study plan if you paste in your assignments—but you have to gather everything yourself, and the plan stays in a chat. PlanEra uses your <strong>actual</strong> tasks: upload your syllabus once, we extract every deadline and grade weight, and the AI Study Plan is one click from your dashboard. The plan lives next to your calendar and task list and stays in sync when you complete things. No copy-paste, no prompt engineering.
+            ChatGPT can write a study plan if you paste in your assignments, but you have to gather everything yourself, and the plan stays in a chat. PlanEra uses your <strong>actual</strong> tasks: upload your syllabus once, we extract every deadline and grade weight, and the AI Study Plan is one click from your dashboard. The plan lives next to your calendar and task list and stays in sync when you complete things. No copy-paste, no prompt engineering.
           </p>
           <p className="text-gray-500 text-sm">
-            We&apos;re not a general-purpose chatbot. We&apos;re a workflow: upload → extract → plan → act—all in one place.
+            We&apos;re not a general-purpose chatbot. We&apos;re a workflow: upload → extract → plan → act, all in one place.
           </p>
         </div>
       </section>

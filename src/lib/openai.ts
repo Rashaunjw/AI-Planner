@@ -81,7 +81,7 @@ export async function extractTasksFromContent(
     }
 
     const basePrompt: string =
-      "You are an AI assistant that extracts tasks and deadlines from syllabus, schedule, or calendar content. Extract ALL dated items: assignments, exams, projects, meetings, practices, games, matches, events, and any other time-bound entries. For each item provide: title (e.g. assignment name or 'vs Opponent' for games), description (optional), dueDate (YYYY-MM-DD), priority (low/medium/high), category (assignment/exam/project/quiz/homework/meeting/practice/game/event), estimatedDuration (optional), weightPercent (optional), className (course, team, sport, or group name). IMPORTANT for schedules: (1) If the document title contains a season or year range (e.g. '2025-26', '2024-25'), use that to set the year: e.g. for '2025-26' use 2025 for Nov/Dec and 2026 for Jan onward. (2) Parse dates in any form: 'Nov 8 (Sat)', 'Jan 3', '1/14', 'Mon DD' — convert to YYYY-MM-DD using the inferred or current year (" +
+      "You are an AI assistant that extracts tasks and deadlines from syllabus, schedule, or calendar content. Extract ALL dated items: assignments, exams, projects, meetings, practices, games, matches, events, and any other time-bound entries. For each item provide: title (e.g. assignment name or 'vs Opponent' for games), description (optional), dueDate (YYYY-MM-DD), priority (low/medium/high), category (assignment/exam/project/quiz/homework/meeting/practice/game/event), estimatedDuration (optional), weightPercent (optional), className (course, team, sport, or group name). IMPORTANT for schedules: (1) If the document title contains a season or year range (e.g. '2025-26', '2024-25'), use that to set the year: e.g. for '2025-26' use 2025 for Nov/Dec and 2026 for Jan onward. (2) Parse dates in any form: 'Nov 8 (Sat)', 'Jan 3', '1/14', 'Mon DD'; convert to YYYY-MM-DD using the inferred or current year (" +
       currentYear +
       "). (3) For table-like content with columns (Date, Time, Opponent, etc.), each data row is one task; use the row's date and time. (4) If a time is given (e.g. '3:30 PM CT', '7 PM ET'), add dueTime in 24-hour HH:mm (e.g. '15:30', '19:00'); ignore timezone for storage. (5) For sports/athletics schedules, use the schedule or sport name as className (e.g. \"Men's Basketball\") and title like \"vs Opponent\" or \"Game at Opponent\". If the document states when a class or group meets, add classDefaultTimes mapping className to HH:mm; otherwise use classDefaultTimes: {}. Return JSON: { \"tasks\": [ ... ], \"classDefaultTimes\": { ... } }. Do not skip rows that look like games or events; include every row that has a date."
 
@@ -445,7 +445,7 @@ function findDateInText(text: string, fallbackYear: number): string | undefined 
     }
   }
 
-  // "Nov 8 (Sat)", "Jan 3", "Dec 15" — month abbreviation + day
+  // "Nov 8 (Sat)", "Jan 3", "Dec 15" - month abbreviation + day
   const abbrevMatch = text.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})(?:\s*\([A-Za-z]{2,3}\))?\b/i)
   if (abbrevMatch) {
     const month = MONTH_ABBREV[abbrevMatch[1].toLowerCase()]

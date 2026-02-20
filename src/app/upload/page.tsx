@@ -9,6 +9,19 @@ import { toast } from "sonner"
 import AppNav from "@/components/app-nav"
 import LoadingScreen from "@/components/loading-screen"
 
+const PARSING_FACTS = [
+  "Spacing out study sessions over days (spaced repetition) improves long-term retention more than cramming.",
+  "Students who write by hand often remember lecture content better than those who only type notes.",
+  "Sleep consolidates memory; getting 7–8 hours after learning helps lock in what you studied.",
+  "Breaking study time into 25–30 minute blocks with short breaks can boost focus and retention.",
+  "Explaining a concept in your own words (teaching it) is one of the most effective ways to learn it.",
+  "Having a written plan with deadlines is linked to higher grades and less last-minute stress.",
+  "Students who review their schedule weekly are better at balancing classes, work, and life.",
+  "Setting specific goals (e.g. “finish Ch. 3 by Friday”) works better than vague “study more” goals.",
+  "Connecting new material to what you already know strengthens memory and understanding.",
+  "Active recall (quizzing yourself) beats re-reading when it comes to remembering for exams.",
+]
+
 export default function UploadPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -23,6 +36,7 @@ export default function UploadPage() {
   const [showContextPrompt, setShowContextPrompt] = useState(false)
   const [linkError, setLinkError] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [parsingFactIndex, setParsingFactIndex] = useState(0)
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -38,6 +52,16 @@ export default function UploadPage() {
       setShowContextPrompt(true)
     }
   }, [])
+
+  // Cycle through study facts while parsing
+  const stillExtracting = uploaded && uploading && extractedCount === null
+  useEffect(() => {
+    if (!stillExtracting) return
+    const interval = setInterval(() => {
+      setParsingFactIndex((i) => (i + 1) % PARSING_FACTS.length)
+    }, 3500)
+    return () => clearInterval(interval)
+  }, [stillExtracting])
 
   if (status === "loading") {
     return <LoadingScreen message="Loading..." />
@@ -164,7 +188,6 @@ export default function UploadPage() {
   }
 
   if (uploaded) {
-    const stillExtracting = uploading && extractedCount === null
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50 flex items-center justify-center p-6">
         <div className="max-w-sm w-full text-center">
@@ -224,6 +247,14 @@ export default function UploadPage() {
                 <div className="flex items-center justify-center gap-2 mt-4 text-sm text-gray-400">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
                   Extracting...
+                </div>
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1.5">
+                    Did you know?
+                  </p>
+                  <p className="text-sm text-gray-600 leading-relaxed min-h-[2.5rem]">
+                    {PARSING_FACTS[parsingFactIndex]}
+                  </p>
                 </div>
               </>
             ) : (
