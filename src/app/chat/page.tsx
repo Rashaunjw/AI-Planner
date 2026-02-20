@@ -15,6 +15,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -22,6 +23,30 @@ export default function ChatPage() {
       router.replace("/auth/signin")
     }
   }, [router, session, status])
+
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user?.id) return
+    let cancelled = false
+    setLoadingHistory(true)
+    fetch("/api/chat")
+      .then((res) => (res.ok ? res.json() : { messages: [] }))
+      .then((data) => {
+        if (!cancelled && Array.isArray(data?.messages)) {
+          setMessages(
+            data.messages.map((m: Message) => ({
+              role: m.role,
+              content: m.content,
+            }))
+          )
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingHistory(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [status, session?.user?.id])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -44,12 +69,13 @@ export default function ChatPage() {
       const data = await res.json()
 
       if (!res.ok) {
+        const errorMsg =
+          data?.rateLimited === true
+            ? data?.error ?? "Message limit reached for today. Try again tomorrow."
+            : data?.error ?? "Something went wrong. Please try again."
         setMessages((prev) => [
           ...prev,
-          {
-            role: "assistant",
-            content: data?.error ?? "Something went wrong. Please try again.",
-          },
+          { role: "assistant", content: errorMsg },
         ])
         return
       }
@@ -94,7 +120,12 @@ export default function ChatPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden flex flex-col min-h-[420px]">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[320px]">
-            {messages.length === 0 && (
+            {loadingHistory ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500">
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-400 mb-2" />
+                <p className="text-sm">Loading your conversation...</p>
+              </div>
+            ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500">
                 <GraduationCap className="h-12 w-12 text-indigo-200 mb-3" />
                 <p className="text-sm font-medium text-gray-600">
@@ -104,8 +135,8 @@ export default function ChatPage() {
                   e.g. &ldquo;When is my bio midterm?&rdquo; or &ldquo;What&apos;s due this week?&rdquo;
                 </p>
               </div>
-            )}
-            {messages.map((m, i) => (
+            ) : null}
+            {!loadingHistory && messages.map((m, i) => (
               <div
                 key={i}
                 className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}

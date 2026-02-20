@@ -24,7 +24,7 @@ type StudyPlanBlock = { date: string; title: string; durationMinutes: number }
 export default function PlanPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [plan, setPlan] = useState<string | null>(null)
   const [blocks, setBlocks] = useState<StudyPlanBlock[]>([])
   const [addingToCalendar, setAddingToCalendar] = useState(false)
@@ -52,10 +52,6 @@ export default function PlanPage() {
   useEffect(() => {
     if (status !== "loading" && !session) {
       router.replace("/auth/signin")
-      return
-    }
-    if (status === "authenticated") {
-      generate()
     }
   }, [router, session, status])
 

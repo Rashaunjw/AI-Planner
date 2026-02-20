@@ -55,6 +55,30 @@ model User {
   classShares     ClassShare[]
   classColors     UserClassColor[]
   digestSents     DigestSent[]
+  conversations   Conversation[]
+}
+
+model Conversation {
+  id        String        @id @default(cuid())
+  userId    String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+
+  @@unique([userId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  role           String       // "user" | "assistant"
+  content        String
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
 }
 
 model UserClassColor {

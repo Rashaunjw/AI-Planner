@@ -214,6 +214,31 @@ export async function chatWithScheduleContext(
   return reply ?? "I couldn't generate a reply. Please try again."
 }
 
+/** Same as above but with conversation history for follow-up questions. */
+export async function chatWithScheduleAndHistory(
+  scheduleContext: string,
+  messageHistory: { role: 'user' | 'assistant'; content: string }[]
+): Promise<string> {
+  if (!openai) {
+    throw new Error('OpenAI API key not configured')
+  }
+  const systemContent =
+    'You are a helpful assistant for a student using PlanEra. You answer questions about their schedule, assignments, and due dates using ONLY the schedule data provided below. Be concise and friendly. If the question is not about their schedule or you do not have the information, say so and suggest they check the Tasks or Calendar page. Do not make up due dates or assignments.\n\nSchedule data:\n\n' +
+    scheduleContext
+  const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
+    { role: 'system', content: systemContent },
+    ...messageHistory.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+  ]
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages,
+    temperature: 0.3,
+    max_tokens: 500,
+  })
+  const reply = response.choices[0]?.message?.content?.trim()
+  return reply ?? "I couldn't generate a reply. Please try again."
+}
+
 export interface StudyPlanBlock {
   date: string
   title: string
