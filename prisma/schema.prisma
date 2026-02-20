@@ -54,6 +54,7 @@ model User {
   uploads        Upload[]
   classShares     ClassShare[]
   classColors     UserClassColor[]
+  digestSents     DigestSent[]
 }
 
 model UserClassColor {
@@ -182,4 +183,15 @@ model Reminder {
   updatedAt    DateTime @updatedAt
   task         Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DigestSent {
+  id         String   @id @default(cuid())
+  userId     String
+  weekStart  DateTime
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekStart])
+  @@index([userId])
 }

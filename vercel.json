@@ -1,13 +1,7 @@
 {
   "crons": [
-    {
-      "path": "/api/reminders/run",
-      "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/calendar/sync-all",
-      "schedule": "30 7 * * *"
-    }
+    { "path": "/api/reminders/run", "schedule": "0 8 * * *" },
+    { "path": "/api/calendar/sync-all", "schedule": "30 7 * * *" },
+    { "path": "/api/digest/weekly", "schedule": "0 9 * * 1" }
   ]
 }
-

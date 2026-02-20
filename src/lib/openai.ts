@@ -183,37 +183,88 @@ function normalizeTimeString(value: string | undefined): string | undefined {
   return undefined
 }
 
+export interface StudyPlanBlock {
+  date: string
+  title: string
+  durationMinutes: number
+}
+
 export async function generateStudyPlan(tasks: ExtractedTask[]): Promise<string> {
+  const result = await generateStudyPlanWithBlocks(tasks)
+  return result.plan
+}
+
+export async function generateStudyPlanWithBlocks(
+  tasks: ExtractedTask[]
+): Promise<{ plan: string; blocks: StudyPlanBlock[] }> {
   try {
     if (!openai) {
       throw new Error('OpenAI API key not configured')
     }
 
-    const basePrompt: string = "You are an AI study planner. Given the following academic tasks, create a personalized study plan."
-    const tasksJson: string = JSON.stringify(tasks, null, 2)
-    const requirements: string = "Create a study plan that: 1. Prioritizes tasks by due date and importance, 2. Suggests realistic time blocks for studying, 3. Includes buffer time for unexpected delays, 4. Considers workload distribution, 5. Provides specific study strategies for each task type. Return a detailed study plan as a structured text response."
+    const basePrompt =
+      "You are an AI study planner. Given the following academic tasks, create a personalized study plan."
+    const tasksJson = JSON.stringify(tasks, null, 2)
+    const requirements = `Create a study plan that: 1. Prioritizes tasks by due date and importance, 2. Suggests realistic time blocks for studying, 3. Includes buffer time for unexpected delays, 4. Considers workload distribution, 5. Provides specific study strategies for each task type.
+
+Return your response in two parts:
+1. First, the full study plan as structured text (headings, bullets, clear advice).
+2. Then on a new line write exactly: ---BLOCKS---
+3. Then a JSON array of 5-12 study blocks that can be added to a calendar. Each block must have: "date" (YYYY-MM-DD, use dates from today through the next 14 days), "title" (short string, e.g. "Review Chapter 5"), "durationMinutes" (number, e.g. 60). No other text after the JSON array.`
 
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: "You are an expert academic advisor who creates personalized study plans."
+          content:
+            "You are an expert academic advisor who creates personalized study plans. When outputting JSON, output only valid JSON with no markdown code fence.",
         },
         {
           role: "user",
-          content: basePrompt + "\n\nTasks:\n" + tasksJson + "\n\n" + requirements
-        }
+          content: `${basePrompt}\n\nTasks:\n${tasksJson}\n\n${requirements}`,
+        },
       ],
       temperature: 0.3,
-      max_tokens: 1500,
+      max_tokens: 2000,
     })
 
-    return response.choices[0]?.message?.content || 'Study plan generation failed'
+    const raw = response.choices[0]?.message?.content || "Study plan generation failed"
+    const blocksMarker = "---BLOCKS---"
+    const blocksIndex = raw.indexOf(blocksMarker)
+    let plan = raw
+    let blocks: StudyPlanBlock[] = []
 
+    if (blocksIndex !== -1) {
+      plan = raw.slice(0, blocksIndex).trim()
+      const jsonPart = raw.slice(blocksIndex + blocksMarker.length).trim()
+      try {
+        const parsed = parseJsonFromModel(jsonPart)
+        if (Array.isArray(parsed)) {
+          blocks = parsed
+            .filter(
+              (b: unknown): b is StudyPlanBlock =>
+                typeof b === "object" &&
+                b !== null &&
+                typeof (b as StudyPlanBlock).date === "string" &&
+                typeof (b as StudyPlanBlock).title === "string" &&
+                typeof (b as StudyPlanBlock).durationMinutes === "number"
+            )
+            .map((b) => ({
+              date: String(b.date).slice(0, 10),
+              title: String(b.title).slice(0, 200),
+              durationMinutes: Math.max(15, Math.min(480, Number(b.durationMinutes) || 60)),
+            }))
+        }
+      } catch {
+        // ignore parse errors; blocks stay []
+      }
+    }
+
+    return { plan, blocks }
   } catch (error) {
-    console.error('Error generating study plan:', error)
-    throw new Error('Failed to generate study plan')
+    console.error("Error generating study plan:", error)
+    throw new Error("Failed to generate study plan")
   }
 }
 

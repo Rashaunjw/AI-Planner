@@ -1,6 +1,6 @@
 "use client"
 
-import { GraduationCap, Upload, LayoutDashboard, ListTodo, Calendar, Settings, LogOut } from "lucide-react"
+import { GraduationCap, Upload, LayoutDashboard, ListTodo, Calendar, Settings, LogOut, Brain } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
@@ -10,6 +10,7 @@ import { PwaInstallWalkthroughTrigger } from "@/components/pwa-install-walkthrou
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/plan", label: "Plan", icon: Brain },
   { href: "/tasks", label: "Tasks", icon: ListTodo },
   { href: "/calendar", label: "Calendar", icon: Calendar },
 ]

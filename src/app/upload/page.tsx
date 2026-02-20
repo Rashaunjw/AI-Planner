@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Upload, FileText, CheckCircle, GraduationCap, Briefcase, Trophy, Users, Link as LinkIcon } from "lucide-react"
+import { Upload, FileText, CheckCircle, GraduationCap, Briefcase, Trophy, Users, Link as LinkIcon, LayoutDashboard, Brain, ListTodo } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -134,9 +134,6 @@ export default function UploadPage() {
 
       if (response.ok) {
         setExtractedCount(responseBody?.taskCount ?? null)
-        setTimeout(() => {
-          window.location.href = "/tasks"
-        }, 3000)
       } else if (response.status === 403 && responseBody?.upgrade) {
         setUploaded(false)
         toast.error(responseBody?.message || "Upload limit reached. Upgrade to Pro for unlimited uploads.", {
@@ -178,31 +175,58 @@ export default function UploadPage() {
                     assignment{extractedCount !== 1 ? "s" : ""} extracted
                   </p>
                 </div>
-                <p className="text-sm text-gray-500 mb-1">
+                <p className="text-sm text-gray-500 mb-4">
                   Your assignments are ready to review.
                 </p>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={() => router.push("/dashboard")}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white gap-2"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    View on Dashboard
+                  </Button>
+                  <Button
+                    onClick={() => router.push("/plan")}
+                    variant="outline"
+                    className="w-full gap-2"
+                  >
+                    <Brain className="h-4 w-4" />
+                    Generate AI Study Plan
+                  </Button>
+                  <Button
+                    onClick={() => router.push("/tasks")}
+                    variant="outline"
+                    className="w-full gap-2"
+                  >
+                    <ListTodo className="h-4 w-4" />
+                    View assignments
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-400 mt-4">
+                  Tip: Add your work schedule or practice calendar next so PlanEra is your single place for deadlines.
+                </p>
+              </>
+            ) : stillExtracting ? (
+              <>
+                <p className="text-gray-500 my-4 text-sm">
+                  We&apos;re extracting your assignments and/or deadlines. This usually takes a moment.
+                </p>
+                <div className="flex items-center justify-center gap-2 mt-4 text-sm text-gray-400">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
+                  Extracting...
+                </div>
               </>
             ) : (
-              <p className="text-gray-500 my-4 text-sm">
-                {extractedCount === 0
-                  ? "No tasks were detected. You can add assignments manually."
-                  : "We're extracting your assignments and/or deadlines. This usually takes a moment."}
-              </p>
+              <>
+                <p className="text-gray-500 my-4 text-sm">
+                  No tasks were detected. You can add assignments manually.
+                </p>
+                <Button onClick={() => router.push("/tasks")} variant="outline" className="mt-2">
+                  Go to assignments
+                </Button>
+              </>
             )}
-
-            <div className="flex items-center justify-center gap-2 mt-4 text-sm text-gray-400">
-              {stillExtracting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
-                  Extracting your assignments...
-                </>
-              ) : (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
-                  Redirecting to assignments...
-                </>
-              )}
-            </div>
           </div>
         </div>
       </div>
