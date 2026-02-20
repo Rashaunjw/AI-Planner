@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Calendar, FileText, GraduationCap, BookOpen, CheckCircle, Clock, Zap, Shield, Star, Smartphone, Monitor } from "lucide-react"
+import { ArrowRight, Calendar, FileText, GraduationCap, BookOpen, CheckCircle, Clock, Zap, Shield, Star, Smartphone, Monitor, HelpCircle } from "lucide-react"
 import Link from "next/link"
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
+import FaqSection from "@/components/faq-section"
 
 export default async function Home() {
   const session = await getServerSession(authOptions)
@@ -273,6 +274,52 @@ export default async function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ─────────────────────────────────────────────────── */}
+      <section className="py-20 px-4 bg-white">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center justify-center gap-2 mb-10">
+            <HelpCircle className="h-8 w-8 text-indigo-600" />
+            <h2 className="text-3xl font-bold text-gray-900">
+              Common questions
+            </h2>
+          </div>
+          <FaqSection
+            items={[
+              {
+                question: "What is PlanEra?",
+                answer:
+                  "PlanEra is an AI-powered study planner for students. Upload your syllabus, work schedule, or practice calendar and our AI extracts every deadline and assignment so you see everything in one place—dashboard, calendar view, and email reminders. No more manual copying into a planner.",
+              },
+              {
+                question: "What can I upload?",
+                answer:
+                  "You can upload PDFs, Word documents (.doc, .docx), or paste plain text from a course page. The AI reads your content and pulls out assignments, exams, projects, and due dates. It works even when syllabi are messy or unstructured. File size limit is 10MB.",
+              },
+              {
+                question: "How does the AI work?",
+                answer:
+                  "When you upload a document or paste text, our AI analyzes it and extracts every time-bound item: assignments, exams, projects, and events. It infers class names, due dates, and grade weights when possible. The result is a structured task list and calendar. Your data is not used to train AI models.",
+              },
+              {
+                question: "How do I get started?",
+                answer:
+                  "Create a free account, then go to Upload and add your syllabus (PDF or Word) or paste text. Choose the context (e.g. class, work, practice). In under a minute you'll see extracted tasks on your Dashboard and Calendar. You can connect Google Calendar and turn on email reminders in Settings.",
+              },
+              {
+                question: "Is my data private?",
+                answer:
+                  "Yes. Your uploads and tasks are stored securely and tied to your account. We don't sell your data or use it to train AI models. Email reminders are sent only to you. For full details, see our Privacy Policy.",
+              },
+              {
+                question: "Do I need to pay?",
+                answer:
+                  "PlanEra is free to use. The free tier includes syllabus uploads (with a monthly limit), AI extraction, dashboard and calendar, email reminders, and calendar sync. A Pro tier with unlimited uploads and extra features may be offered later.",
+              },
+            ]}
+          />
         </div>
       </section>
 
