@@ -9,6 +9,8 @@ export interface ExtractedTask {
   title: string
   description?: string
   dueDate?: string
+  /** When the syllabus states a due time (e.g. "due 11:59 PM"), 24-hour HH:mm */
+  dueTime?: string
   priority: 'low' | 'medium' | 'high'
   category: string
   estimatedDuration?: number
@@ -16,10 +18,15 @@ export interface ExtractedTask {
   className?: string
 }
 
+export interface ExtractTasksResult {
+  tasks: ExtractedTask[]
+  classDefaultTimes: Record<string, string>
+}
+
 export async function extractTasksFromContent(
   content: string,
   context?: string
-): Promise<ExtractedTask[]> {
+): Promise<ExtractTasksResult> {
   const currentYear = new Date().getFullYear()
   const detectedGroupName = extractGroupNameFromContent(content, context)
 
@@ -28,16 +35,22 @@ export async function extractTasksFromContent(
       throw new Error('OpenAI API key not configured')
     }
 
-    const basePrompt: string = "You are an AI assistant that extracts tasks and deadlines from syllabus or schedule content. Analyze the following text and extract all assignments, exams, projects, meetings, practices, and other tasks. For each task, provide: title (clear, concise title), description (brief description), dueDate (YYYY-MM-DD format), priority (low/medium/high), category (assignment/exam/project/quiz/homework/meeting/practice), estimatedDuration (minutes, optional), weightPercent (number 0-100 if a grading weight is specified), className (course, team, organization, or project name, e.g., \"Biology 101\" or \"Alpha Phi\" or \"Lakers\"). If the syllabus or schedule uses a dated schedule table (e.g., a date column with items on the same row), treat the row's date as the dueDate for each task listed in that row, even if it doesn't say 'due'. If a date is given as month/day without a year, infer the year from the syllabus or schedule; if no year is present, use the current year (" + currentYear + "). Return as JSON array. If no date is mentioned anywhere for a task, omit dueDate. If no weight is mentioned, omit weightPercent. If a group name appears near the top of the document, use it for className on all tasks."
+    const basePrompt: string =
+      "You are an AI assistant that extracts tasks and deadlines from syllabus or schedule content. Analyze the following text and extract all assignments, exams, projects, meetings, practices, and other tasks. For each task, provide: title (clear, concise title), description (brief description), dueDate (YYYY-MM-DD format), priority (low/medium/high), category (assignment/exam/project/quiz/homework/meeting/practice), estimatedDuration (minutes, optional), weightPercent (number 0-100 if a grading weight is specified), className (course, team, organization, or project name). If the syllabus or schedule uses a dated schedule table, treat the row's date as the dueDate for each task listed in that row. If a date is given as month/day without a year, use the current year (" +
+      currentYear +
+      "). If the syllabus explicitly states a due time for a specific assignment (e.g. 'due by 11:59 PM', 'due at 2:00 PM'), add dueTime for that task in 24-hour format HH:mm (e.g. '23:59', '14:00'). Do not guess due times; only add dueTime when clearly stated. If the syllabus states when the class meets (e.g. 'Class meets MWF 2:00-2:50 PM', 'Section at 10:00 AM'), add a classDefaultTimes object mapping each className to that meeting time in 24-hour HH:mm. Use class meeting time only as the default for when assignments are due in that class when no other time is stated. Return JSON: { \"tasks\": [ ... ], \"classDefaultTimes\": { \"ClassName\": \"HH:mm\", ... } }. If no class times appear, use classDefaultTimes: {}. If no date is mentioned for a task, omit dueDate. If a group name appears near the top, use it for className on all tasks."
 
-    const exampleFormat: string = "Example format: [{\"title\": \"Midterm Exam\", \"description\": \"Comprehensive exam covering chapters 1-8\", \"dueDate\": \"2024-03-15\", \"priority\": \"high\", \"category\": \"exam\", \"estimatedDuration\": 120, \"weightPercent\": 25, \"className\": \"Biology 101\"}]. If the text says '1/14 Problem Set 1', output dueDate as \"" + currentYear + "-01-14\"."
+    const exampleFormat: string =
+      "Example: { \"tasks\": [{\"title\": \"Midterm Exam\", \"dueDate\": \"2024-03-15\", \"dueTime\": \"14:00\", \"priority\": \"high\", \"category\": \"exam\", \"className\": \"Biology 101\"}], \"classDefaultTimes\": { \"Biology 101\": \"14:00\" } }. For '1/14 Problem Set 1' with no time, use dueDate \"" +
+      currentYear +
+      '-01-14" and omit dueTime so the class default time can apply.'
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "You are an expert at parsing academic syllabi and extracting structured task information."
+          content: "You are an expert at parsing academic syllabi and extracting structured task information. Return only valid JSON."
         },
         {
           role: "user",
@@ -60,33 +73,71 @@ export async function extractTasksFromContent(
       throw new Error('No response from OpenAI')
     }
 
-    // Parse the JSON response (handle code fences or extra text)
-    const tasks = parseJsonFromModel(responseContent) as ExtractedTask[]
+    const parsed = parseJsonFromModel(responseContent)
+    let tasks: ExtractedTask[]
+    let classDefaultTimes: Record<string, string> = {}
 
-    // Validate and clean the tasks
-    const cleaned = tasks.map(task => ({
+    if (Array.isArray(parsed)) {
+      tasks = parsed as ExtractedTask[]
+    } else if (
+      parsed &&
+      typeof parsed === 'object' &&
+      'tasks' in parsed &&
+      Array.isArray((parsed as { tasks: unknown }).tasks)
+    ) {
+      const obj = parsed as { tasks: ExtractedTask[]; classDefaultTimes?: Record<string, string> }
+      tasks = obj.tasks
+      if (obj.classDefaultTimes && typeof obj.classDefaultTimes === 'object') {
+        classDefaultTimes = obj.classDefaultTimes
+      }
+    } else {
+      tasks = []
+    }
+
+    const cleaned = tasks.map((task) => ({
       ...task,
       title: task.title?.trim() || 'Untitled Task',
       description: task.description?.trim(),
       priority: ['low', 'medium', 'high'].includes(task.priority) ? task.priority : 'medium',
       category: task.category?.trim() || 'assignment',
       weightPercent: normalizeWeightPercent(task.weightPercent),
-      className: task.className?.trim() || detectedGroupName || undefined
+      className: task.className?.trim() || detectedGroupName || undefined,
+      dueTime: normalizeTimeString(task.dueTime),
     }))
 
     if (cleaned.length === 0) {
-      return fallbackExtractTasks(content, currentYear, detectedGroupName)
+      const fallback = fallbackExtractTasks(content, currentYear, detectedGroupName)
+      return { tasks: fallback, classDefaultTimes: {} }
     }
 
-    return cleaned
+    const normalizedDefaults: Record<string, string> = {}
+    for (const [cls, time] of Object.entries(classDefaultTimes)) {
+      const t = normalizeTimeString(time)
+      if (t) normalizedDefaults[cls.trim()] = t
+    }
+
+    return { tasks: cleaned, classDefaultTimes: normalizedDefaults }
   } catch (error) {
     console.error('Error extracting tasks:', error)
     const fallback = fallbackExtractTasks(content, currentYear, detectedGroupName)
     if (fallback.length > 0) {
-      return fallback
+      return { tasks: fallback, classDefaultTimes: {} }
     }
     throw new Error('Failed to extract tasks from content')
   }
+}
+
+/** Normalize time to HH:mm 24-hour, or return undefined if invalid */
+function normalizeTimeString(value: string | undefined): string | undefined {
+  if (!value || typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/)
+  if (match) {
+    const h = Math.min(23, Math.max(0, parseInt(match[1], 10)))
+    const m = Math.min(59, Math.max(0, parseInt(match[2], 10)))
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  }
+  return undefined
 }
 
 export async function generateStudyPlan(tasks: ExtractedTask[]): Promise<string> {
@@ -126,17 +177,18 @@ export async function generateStudyPlan(tasks: ExtractedTask[]): Promise<string>
 function parseJsonFromModel(raw: string): unknown {
   const trimmed = raw.trim()
   const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i)
-  if (fencedMatch?.[1]) {
-    return JSON.parse(fencedMatch[1].trim())
-  }
+  const content = fencedMatch?.[1]?.trim() ?? trimmed
 
-  const arrayStart = trimmed.indexOf('[')
-  const arrayEnd = trimmed.lastIndexOf(']')
+  if (content.startsWith('{')) {
+    const end = content.lastIndexOf('}')
+    if (end > 0) return JSON.parse(content.slice(0, end + 1))
+  }
+  const arrayStart = content.indexOf('[')
+  const arrayEnd = content.lastIndexOf(']')
   if (arrayStart !== -1 && arrayEnd !== -1 && arrayEnd > arrayStart) {
-    return JSON.parse(trimmed.slice(arrayStart, arrayEnd + 1))
+    return JSON.parse(content.slice(arrayStart, arrayEnd + 1))
   }
-
-  return JSON.parse(trimmed)
+  return JSON.parse(content)
 }
 
 function fallbackExtractTasks(

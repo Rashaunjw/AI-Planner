@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { extractTasksFromContent } from '@/lib/openai'
-import { parseDateInput } from '@/lib/date'
+import { parseDateWithTime } from '@/lib/date'
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
 
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
 
     // Extract tasks using AI
     try {
-      const extractedTasks = await extractTasksFromContent(
+      const { tasks: extractedTasks, classDefaultTimes } = await extractTasksFromContent(
         content,
         typeof context === 'string' ? context : undefined
       )
@@ -144,7 +144,13 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      // Create task records even if required fields are missing
+      const getDefaultTime = (task: (typeof extractedTasks)[0]) => {
+        if (task.dueTime) return task.dueTime
+        const cn = task.className?.trim()
+        if (cn && classDefaultTimes[cn]) return classDefaultTimes[cn]
+        return '12:00'
+      }
+
       const tasks = await Promise.all(
         extractedTasks.map((task) =>
           prisma.task.create({
@@ -153,7 +159,9 @@ export async function POST(request: NextRequest) {
               uploadId: upload.id,
               title: task.title?.trim() || 'Untitled task',
               description: task.description,
-              dueDate: task.dueDate ? parseDateInput(task.dueDate) : null,
+              dueDate: task.dueDate
+                ? parseDateWithTime(task.dueDate, getDefaultTime(task))
+                : null,
               priority: task.priority || 'medium',
               category: task.category,
               estimatedDuration: task.estimatedDuration,
