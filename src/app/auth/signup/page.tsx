@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { GraduationCap, Upload, Brain, BarChart2, Clock } from "lucide-react"
 import Link from "next/link"
 import { getServerSession } from "next-auth"
@@ -113,7 +114,9 @@ export default async function SignUp() {
               </div>
             </div>
 
-            <GoogleSignInButton />
+            <Suspense fallback={<div className="h-12 rounded-md bg-gray-100 animate-pulse" />}>
+              <GoogleSignInButton />
+            </Suspense>
 
             <div className="mt-5 text-center">
               <p className="text-sm text-gray-500">

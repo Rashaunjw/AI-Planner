@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { GraduationCap, Zap, Calendar, CheckCircle, Bell } from "lucide-react"
 import Link from "next/link"
 import { getServerSession } from "next-auth"
@@ -95,14 +96,16 @@ export default async function SignIn() {
             </Link>
           </div>
 
-          {/* Form card */}
+          {/* Form card (Suspense required: forms use useSearchParams) */}
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-gray-900 mb-1">Welcome back</h2>
               <p className="text-gray-500 text-sm">Sign in to your account to continue</p>
             </div>
 
-            <CredentialsSignInForm />
+            <Suspense fallback={<div className="h-10 rounded-md bg-gray-100 animate-pulse" />}>
+              <CredentialsSignInForm />
+            </Suspense>
 
             <div className="text-right mt-2">
               <Link
@@ -122,7 +125,9 @@ export default async function SignIn() {
               </div>
             </div>
 
-            <GoogleSignInButton />
+            <Suspense fallback={<div className="h-12 rounded-md bg-gray-100 animate-pulse" />}>
+              <GoogleSignInButton />
+            </Suspense>
 
             <div className="mt-5 text-center">
               <p className="text-sm text-gray-500">

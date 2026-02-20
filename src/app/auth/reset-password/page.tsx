@@ -3,7 +3,7 @@ import ResetPasswordForm from "@/components/auth/reset-password-form"
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-500">Loading...</div>}>
       <ResetPasswordForm />
     </Suspense>
   )
