@@ -1044,9 +1044,12 @@ export default function TasksPage() {
                                         setEditForm({ ...editForm, className: e.target.value })
                                       }
                                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                                      placeholder="Class name"
+                                      placeholder="e.g., Biology 101"
                                       required
                                     />
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                      Fix the class name here if the syllabus had it wrong.
+                                    </p>
                                   </div>
                                   <div>
                                     <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -1144,6 +1147,15 @@ export default function TasksPage() {
                                     >
                                       {task.title}
                                     </h3>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleEdit(task)}
+                                      title="Change class name"
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border shrink-0 ${color.badge} border-transparent hover:ring-2 hover:ring-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-400`}
+                                    >
+                                      {task.className?.trim() || "No class"}
+                                      <Edit className="h-3 w-3 opacity-70" />
+                                    </button>
                                     {task.category && (
                                       <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200 shrink-0">
                                         {task.category}
