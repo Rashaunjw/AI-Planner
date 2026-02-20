@@ -65,6 +65,14 @@ export async function fetchUrlToText(rawUrl: string): Promise<string> {
     clearTimeout(timeoutId)
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        const isGoogleDocs = url.hostname.toLowerCase().includes('google.com')
+        throw new Error(
+          isGoogleDocs
+            ? "This Google Doc isn't viewable by link. Share it so 'Anyone with the link' can view, or paste the document text above instead."
+            : "This link requires sign-in and can't be read. Use a public page or paste the text above instead."
+        )
+      }
       throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`)
     }
 

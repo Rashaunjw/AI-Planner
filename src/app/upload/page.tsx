@@ -391,7 +391,7 @@ export default function UploadPage() {
             Or paste a link
           </label>
           <p className="text-xs text-gray-500 mb-2">
-            Course page, shared doc, or any page with syllabus/schedule text. We’ll fetch the page and extract tasks.
+            Course page, shared doc, or any page with syllabus/schedule text. We’ll fetch the page and extract tasks. For Google Docs, share so &quot;Anyone with the link&quot; can view.
           </p>
           <div className="flex gap-2">
             <input
