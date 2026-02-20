@@ -15,6 +15,8 @@ import {
   Search,
   SlidersHorizontal,
   Share2,
+  Check,
+  X,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -153,6 +155,9 @@ export default function TasksPage() {
   const [showShareDropdown, setShowShareDropdown] = useState(false)
   const [sharingClass, setSharingClass] = useState<string | null>(null)
   const [classColors, setClassColors] = useState<Record<string, string>>({})
+  const [editingClassName, setEditingClassName] = useState<string | null>(null)
+  const [editingClassNameValue, setEditingClassNameValue] = useState("")
+  const [renamingClass, setRenamingClass] = useState(false)
 
   const fetchTasks = async () => {
     try {
@@ -396,6 +401,54 @@ export default function TasksPage() {
       toast.error("Failed to clear assignments.")
     } finally {
       setDeletingAll(false)
+    }
+  }
+
+  const handleStartRenameClass = (name: string) => {
+    setEditingClassName(name)
+    setEditingClassNameValue(name)
+  }
+
+  const handleCancelRenameClass = () => {
+    setEditingClassName(null)
+    setEditingClassNameValue("")
+  }
+
+  const handleSaveRenameClass = async () => {
+    const newName = editingClassNameValue.trim()
+    if (!editingClassName || !newName || newName === editingClassName) {
+      handleCancelRenameClass()
+      return
+    }
+    setRenamingClass(true)
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          oldClassName: editingClassName,
+          newClassName: newName,
+        }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to rename class.")
+      }
+      const valueForState = newName === "No Class" ? null : newName
+      setTasks((prev) =>
+        prev.map((t) =>
+          (t.className?.trim() || "No Class") === editingClassName
+            ? { ...t, className: valueForState }
+            : t
+        )
+      )
+      if (filterClass === editingClassName) setFilterClass(newName === "No Class" ? "No Class" : newName)
+      toast.success(`Renamed to "${newName}" everywhere.`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to rename class.")
+    } finally {
+      setRenamingClass(false)
+      handleCancelRenameClass()
     }
   }
 
@@ -873,7 +926,7 @@ export default function TasksPage() {
 
             {/* Class Filter Pills */}
             {classNames.length > 1 && (
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2 items-center">
                 <button
                   onClick={() => setFilterClass(null)}
                   className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors ${filterClass === null
@@ -886,17 +939,75 @@ export default function TasksPage() {
                 {classNames.map((name) => {
                   const color = getClassColor(name === "No Class" ? null : name)
                   const isActive = filterClass === name
+                  const isEditing = editingClassName === name
                   return (
-                    <button
+                    <div
                       key={name}
-                      onClick={() => setFilterClass(isActive ? null : name)}
-                      className={`text-xs font-medium px-3 py-1 rounded-full border transition-colors ${isActive
-                        ? color.badge + " border-transparent"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
+                      className={`inline-flex items-center gap-1 rounded-full border transition-colors ${isEditing
+                        ? "bg-white border-gray-300 pl-2 pr-1 py-0.5"
+                        : isActive
+                          ? color.badge + " border-transparent"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
                         }`}
                     >
-                      {name}
-                    </button>
+                      {isEditing ? (
+                        <>
+                          <input
+                            type="text"
+                            value={editingClassNameValue}
+                            onChange={(e) => setEditingClassNameValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveRenameClass()
+                              if (e.key === "Escape") handleCancelRenameClass()
+                            }}
+                            className="text-xs font-medium w-24 sm:w-28 bg-transparent border-0 py-1 focus:outline-none focus:ring-0 text-gray-900"
+                            placeholder="Class name"
+                            autoFocus
+                            disabled={renamingClass}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleSaveRenameClass}
+                            disabled={renamingClass || !editingClassNameValue.trim()}
+                            className="p-1 rounded-full text-green-600 hover:bg-green-100"
+                            aria-label="Save"
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelRenameClass}
+                            disabled={renamingClass}
+                            className="p-1 rounded-full text-gray-400 hover:bg-gray-100"
+                            aria-label="Cancel"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setFilterClass(isActive ? null : name)}
+                            className={`text-xs font-medium px-2 py-1 rounded-full ${isActive ? "text-inherit" : "hover:bg-gray-100/50"}`}
+                          >
+                            {name}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleStartRenameClass(name)
+                            }}
+                            className="p-0.5 rounded-full text-gray-500 hover:bg-black/10 hover:text-indigo-600"
+                            aria-label="Rename class"
+                            title="Rename this class everywhere"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   )
                 })}
               </div>
