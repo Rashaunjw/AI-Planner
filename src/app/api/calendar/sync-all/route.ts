@@ -71,12 +71,20 @@ export async function POST(request: NextRequest) {
         await refreshAccessToken()
       }
 
-      const tasks = await prisma.task.findMany({
-        where: {
-          userId: user.id,
-          dueDate: { not: null },
-        },
-        orderBy: { dueDate: "asc" },
+      const [tasks, classColors] = await Promise.all([
+        prisma.task.findMany({
+          where: { userId: user.id, dueDate: { not: null } },
+          orderBy: { dueDate: "asc" },
+        }),
+        prisma.userClassColor.findMany({
+          where: { userId: user.id },
+          select: { className: true, colorId: true },
+        }),
+      ])
+
+      const colorByClass: Record<string, string> = {}
+      classColors.forEach((c) => {
+        colorByClass[c.className] = c.colorId
       })
 
       for (const task of tasks) {
@@ -89,11 +97,14 @@ export async function POST(request: NextRequest) {
           ? `[${task.className.trim()}] ${task.title}`
           : task.title
 
+        const classKey = task.className?.trim() ?? ""
+        const colorId = classKey ? colorByClass[classKey] : undefined
         const payload = {
           summary,
           description: task.description || undefined,
           start: { date: formatDate(startDate) },
           end: { date: formatDate(endDate) },
+          ...(colorId && { colorId }),
         }
 
         let eventResponse = await fetch(GOOGLE_EVENTS_URL, {

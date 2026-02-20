@@ -2,13 +2,27 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Save, Bell, Calendar, User, Link2, Copy, Check, ExternalLink, Monitor, Smartphone, Mail, Sparkles } from "lucide-react"
+import { Save, Bell, Calendar, User, Link2, Copy, Check, ExternalLink, Monitor, Smartphone, Mail, Sparkles, Palette } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
 import AppNav from "@/components/app-nav"
 import LoadingScreen from "@/components/loading-screen"
+
+const GOOGLE_CALENDAR_COLORS = [
+  { id: "1", hex: "#A4BDFC" },
+  { id: "2", hex: "#7AE7BF" },
+  { id: "3", hex: "#DBADFF" },
+  { id: "4", hex: "#FF887C" },
+  { id: "5", hex: "#FBD75B" },
+  { id: "6", hex: "#FFB878" },
+  { id: "7", hex: "#46D6DB" },
+  { id: "8", hex: "#E1E1E1" },
+  { id: "9", hex: "#5484ED" },
+  { id: "10", hex: "#51B749" },
+  { id: "11", hex: "#DC2127" },
+]
 
 export default function SettingsPage() {
   const { data: session, status } = useSession()
@@ -25,6 +39,9 @@ export default function SettingsPage() {
   const [loadingSettings, setLoadingSettings] = useState(true)
   const [uploads, setUploads] = useState<Array<{ id: string; fileName: string; createdAt: string }>>([])
   const [icsCopied, setIcsCopied] = useState(false)
+  const [classColors, setClassColors] = useState<Record<string, string>>({})
+  const [classNames, setClassNames] = useState<string[]>([])
+  const [savingColor, setSavingColor] = useState<string | null>(null)
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -55,6 +72,12 @@ export default function SettingsPage() {
           if (Array.isArray(data.uploads)) {
             setUploads(data.uploads)
           }
+        }
+        const colorsRes = await fetch("/api/settings/class-colors")
+        if (colorsRes.ok) {
+          const colorsData = await colorsRes.json()
+          if (Array.isArray(colorsData.classes)) setClassNames(colorsData.classes)
+          if (colorsData.classColors && typeof colorsData.classColors === "object") setClassColors(colorsData.classColors)
         }
       } catch (error) {
         console.error("Error fetching settings:", error)
@@ -345,6 +368,64 @@ export default function SettingsPage() {
                 </Button>
               </div>
             </div>
+          </div>
+
+          {/* Class colors for Google Calendar */}
+          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
+            <div className="flex items-center mb-5">
+              <div className="bg-indigo-100 p-2 rounded-lg mr-3">
+                <Palette className="h-5 w-5 text-indigo-600" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">Class colors (Google Calendar)</h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Choose a color per class. It will appear on synced events in Google Calendar.
+                </p>
+              </div>
+            </div>
+            {classNames.length === 0 ? (
+              <p className="text-sm text-gray-500">Add assignments with a class name to set colors here.</p>
+            ) : (
+              <ul className="space-y-4">
+                {classNames.map((className) => (
+                  <li key={className} className="flex flex-wrap items-center gap-3">
+                    <span className="text-sm font-medium text-gray-700 min-w-[120px]">{className}</span>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {GOOGLE_CALENDAR_COLORS.map(({ id, hex }) => (
+                        <button
+                          key={id}
+                          type="button"
+                          disabled={savingColor === className}
+                          onClick={async () => {
+                            setSavingColor(className)
+                            try {
+                              const res = await fetch("/api/settings/class-colors", {
+                                method: "PUT",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ className, colorId: id }),
+                              })
+                              if (res.ok) {
+                                setClassColors((prev) => ({ ...prev, [className]: id }))
+                                toast.success(`Color set for ${className}`)
+                              } else toast.error("Failed to save color")
+                            } finally {
+                              setSavingColor(null)
+                            }
+                          }}
+                          className={`w-8 h-8 rounded-full border-2 transition-all ${
+                            classColors[className] === id
+                              ? "border-gray-900 ring-2 ring-offset-2 ring-indigo-400"
+                              : "border-gray-200 hover:border-gray-400"
+                          }`}
+                          style={{ backgroundColor: hex }}
+                          title={`Color ${id}`}
+                        />
+                      ))}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* ICS Calendar Feed */}

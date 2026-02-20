@@ -104,7 +104,8 @@ export default function UploadPage() {
     }
 
     setUploading(true)
-    setUploaded(false)
+    setUploaded(true)
+    setExtractedCount(null)
 
     try {
       const formData = new FormData()
@@ -124,19 +125,21 @@ export default function UploadPage() {
 
       if (response.ok) {
         setExtractedCount(responseBody?.taskCount ?? null)
-        setUploaded(true)
         setTimeout(() => {
           window.location.href = "/tasks"
         }, 3000)
       } else if (response.status === 403 && responseBody?.upgrade) {
+        setUploaded(false)
         toast.error(responseBody?.message || "Upload limit reached. Upgrade to Pro for unlimited uploads.", {
           action: { label: "View plans", onClick: () => router.push("/pricing") },
         })
       } else {
+        setUploaded(false)
         const message = responseBody?.error || `Upload failed with status ${response.status}`
         toast.error(message)
       }
     } catch (error) {
+      setUploaded(false)
       const message = error instanceof Error ? error.message : "Upload failed"
       console.error("Upload error:", error)
       toast.error(message)
@@ -146,16 +149,16 @@ export default function UploadPage() {
   }
 
   if (uploaded) {
+    const stillExtracting = uploading && extractedCount === null
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50 flex items-center justify-center p-6">
         <div className="max-w-sm w-full text-center">
           <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 p-10">
-            {/* Animated checkmark */}
             <div className="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5">
               <CheckCircle className="h-10 w-10 text-green-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              {extractedCount === 0 ? "Upload Complete" : "Done! 🎉"}
+              {stillExtracting ? "Got it!" : extractedCount === 0 ? "Upload Complete" : "Done!"}
             </h1>
 
             {extractedCount !== null && extractedCount > 0 ? (
@@ -174,13 +177,22 @@ export default function UploadPage() {
               <p className="text-gray-500 my-4 text-sm">
                 {extractedCount === 0
                   ? "No tasks were detected. You can add assignments manually."
-                  : "AI is extracting your assignments and deadlines..."}
+                  : "We're extracting your assignments and deadlines. This usually takes a moment."}
               </p>
             )}
 
             <div className="flex items-center justify-center gap-2 mt-4 text-sm text-gray-400">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
-              Redirecting to assignments...
+              {stillExtracting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
+                  Extracting your assignments...
+                </>
+              ) : (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
+                  Redirecting to assignments...
+                </>
+              )}
             </div>
           </div>
         </div>

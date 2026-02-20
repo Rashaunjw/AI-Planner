@@ -105,6 +105,21 @@ const CLASS_COLOR_PALETTE = [
   },
 ]
 
+// Google Calendar colorId (1-11) -> CLASS_COLOR_PALETTE index for consistent in-app display
+const GOOGLE_COLOR_ID_TO_PALETTE_INDEX: Record<string, number> = {
+  "1": 0,
+  "2": 2,
+  "3": 1,
+  "4": 3,
+  "5": 4,
+  "6": 4,
+  "7": 5,
+  "8": 0,
+  "9": 6,
+  "10": 2,
+  "11": 3,
+}
+
 export default function TasksPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -137,13 +152,23 @@ export default function TasksPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed">("all")
   const [showShareDropdown, setShowShareDropdown] = useState(false)
   const [sharingClass, setSharingClass] = useState<string | null>(null)
+  const [classColors, setClassColors] = useState<Record<string, string>>({})
 
   const fetchTasks = async () => {
     try {
-      const response = await fetch("/api/tasks")
-      if (response.ok) {
-        const data = await response.json()
+      const [tasksRes, colorsRes] = await Promise.all([
+        fetch("/api/tasks"),
+        fetch("/api/settings/class-colors"),
+      ])
+      if (tasksRes.ok) {
+        const data = await tasksRes.json()
         setTasks(data.tasks || [])
+      }
+      if (colorsRes.ok) {
+        const colorsData = await colorsRes.json()
+        if (colorsData.classColors && typeof colorsData.classColors === "object") {
+          setClassColors(colorsData.classColors)
+        }
       }
     } catch (error) {
       console.error("Error fetching tasks:", error)
@@ -193,6 +218,11 @@ export default function TasksPage() {
 
   const getClassColor = (className?: string | null) => {
     const key = className?.trim() || ""
+    const savedColorId = classColors[key]
+    if (savedColorId && GOOGLE_COLOR_ID_TO_PALETTE_INDEX[savedColorId] !== undefined) {
+      const idx = GOOGLE_COLOR_ID_TO_PALETTE_INDEX[savedColorId]
+      return CLASS_COLOR_PALETTE[idx]
+    }
     const idx = classColorMap.get(key) ?? 0
     return CLASS_COLOR_PALETTE[idx]
   }
@@ -554,7 +584,7 @@ export default function TasksPage() {
                 </div>
                 <div className="bg-green-50 rounded-lg px-4 py-2">
                   <p className="text-2xl font-bold text-green-700">{completedAssignments}</p>
-                  <p className="text-xs text-green-500 font-medium">Submitted</p>
+                  <p className="text-xs text-green-500 font-medium">Completed</p>
                 </div>
               </div>
             )}

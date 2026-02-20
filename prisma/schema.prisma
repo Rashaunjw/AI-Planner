@@ -52,7 +52,20 @@ model User {
   sessions       Session[]
   tasks          Task[]
   uploads        Upload[]
-  classShares    ClassShare[]
+  classShares     ClassShare[]
+  classColors     UserClassColor[]
+}
+
+model UserClassColor {
+  id        String   @id @default(cuid())
+  userId    String
+  className String
+  colorId   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, className])
+  @@index([userId])
 }
 
 model ClassShare {
