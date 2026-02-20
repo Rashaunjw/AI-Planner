@@ -84,7 +84,9 @@ export default function EmailSignUpForm() {
 
             if (result?.error) {
                 const message =
-                    payload?.emailSent === false
+                    result.error === "EmailNotVerified"
+                        ? "Account created. Please verify your email to sign in (check your inbox for the link)."
+                        : payload?.emailSent === false
                         ? "Account created, but verification email could not be sent. Please sign in."
                         : "Account created. Please sign in to continue."
                 setStatusMessage(message)

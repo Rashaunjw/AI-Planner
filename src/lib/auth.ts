@@ -38,6 +38,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await prisma.user.findUnique({
           where: { email },
+          select: { id: true, email: true, name: true, passwordHash: true, emailVerified: true },
         })
 
         if (!user?.passwordHash) {
@@ -49,6 +50,11 @@ export const authOptions: NextAuthOptions = {
         if (!isValid) {
           console.warn("Credentials sign-in failed: invalid password.")
           return null
+        }
+
+        // Require email verification before first sign-in (credentials only; Google sets emailVerified)
+        if (!user.emailVerified) {
+          return { id: null, email: null, name: null, error: "EmailNotVerified" } as unknown as { id: string; email: string | null; name: string | null }
         }
 
         return {
@@ -74,6 +80,11 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
+      // Block sign-in when credentials authorize returned an error (e.g. email not verified)
+      const err = (user as { error?: string } | null)?.error
+      if (err) {
+        throw new Error(err)
+      }
       console.debug("NextAuth signIn callback:", {
         provider: account?.provider,
         hasUser: Boolean(user?.id),
