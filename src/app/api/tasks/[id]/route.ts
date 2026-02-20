@@ -94,6 +94,46 @@ export async function DELETE(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
 
+    // Remove from Google Calendar if this task had synced events
+    const calendarEvents = await prisma.calendarEvent.findMany({
+      where: { taskId: id, googleEventId: { not: null } },
+      include: { calendar: true },
+    })
+    if (calendarEvents.length > 0) {
+      const account = await prisma.account.findFirst({
+        where: { userId: session.user.id, provider: 'google' },
+      })
+      if (account?.access_token) {
+        let accessToken = account.access_token
+        const expiresAt = account.expires_at ? account.expires_at * 1000 : null
+        if (account.refresh_token && (!expiresAt || Date.now() > expiresAt - 60_000)) {
+          const refreshRes = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              client_id: process.env.GOOGLE_CLIENT_ID || '',
+              client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+              grant_type: 'refresh_token',
+              refresh_token: account.refresh_token,
+            }).toString(),
+          })
+          if (refreshRes.ok) {
+            const data = await refreshRes.json()
+            accessToken = data.access_token
+          }
+        }
+        const calendarId = (cal: { googleCalendarId: string | null }) => cal.googleCalendarId || 'primary'
+        for (const ev of calendarEvents) {
+          if (!ev.googleEventId) continue
+          const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId(ev.calendar))}/events/${encodeURIComponent(ev.googleEventId)}`
+          await fetch(url, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${accessToken}` },
+          })
+        }
+      }
+    }
+
     await prisma.task.delete({
       where: {
         id: id

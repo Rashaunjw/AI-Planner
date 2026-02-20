@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Plus, CalendarDays, CalendarRange, Calendar } from "lucide-react"
+import { Plus, CalendarDays, CalendarRange, Calendar, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -41,6 +41,8 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true)
   const [currentMonth, setCurrentMonth] = useState(() => new Date())
   const [syncing, setSyncing] = useState(false)
+  const [removing, setRemoving] = useState(false)
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [view, setView] = useState<CalendarView>("month")
 
@@ -219,6 +221,29 @@ export default function CalendarPage() {
     }
   }
 
+  const handleRemoveFromCalendar = async () => {
+    setShowRemoveConfirm(false)
+    setRemoving(true)
+    try {
+      const response = await fetch("/api/calendar/events", { method: "DELETE" })
+      const data = await response.json()
+      if (!response.ok) {
+        toast.error(data.error || "Failed to remove events from Google Calendar.")
+        return
+      }
+      if (data.deletedCount === 0) {
+        toast.info("No synced events to remove from Google Calendar.")
+      } else {
+        toast.success(`Removed ${data.deletedCount} event${data.deletedCount === 1 ? "" : "s"} from Google Calendar.`)
+      }
+    } catch (error) {
+      console.error("Remove from calendar error:", error)
+      toast.error("Failed to remove events from Google Calendar.")
+    } finally {
+      setRemoving(false)
+    }
+  }
+
   const todayKey = formatDateKey(new Date())
   // In day view, sidebar shows the focused day
   const effectiveSelectedDay = view === "day" ? formatDateKey(currentMonth) : selectedDay
@@ -251,8 +276,46 @@ export default function CalendarPage() {
             >
               {syncing ? "Syncing..." : "Sync to Google Calendar"}
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowRemoveConfirm(true)}
+              disabled={removing}
+              className="border-red-200 text-red-700 hover:bg-red-50"
+            >
+              {removing ? "Removing..." : "Remove from Google Calendar"}
+            </Button>
           </div>
         </div>
+
+        {/* Confirm remove from Google Calendar */}
+        {showRemoveConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 max-w-sm w-full">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Remove from Google Calendar?</h3>
+              <p className="text-gray-600 text-sm mb-6">
+                This will delete all events that were synced from this app to your Google Calendar. Your tasks here will not be deleted.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowRemoveConfirm(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={handleRemoveFromCalendar}
+                >
+                  <Trash2 className="h-4 w-4 mr-1.5" />
+                  Remove from Calendar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Calendar Grid */}

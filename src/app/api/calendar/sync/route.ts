@@ -6,6 +6,23 @@ import { prisma } from "@/lib/prisma"
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 const GOOGLE_EVENTS_URL = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
 
+async function getOrCreatePrimaryCalendar(userId: string) {
+  let calendar = await prisma.calendar.findFirst({
+    where: { userId, isPrimary: true },
+  })
+  if (!calendar) {
+    calendar = await prisma.calendar.create({
+      data: {
+        userId,
+        name: "Primary",
+        googleCalendarId: "primary",
+        isPrimary: true,
+      },
+    })
+  }
+  return calendar
+}
+
 export async function POST() {
   try {
     const session = await getServerSession(authOptions)
@@ -78,7 +95,9 @@ export async function POST() {
       await refreshAccessToken()
     }
 
-    const [tasks, classColors] = await Promise.all([
+    const calendar = await getOrCreatePrimaryCalendar(session.user.id)
+
+    const [tasks, classColors, existingEventTaskIds] = await Promise.all([
       prisma.task.findMany({
         where: { userId: session.user.id },
         orderBy: { dueDate: "asc" },
@@ -87,7 +106,13 @@ export async function POST() {
         where: { userId: session.user.id },
         select: { className: true, colorId: true },
       }),
+      prisma.calendarEvent.findMany({
+        where: { calendarId: calendar.id },
+        select: { taskId: true },
+      }),
     ])
+
+    const existingTaskIds = new Set(existingEventTaskIds.map((e) => e.taskId))
 
     const colorByClass: Record<string, string> = {}
     classColors.forEach((c) => {
@@ -98,6 +123,7 @@ export async function POST() {
       if (!task.dueDate) return false
       if (!task.className?.trim()) return false
       if (!task.title?.trim() || task.title.trim() === "Untitled task") return false
+      if (existingTaskIds.has(task.id)) return false
       return true
     })
     const skippedCount = tasks.length - syncableTasks.length
@@ -145,6 +171,24 @@ export async function POST() {
 
       if (eventResponse.ok) {
         createdCount += 1
+        try {
+          const eventData = await eventResponse.json()
+          const googleEventId = eventData?.id
+          if (googleEventId) {
+            await prisma.calendarEvent.create({
+              data: {
+                taskId: task.id,
+                calendarId: calendar.id,
+                googleEventId,
+                startTime: startDate,
+                endTime: endDate,
+                isAllDay: true,
+              },
+            })
+          }
+        } catch (e) {
+          console.error("Failed to store calendar event for task", task.id, e)
+        }
       } else {
         const message = await eventResponse.text()
         failures.push({ status: eventResponse.status, message })

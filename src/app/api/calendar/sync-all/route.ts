@@ -4,6 +4,23 @@ import { prisma } from "@/lib/prisma"
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 const GOOGLE_EVENTS_URL = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
 
+async function getOrCreatePrimaryCalendar(userId: string) {
+  let calendar = await prisma.calendar.findFirst({
+    where: { userId, isPrimary: true },
+  })
+  if (!calendar) {
+    calendar = await prisma.calendar.create({
+      data: {
+        userId,
+        name: "Primary",
+        googleCalendarId: "primary",
+        isPrimary: true,
+      },
+    })
+  }
+  return calendar
+}
+
 export async function POST(request: NextRequest) {
   const secret = process.env.CRON_SECRET
   if (secret) {
@@ -71,7 +88,9 @@ export async function POST(request: NextRequest) {
         await refreshAccessToken()
       }
 
-      const [tasks, classColors] = await Promise.all([
+      const calendar = await getOrCreatePrimaryCalendar(user.id)
+
+      const [tasks, classColors, existingEventTaskIds] = await Promise.all([
         prisma.task.findMany({
           where: { userId: user.id, dueDate: { not: null } },
           orderBy: { dueDate: "asc" },
@@ -80,7 +99,13 @@ export async function POST(request: NextRequest) {
           where: { userId: user.id },
           select: { className: true, colorId: true },
         }),
+        prisma.calendarEvent.findMany({
+          where: { calendarId: calendar.id },
+          select: { taskId: true },
+        }),
       ])
+
+      const existingTaskIds = new Set(existingEventTaskIds.map((e) => e.taskId))
 
       const colorByClass: Record<string, string> = {}
       classColors.forEach((c) => {
@@ -88,7 +113,7 @@ export async function POST(request: NextRequest) {
       })
 
       for (const task of tasks) {
-        if (!task.dueDate) continue
+        if (!task.dueDate || existingTaskIds.has(task.id)) continue
         const startDate = new Date(task.dueDate)
         const endDate = new Date(startDate)
         endDate.setDate(startDate.getDate() + 1)
@@ -127,6 +152,27 @@ export async function POST(request: NextRequest) {
               },
               body: JSON.stringify(payload),
             })
+          }
+        }
+
+        if (eventResponse.ok) {
+          try {
+            const eventData = await eventResponse.json()
+            const googleEventId = eventData?.id
+            if (googleEventId) {
+              await prisma.calendarEvent.create({
+                data: {
+                  taskId: task.id,
+                  calendarId: calendar.id,
+                  googleEventId,
+                  startTime: startDate,
+                  endTime: endDate,
+                  isAllDay: true,
+                },
+              })
+            }
+          } catch (e) {
+            console.error("Failed to store calendar event for task", task.id, e)
           }
         }
       }
