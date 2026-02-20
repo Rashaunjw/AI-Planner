@@ -1,20 +1,34 @@
 "use client"
 
-import { GraduationCap, Upload, LayoutDashboard, ListTodo, Calendar, Settings, LogOut, Brain, MessageCircle } from "lucide-react"
+import { GraduationCap, Upload, LayoutDashboard, ListTodo, Calendar, Settings, LogOut, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { PwaInstallWalkthroughTrigger } from "@/components/pwa-install-walkthrough"
+import { useChatPanel } from "@/components/chat-panel-context"
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/plan", label: "Plan", icon: Brain },
+  { href: "/upload", label: "Upload", icon: Upload },
   { href: "/tasks", label: "Tasks", icon: ListTodo },
   { href: "/calendar", label: "Calendar", icon: Calendar },
-  { href: "/chat", label: "Chat", icon: MessageCircle },
 ]
+
+function ChatButton() {
+  const chatPanel = useChatPanel()
+  if (!chatPanel) return null
+  return (
+    <button
+      type="button"
+      onClick={chatPanel.openChat}
+      className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 rounded-md text-sm font-medium text-indigo-200 hover:text-white hover:bg-indigo-800 transition-colors"
+    >
+      <MessageCircle className="h-4 w-4" />
+      <span className="hidden sm:inline">Chat</span>
+    </button>
+  )
+}
 
 export default function AppNav() {
   const pathname = usePathname()
@@ -55,18 +69,7 @@ export default function AppNav() {
 
           {/* Right actions */}
           <div className="flex items-center space-x-1 sm:space-x-2">
-            <Link href="/upload">
-              <Button
-                size="sm"
-                className={cn(
-                  "bg-indigo-600 hover:bg-indigo-500 text-white border-0",
-                  pathname === "/upload" && "bg-indigo-500"
-                )}
-              >
-                <Upload className="h-4 w-4 sm:mr-1.5" />
-                <span className="hidden sm:inline">Upload Syllabus</span>
-              </Button>
-            </Link>
+            <ChatButton />
 
             <PwaInstallWalkthroughTrigger />
 
