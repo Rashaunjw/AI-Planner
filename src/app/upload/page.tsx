@@ -22,6 +22,7 @@ export default function UploadPage() {
   const [uploadContext, setUploadContext] = useState<string | null>(null)
   const [showContextPrompt, setShowContextPrompt] = useState(false)
   const [linkError, setLinkError] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -87,6 +88,7 @@ export default function UploadPage() {
     }
 
     setFile(file)
+    setUploadError(null)
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,6 +117,7 @@ export default function UploadPage() {
     setUploaded(true)
     setExtractedCount(null)
     setLinkError(null)
+    setUploadError(null)
 
     try {
       const formData = new FormData()
@@ -143,16 +146,17 @@ export default function UploadPage() {
         })
       } else {
         setUploaded(false)
-        const message = responseBody?.error || `Upload failed with status ${response.status}`
+        const message = responseBody?.error || `Upload failed (${response.status})`
         toast.error(message)
-        // Surface link errors inline so they're visible (toast can be missed)
-        if (hasLink && response.status === 400) setLinkError(message)
+        setUploadError(message)
+        if (hasLink) setLinkError(message)
       }
     } catch (error) {
       setUploaded(false)
       const message = error instanceof Error ? error.message : "Upload failed"
       console.error("Upload error:", error)
       toast.error(message)
+      setUploadError(message)
       if (hasLink) setLinkError(message)
     } finally {
       setUploading(false)
@@ -304,6 +308,20 @@ export default function UploadPage() {
           </div>
         )}
 
+        {uploadError && (
+          <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+            <p className="font-medium">Upload failed</p>
+            <p className="mt-0.5">{uploadError}</p>
+            <button
+              type="button"
+              onClick={() => setUploadError(null)}
+              className="mt-2 text-red-600 underline hover:no-underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* Upload Area */}
         <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-8">
           <div
@@ -382,6 +400,7 @@ export default function UploadPage() {
               onChange={(e) => {
                 setLinkUrl(e.target.value)
                 setLinkError(null)
+                setUploadError(null)
               }}
               placeholder="https://..."
               className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-400"
@@ -409,7 +428,10 @@ export default function UploadPage() {
           </label>
           <textarea
             value={pastedText}
-            onChange={(e) => setPastedText(e.target.value)}
+            onChange={(e) => {
+              setPastedText(e.target.value)
+              setUploadError(null)
+            }}
             rows={6}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-400"
             placeholder="Paste your syllabus or schedule text here..."
