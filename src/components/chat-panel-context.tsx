@@ -10,8 +10,11 @@ type ChatPanelContextValue = {
 
 const ChatPanelContext = createContext<ChatPanelContextValue | null>(null)
 
-export function useChatPanel() {
+export function useChatPanel(): ChatPanelContextValue {
   const ctx = useContext(ChatPanelContext)
+  if (!ctx) {
+    throw new Error("useChatPanel must be used within ChatPanelProvider")
+  }
   return ctx
 }
 
