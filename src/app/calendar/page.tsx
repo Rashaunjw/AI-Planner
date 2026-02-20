@@ -2,13 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Plus, CalendarDays, CalendarRange, Calendar } from "lucide-react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import AppNav from "@/components/app-nav"
 import LoadingScreen from "@/components/loading-screen"
+
+type CalendarView = "day" | "week" | "month"
 
 type Task = {
   id: string
@@ -40,6 +42,7 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(() => new Date())
   const [syncing, setSyncing] = useState(false)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const [view, setView] = useState<CalendarView>("month")
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -51,6 +54,67 @@ export default function CalendarPage() {
     month: "long",
     year: "numeric",
   })
+
+  // Week containing currentMonth (Sunday start)
+  const weekStart = useMemo(() => {
+    const d = new Date(currentMonth)
+    const day = d.getDay()
+    d.setDate(d.getDate() - day)
+    return d
+  }, [currentMonth])
+  const weekDates = useMemo(() => {
+    const dates: Date[] = []
+    const d = new Date(weekStart)
+    for (let i = 0; i < 7; i++) {
+      dates.push(new Date(d))
+      d.setDate(d.getDate() + 1)
+    }
+    return dates
+  }, [weekStart])
+  const weekLabel =
+    view === "week"
+      ? `${weekDates[0].toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${weekDates[6].toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+      : ""
+
+  const dayLabel =
+    view === "day"
+      ? currentMonth.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      : ""
+
+  const navLabel = view === "month" ? monthLabel : view === "week" ? weekLabel : dayLabel
+
+  const goPrev = () => {
+    if (view === "day") {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), currentMonth.getDate() - 1))
+    } else if (view === "week") {
+      const next = new Date(weekStart)
+      next.setDate(next.getDate() - 7)
+      setCurrentMonth(next)
+    } else {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
+    }
+  }
+  const goNext = () => {
+    if (view === "day") {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), currentMonth.getDate() + 1))
+    } else if (view === "week") {
+      const next = new Date(weekStart)
+      next.setDate(next.getDate() + 7)
+      setCurrentMonth(next)
+    } else {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
+    }
+  }
+  const goToday = () => {
+    const today = new Date()
+    setCurrentMonth(today)
+    if (view === "day") setSelectedDay(formatDateKey(today))
+  }
 
   // Build a stable class → color index map
   const classColorMap = useMemo(() => {
@@ -156,7 +220,9 @@ export default function CalendarPage() {
   }
 
   const todayKey = formatDateKey(new Date())
-  const selectedDayTasks = selectedDay ? taskByDate.get(selectedDay) || [] : []
+  // In day view, sidebar shows the focused day
+  const effectiveSelectedDay = view === "day" ? formatDateKey(currentMonth) : selectedDay
+  const selectedDayTasks = effectiveSelectedDay ? taskByDate.get(effectiveSelectedDay) || [] : []
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50">
@@ -191,31 +257,55 @@ export default function CalendarPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Calendar Grid */}
           <div className="lg:col-span-3 bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
-            {/* Month Navigation */}
-            <div className="flex items-center justify-between mb-6">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setCurrentMonth(
-                    new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
-                  )
-                }
-              >
-                ← Prev
-              </Button>
-              <h2 className="text-lg font-semibold text-gray-900">{monthLabel}</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setCurrentMonth(
-                    new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
-                  )
-                }
-              >
-                Next →
-              </Button>
+            {/* View toggle + Navigation */}
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-1 p-1 rounded-lg bg-gray-100 border border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setView("day")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${view === "day" ? "bg-white text-indigo-700 shadow-sm border border-gray-200" : "text-gray-600 hover:text-gray-900"}`}
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Day
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setView("week")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${view === "week" ? "bg-white text-indigo-700 shadow-sm border border-gray-200" : "text-gray-600 hover:text-gray-900"}`}
+                  >
+                    <CalendarRange className="h-4 w-4" />
+                    Week
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setView("month")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${view === "month" ? "bg-white text-indigo-700 shadow-sm border border-gray-200" : "text-gray-600 hover:text-gray-900"}`}
+                  >
+                    <CalendarDays className="h-4 w-4" />
+                    Month
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={goPrev}>
+                    ← Prev
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={goToday}
+                    className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 min-w-[72px]"
+                  >
+                    Today
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={goNext}>
+                    Next →
+                  </Button>
+                </div>
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900 text-center">
+                {navLabel}
+              </h2>
             </div>
 
             {loading ? (
@@ -223,80 +313,195 @@ export default function CalendarPage() {
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
               </div>
             ) : (
-              <div className="overflow-x-auto -mx-2 px-2">
-                <div className="grid grid-cols-7 gap-1 min-w-[420px]">
-                  {/* Day headers */}
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div
-                      key={day}
-                      className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wide py-2"
-                    >
-                      <span className="hidden sm:inline">{day}</span>
-                      <span className="sm:hidden">{day[0]}</span>
+              <>
+                {/* Day view */}
+                {view === "day" && (
+                  <div className="min-h-[420px]">
+                    <div className="rounded-xl border border-gray-100 overflow-hidden">
+                      {(() => {
+                        const key = formatDateKey(currentMonth)
+                        const dayTasks = taskByDate.get(key) || []
+                        return (
+                          <div className="divide-y divide-gray-100">
+                            <div className="bg-indigo-50/50 px-4 py-3 border-b border-indigo-100">
+                              <p className="text-sm font-medium text-indigo-900">
+                                {dayTasks.length} task{dayTasks.length !== 1 ? "s" : ""} due this day
+                              </p>
+                            </div>
+                            {dayTasks.length === 0 ? (
+                              <div className="py-16 text-center text-gray-400 text-sm">
+                                Nothing due on this day.
+                              </div>
+                            ) : (
+                              <ul className="divide-y divide-gray-50">
+                                {dayTasks.map((task) => {
+                                  const color = getTaskColor(task)
+                                  return (
+                                    <li key={task.id} className="px-4 py-4 hover:bg-gray-50/50 transition-colors">
+                                      <div className="flex items-start gap-3">
+                                        <span className={`mt-1.5 w-3 h-3 rounded-full shrink-0 ${color.dot}`} />
+                                        <div className="min-w-0 flex-1">
+                                          <p className="font-medium text-gray-900">{task.title}</p>
+                                          {task.description && (
+                                            <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{task.description}</p>
+                                          )}
+                                          <div className="flex flex-wrap gap-2 mt-2">
+                                            {task.className && (
+                                              <span className="text-xs text-gray-500">{task.className}</span>
+                                            )}
+                                            {task.category && (
+                                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${color.bg} ${color.text}`}>
+                                                {task.category}
+                                              </span>
+                                            )}
+                                            {task.priority === "high" && (
+                                              <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
+                                                High priority
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </li>
+                                  )
+                                })}
+                              </ul>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </div>
-                  ))}
+                  </div>
+                )}
 
-                  {/* Day cells */}
-                  {calendarWeeks.flat().map((date) => {
-                    const isCurrentMonth = date.getMonth() === currentMonth.getMonth()
-                    const key = formatDateKey(date)
-                    const dayTasks = taskByDate.get(key) || []
-                    const isToday = key === todayKey
-                    const isSelected = key === selectedDay
-                    const hasHighPriority = dayTasks.some((t) => t.priority === "high")
+                {/* Week view */}
+                {view === "week" && (
+                  <div className="overflow-x-auto -mx-2 px-2">
+                    <div className="grid grid-cols-7 gap-2 min-w-[560px]">
+                      {weekDates.map((date) => {
+                        const key = formatDateKey(date)
+                        const dayTasks = taskByDate.get(key) || []
+                        const isToday = key === todayKey
+                        const isSelected = key === selectedDay
+                        return (
+                          <div
+                            key={key}
+                            className={`rounded-xl border min-h-[320px] flex flex-col overflow-hidden ${isToday ? "border-indigo-300 bg-indigo-50/40" : "border-gray-100 bg-gray-50/30"}`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDay(isSelected ? null : key)}
+                              className={`w-full px-2 py-2.5 text-left border-b shrink-0 ${isSelected ? "border-indigo-200 bg-indigo-50" : "border-gray-100 bg-white"}`}
+                            >
+                              <span className={`text-xs font-semibold uppercase text-gray-500 block`}>
+                                {date.toLocaleDateString("en-US", { weekday: "short" })}
+                              </span>
+                              <span
+                                className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${isToday ? "bg-indigo-600 text-white" : "text-gray-800"}`}
+                              >
+                                {date.getDate()}
+                              </span>
+                            </button>
+                            <div className="flex-1 p-2 space-y-1.5 overflow-y-auto">
+                              {dayTasks.map((task) => {
+                                const color = getTaskColor(task)
+                                return (
+                                  <div
+                                    key={task.id}
+                                    className={`rounded-lg px-2 py-1.5 text-xs font-medium ${color.bg} ${color.text} truncate`}
+                                    title={task.title}
+                                  >
+                                    {task.title}
+                                  </div>
+                                )
+                              })}
+                              {dayTasks.length === 0 && (
+                                <p className="text-[11px] text-gray-400 py-2">No tasks</p>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
 
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => setSelectedDay(isSelected ? null : key)}
-                        className={`min-h-[72px] sm:min-h-[96px] rounded-lg border p-1.5 sm:p-2 text-left transition-all ${isSelected
-                          ? "border-indigo-400 bg-indigo-50 shadow-sm"
-                          : isToday
-                            ? "border-indigo-300 bg-indigo-50/60"
-                            : isCurrentMonth
-                              ? "border-gray-100 bg-white hover:border-indigo-200 hover:bg-indigo-50/30"
-                              : "border-transparent bg-gray-50/50"
-                          }`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span
-                            className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full ${isToday
-                              ? "bg-indigo-600 text-white"
-                              : isCurrentMonth
-                                ? "text-gray-700"
-                                : "text-gray-300"
+                {/* Month view */}
+                {view === "month" && (
+                  <div className="overflow-x-auto -mx-2 px-2">
+                    <div className="grid grid-cols-7 gap-1 min-w-[420px]">
+                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                        <div
+                          key={day}
+                          className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wide py-2"
+                        >
+                          <span className="hidden sm:inline">{day}</span>
+                          <span className="sm:hidden">{day[0]}</span>
+                        </div>
+                      ))}
+
+                      {calendarWeeks.flat().map((date) => {
+                        const isCurrentMonth = date.getMonth() === currentMonth.getMonth()
+                        const key = formatDateKey(date)
+                        const dayTasks = taskByDate.get(key) || []
+                        const isToday = key === todayKey
+                        const isSelected = key === selectedDay
+                        const hasHighPriority = dayTasks.some((t) => t.priority === "high")
+
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => setSelectedDay(isSelected ? null : key)}
+                            className={`min-h-[72px] sm:min-h-[96px] rounded-lg border p-1.5 sm:p-2 text-left transition-all ${isSelected
+                              ? "border-indigo-400 bg-indigo-50 shadow-sm"
+                              : isToday
+                                ? "border-indigo-300 bg-indigo-50/60"
+                                : isCurrentMonth
+                                  ? "border-gray-100 bg-white hover:border-indigo-200 hover:bg-indigo-50/30"
+                                  : "border-transparent bg-gray-50/50"
                               }`}
                           >
-                            {date.getDate()}
-                          </span>
-                          {hasHighPriority && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                          )}
-                        </div>
-                        <div className="space-y-0.5">
-                          {dayTasks.slice(0, 2).map((task) => {
-                            const color = getTaskColor(task)
-                            return (
-                              <div
-                                key={task.id}
-                                className={`truncate rounded px-1 py-0.5 text-[10px] sm:text-[11px] font-medium ${color.bg} ${color.text}`}
-                                title={task.title}
+                            <div className="flex items-center justify-between mb-1">
+                              <span
+                                className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full ${isToday
+                                  ? "bg-indigo-600 text-white"
+                                  : isCurrentMonth
+                                    ? "text-gray-700"
+                                    : "text-gray-300"
+                                  }`}
                               >
-                                {task.title}
-                              </div>
-                            )
-                          })}
-                          {dayTasks.length > 2 && (
-                            <div className="text-[10px] text-gray-400 px-1">
-                              +{dayTasks.length - 2} more
+                                {date.getDate()}
+                              </span>
+                              {hasHighPriority && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
+                            <div className="space-y-0.5">
+                              {dayTasks.slice(0, 2).map((task) => {
+                                const color = getTaskColor(task)
+                                return (
+                                  <div
+                                    key={task.id}
+                                    className={`truncate rounded px-1 py-0.5 text-[10px] sm:text-[11px] font-medium ${color.bg} ${color.text}`}
+                                    title={task.title}
+                                  >
+                                    {task.title}
+                                  </div>
+                                )
+                              })}
+                              {dayTasks.length > 2 && (
+                                <div className="text-[10px] text-gray-400 px-1">
+                                  +{dayTasks.length - 2} more
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {tasks.length === 0 && !loading && (
@@ -313,10 +518,10 @@ export default function CalendarPage() {
           {/* Sidebar: Selected day detail */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-5 sticky top-6">
-              {selectedDay ? (
+              {effectiveSelectedDay ? (
                 <>
                   <h3 className="text-sm font-bold text-gray-900 mb-1">
-                    {new Date(selectedDay + "T12:00:00").toLocaleDateString("en-US", {
+                    {new Date(effectiveSelectedDay + "T12:00:00").toLocaleDateString("en-US", {
                       weekday: "long",
                       month: "long",
                       day: "numeric",
@@ -349,16 +554,20 @@ export default function CalendarPage() {
                       })}
                     </ul>
                   )}
-                  <button
-                    onClick={() => setSelectedDay(null)}
-                    className="mt-4 text-xs text-gray-400 hover:text-gray-600"
-                  >
-                    Clear selection
-                  </button>
+                  {view !== "day" && selectedDay && (
+                    <button
+                      onClick={() => setSelectedDay(null)}
+                      className="mt-4 text-xs text-gray-400 hover:text-gray-600"
+                    >
+                      Clear selection
+                    </button>
+                  )}
                 </>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-sm text-gray-400">Click a day to see what&apos;s due.</p>
+                  <p className="text-sm text-gray-400">
+                    {view === "month" || view === "week" ? "Click a day to see what's due." : "No day selected."}
+                  </p>
                 </div>
               )}
             </div>
