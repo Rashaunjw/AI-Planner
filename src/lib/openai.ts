@@ -183,6 +183,37 @@ function normalizeTimeString(value: string | undefined): string | undefined {
   return undefined
 }
 
+/**
+ * Answer a user chat message using only the provided schedule context (tasks/summary).
+ * Used by the schedule chatbot.
+ */
+export async function chatWithScheduleContext(
+  scheduleContext: string,
+  userMessage: string
+): Promise<string> {
+  if (!openai) {
+    throw new Error('OpenAI API key not configured')
+  }
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are a helpful assistant for a student using PlanEra. You answer questions about their schedule, assignments, and due dates using ONLY the schedule data provided below. Be concise and friendly. If the question is not about their schedule or you do not have the information, say so and suggest they check the Tasks or Calendar page. Do not make up due dates or assignments.',
+      },
+      {
+        role: 'user',
+        content: `Schedule data:\n\n${scheduleContext}\n\n---\n\nUser question: ${userMessage}`,
+      },
+    ],
+    temperature: 0.3,
+    max_tokens: 500,
+  })
+  const reply = response.choices[0]?.message?.content?.trim()
+  return reply ?? "I couldn't generate a reply. Please try again."
+}
+
 export interface StudyPlanBlock {
   date: string
   title: string

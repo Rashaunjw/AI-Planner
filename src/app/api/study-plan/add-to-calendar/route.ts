@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
           typeof (b as StudyPlanBlock).title === "string" &&
           typeof (b as StudyPlanBlock).durationMinutes === "number"
       )
-      .map((b) => ({
+      .map((b: StudyPlanBlock) => ({
         date: String(b.date).slice(0, 10),
         title: String(b.title).slice(0, 200),
         durationMinutes: Math.max(15, Math.min(480, Number(b.durationMinutes) || 60)),

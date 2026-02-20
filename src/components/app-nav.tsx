@@ -1,6 +1,6 @@
 "use client"
 
-import { GraduationCap, Upload, LayoutDashboard, ListTodo, Calendar, Settings, LogOut, Brain } from "lucide-react"
+import { GraduationCap, Upload, LayoutDashboard, ListTodo, Calendar, Settings, LogOut, Brain, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: "/plan", label: "Plan", icon: Brain },
   { href: "/tasks", label: "Tasks", icon: ListTodo },
   { href: "/calendar", label: "Calendar", icon: Calendar },
+  { href: "/chat", label: "Chat", icon: MessageCircle },
 ]
 
 export default function AppNav() {

@@ -57,7 +57,7 @@ export default function PlanPage() {
     if (status === "authenticated") {
       generate()
     }
-  }, [session?.user?.id, status])
+  }, [router, session, status])
 
   const handleAddToCalendar = async () => {
     if (blocks.length === 0) {
