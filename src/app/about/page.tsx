@@ -42,7 +42,7 @@ export default function AboutPage() {
         <div className="max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-indigo-700/60 text-indigo-200 rounded-full px-4 py-1.5 text-sm font-medium mb-8 border border-indigo-600">
             <Heart className="h-3.5 w-3.5 text-rose-400" />
-            Built by a student, for students
+            Built by students, for students
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-6 leading-tight">
             About PlanEra

@@ -194,12 +194,6 @@ export default async function Dashboard() {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {pendingTasks.length > 0 && <StudyPlanButton />}
-            <Link href="/upload">
-              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 shrink-0">
-                <Upload className="h-4 w-4" />
-                Upload Syllabus
-              </Button>
-            </Link>
           </div>
         </div>
 

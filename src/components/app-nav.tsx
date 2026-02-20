@@ -84,10 +84,11 @@ export default function AppNav() {
 
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-800 transition-colors"
+              className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-800 transition-colors text-sm font-medium"
               aria-label="Sign out"
             >
               <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Log out</span>
             </button>
           </div>
         </div>
