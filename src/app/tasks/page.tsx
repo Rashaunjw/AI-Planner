@@ -518,7 +518,7 @@ export default function TasksPage() {
       if (response.ok) {
         setTasks(tasks.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task)))
         if (newStatus === "completed") {
-          toast.success("Marked as submitted! 🎉")
+          toast.success("Marked as submitted!")
         }
       } else {
         toast.error("Failed to update status.")
@@ -568,11 +568,11 @@ export default function TasksPage() {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "completed":
-        return { label: "✅ Submitted", className: "bg-green-100 text-green-800 border border-green-200" }
+        return { label: "Submitted", className: "bg-green-100 text-green-800 border border-green-200" }
       case "pending":
-        return { label: "📋 To Do", className: "bg-blue-100 text-blue-800 border border-blue-200" }
+        return { label: "To Do", className: "bg-blue-100 text-blue-800 border border-blue-200" }
       case "cancelled":
-        return { label: "❌ Dropped", className: "bg-gray-100 text-gray-600 border border-gray-200" }
+        return { label: "Dropped", className: "bg-gray-100 text-gray-600 border border-gray-200" }
       default:
         return { label: status, className: "bg-gray-100 text-gray-800" }
     }
@@ -1284,7 +1284,7 @@ export default function TasksPage() {
 
                                   {isIncomplete && (
                                     <div className="mb-3 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
-                                      ⚠️ Missing: {missingFields.join(", ")}. Fill these in to
+                                      Missing: {missingFields.join(", ")}. Fill these in to
                                       sync with Google Calendar.
                                     </div>
                                   )}

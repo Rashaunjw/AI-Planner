@@ -1,17 +1,17 @@
 #!/bin/bash
 
-echo "🚀 Setting up AI Planner for local development..."
+echo "Setting up AI Planner for local development..."
 
 # Create uploads directory
 mkdir -p uploads
 
 # Generate Prisma client
-echo "📊 Generating Prisma client..."
+echo "Generating Prisma client..."
 npx prisma generate
 
-echo "✅ Setup complete!"
+echo "Setup complete!"
 echo ""
-echo "📝 Next steps:"
+echo "Next steps:"
 echo "1. Set up Google OAuth credentials:"
 echo "   - Go to https://console.developers.google.com/"
 echo "   - Create a new project or select existing"

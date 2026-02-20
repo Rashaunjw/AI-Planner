@@ -177,7 +177,7 @@ export default function UploadPage() {
               <p className="text-gray-500 my-4 text-sm">
                 {extractedCount === 0
                   ? "No tasks were detected. You can add assignments manually."
-                  : "We're extracting your assignments and deadlines. This usually takes a moment."}
+                  : "We're extracting your assignments and/or deadlines. This usually takes a moment."}
               </p>
             )}
 
