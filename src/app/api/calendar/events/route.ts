@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma"
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 const GOOGLE_CALENDAR_BASE = "https://www.googleapis.com/calendar/v3/calendars"
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {

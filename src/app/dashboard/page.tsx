@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button"
 import { Brain, Upload, Calendar, BookOpen, Clock, TrendingUp, CheckCircle2, ChevronRight, Flame, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { getServerSession } from "next-auth"

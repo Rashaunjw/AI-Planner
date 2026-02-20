@@ -72,9 +72,10 @@ export async function fetchUrlToText(rawUrl: string): Promise<string> {
     const isHtml = contentType.includes('text/html')
     const isPlain = contentType.includes('text/plain')
 
-    // Cap body size
-    const reader = response.body
-    if (!reader) throw new Error('Empty response body')
+    // Cap body size (use getReader() for ReadableStream)
+    const stream = response.body
+    if (!stream) throw new Error('Empty response body')
+    const reader = stream.getReader()
 
     const chunks: Uint8Array[] = []
     let total = 0
