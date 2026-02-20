@@ -21,6 +21,7 @@ export default function UploadPage() {
   const [linkUrl, setLinkUrl] = useState("")
   const [uploadContext, setUploadContext] = useState<string | null>(null)
   const [showContextPrompt, setShowContextPrompt] = useState(false)
+  const [linkError, setLinkError] = useState<string | null>(null)
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -113,6 +114,7 @@ export default function UploadPage() {
     setUploading(true)
     setUploaded(true)
     setExtractedCount(null)
+    setLinkError(null)
 
     try {
       const formData = new FormData()
@@ -143,12 +145,15 @@ export default function UploadPage() {
         setUploaded(false)
         const message = responseBody?.error || `Upload failed with status ${response.status}`
         toast.error(message)
+        // Surface link errors inline so they're visible (toast can be missed)
+        if (hasLink && response.status === 400) setLinkError(message)
       }
     } catch (error) {
       setUploaded(false)
       const message = error instanceof Error ? error.message : "Upload failed"
       console.error("Upload error:", error)
       toast.error(message)
+      if (hasLink) setLinkError(message)
     } finally {
       setUploading(false)
     }
@@ -374,7 +379,10 @@ export default function UploadPage() {
             <input
               type="url"
               value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
+              onChange={(e) => {
+                setLinkUrl(e.target.value)
+                setLinkError(null)
+              }}
               placeholder="https://..."
               className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-400"
             />
@@ -387,6 +395,11 @@ export default function UploadPage() {
               {uploading ? "Fetching..." : "Fetch & process"}
             </Button>
           </div>
+          {linkError && (
+            <p className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">
+              {linkError}
+            </p>
+          )}
         </div>
 
         {/* Paste Text */}
