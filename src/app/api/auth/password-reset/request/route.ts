@@ -15,27 +15,40 @@ function isEmailConfigured(): boolean {
 }
 
 export async function POST(request: Request) {
+  let body: unknown
   try {
-    const body = await request.json()
-    const email = typeof body?.email === "string" ? body.email.trim() : ""
+    body = await request.json()
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid request body." },
+      { status: 400 }
+    )
+  }
 
-    if (!email) {
-      return NextResponse.json(
-        { error: "Email is required." },
-        { status: 400 }
-      )
-    }
+  const email = typeof body === "object" && body !== null && "email" in body
+    ? typeof (body as { email: unknown }).email === "string"
+      ? (body as { email: string }).email.trim()
+      : ""
+    : ""
 
-    if (!isEmailConfigured()) {
-      return NextResponse.json(
-        {
-          error:
-            "Password reset emails are not configured. Please contact support or try again later.",
-        },
-        { status: 503 }
-      )
-    }
+  if (!email) {
+    return NextResponse.json(
+      { error: "Email is required." },
+      { status: 400 }
+    )
+  }
 
+  if (!isEmailConfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "Password reset emails are not configured. Please contact support or try again later.",
+      },
+      { status: 503 }
+    )
+  }
+
+  try {
     const user = await prisma.user.findUnique({
       where: { email },
       select: { id: true },
@@ -59,12 +72,23 @@ export async function POST(request: Request) {
       },
     })
 
-    await sendPasswordResetEmail(email, createPasswordResetLink(token, email))
+    try {
+      await sendPasswordResetEmail(email, createPasswordResetLink(token, email))
+    } catch (emailError) {
+      console.error("Password reset email send failed:", emailError)
+      return NextResponse.json(
+        {
+          error:
+            "We could not send the reset email. Please try again later or contact support.",
+        },
+        { status: 503 }
+      )
+    }
 
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error("Password reset request error:", error)
-    const errMessage = error instanceof Error ? error.message : ""
+    const errMessage = error instanceof Error ? error.message : String(error)
     if (
       errMessage.includes("RESEND_API_KEY") ||
       errMessage.includes("Email sender is not configured")
@@ -73,6 +97,16 @@ export async function POST(request: Request) {
         {
           error:
             "Password reset emails are not available right now. Please try again later.",
+        },
+        { status: 503 }
+      )
+    }
+    if (errMessage.includes("PasswordResetToken") || errMessage.includes("prisma") || errMessage.includes("Unknown arg")) {
+      console.error("Password reset DB error (run migrations?):", error)
+      return NextResponse.json(
+        {
+          error:
+            "Password reset is temporarily unavailable. Please try again later.",
         },
         { status: 503 }
       )
