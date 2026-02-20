@@ -36,14 +36,12 @@ export async function extractTasksFromContent(
     }
 
     const basePrompt: string =
-      "You are an AI assistant that extracts tasks and deadlines from syllabus or schedule content. Analyze the following text and extract all assignments, exams, projects, meetings, practices, and other tasks. For each task, provide: title (clear, concise title), description (brief description), dueDate (YYYY-MM-DD format), priority (low/medium/high), category (assignment/exam/project/quiz/homework/meeting/practice), estimatedDuration (minutes, optional), weightPercent (number 0-100 if a grading weight is specified), className (course, team, organization, or project name). If the syllabus or schedule uses a dated schedule table, treat the row's date as the dueDate for each task listed in that row. If a date is given as month/day without a year, use the current year (" +
+      "You are an AI assistant that extracts tasks and deadlines from syllabus, schedule, or calendar content. Extract ALL dated items: assignments, exams, projects, meetings, practices, games, matches, events, and any other time-bound entries. For each item provide: title (e.g. assignment name or 'vs Opponent' for games), description (optional), dueDate (YYYY-MM-DD), priority (low/medium/high), category (assignment/exam/project/quiz/homework/meeting/practice/game/event), estimatedDuration (optional), weightPercent (optional), className (course, team, sport, or group name). IMPORTANT for schedules: (1) If the document title contains a season or year range (e.g. '2025-26', '2024-25'), use that to set the year: e.g. for '2025-26' use 2025 for Nov/Dec and 2026 for Jan onward. (2) Parse dates in any form: 'Nov 8 (Sat)', 'Jan 3', '1/14', 'Mon DD' — convert to YYYY-MM-DD using the inferred or current year (" +
       currentYear +
-      "). If the syllabus explicitly states a due time for a specific assignment (e.g. 'due by 11:59 PM', 'due at 2:00 PM'), add dueTime for that task in 24-hour format HH:mm (e.g. '23:59', '14:00'). Do not guess due times; only add dueTime when clearly stated. If the syllabus states when the class meets (e.g. 'Class meets MWF 2:00-2:50 PM', 'Section at 10:00 AM'), add a classDefaultTimes object mapping each className to that meeting time in 24-hour HH:mm. Use class meeting time only as the default for when assignments are due in that class when no other time is stated. Return JSON: { \"tasks\": [ ... ], \"classDefaultTimes\": { \"ClassName\": \"HH:mm\", ... } }. If no class times appear, use classDefaultTimes: {}. If no date is mentioned for a task, omit dueDate. If a group name appears near the top, use it for className on all tasks."
+      "). (3) For table-like content with columns (Date, Time, Opponent, etc.), each data row is one task; use the row's date and time. (4) If a time is given (e.g. '3:30 PM CT', '7 PM ET'), add dueTime in 24-hour HH:mm (e.g. '15:30', '19:00'); ignore timezone for storage. (5) For sports/athletics schedules, use the schedule or sport name as className (e.g. \"Men's Basketball\") and title like \"vs Opponent\" or \"Game at Opponent\". If the document states when a class or group meets, add classDefaultTimes mapping className to HH:mm; otherwise use classDefaultTimes: {}. Return JSON: { \"tasks\": [ ... ], \"classDefaultTimes\": { ... } }. Do not skip rows that look like games or events; include every row that has a date."
 
     const exampleFormat: string =
-      "Example: { \"tasks\": [{\"title\": \"Midterm Exam\", \"dueDate\": \"2024-03-15\", \"dueTime\": \"14:00\", \"priority\": \"high\", \"category\": \"exam\", \"className\": \"Biology 101\"}], \"classDefaultTimes\": { \"Biology 101\": \"14:00\" } }. For '1/14 Problem Set 1' with no time, use dueDate \"" +
-      currentYear +
-      '-01-14" and omit dueTime so the class default time can apply.'
+      "Example: { \"tasks\": [{\"title\": \"vs Trevecca Nazarene\", \"dueDate\": \"2025-11-08\", \"dueTime\": \"15:30\", \"priority\": \"medium\", \"category\": \"game\", \"className\": \"Men's Basketball\"}, {\"title\": \"Midterm Exam\", \"dueDate\": \"2024-03-15\", \"category\": \"exam\", \"className\": \"Biology 101\"}], \"classDefaultTimes\": {} }. For 'Nov 8 (Sat)' with '3:30 PM CT' use dueDate '2025-11-08' and dueTime '15:30'."
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -237,6 +235,11 @@ function extractGroupNameFromContent(content: string, context?: string): string 
     .slice(0, 40)
 
   for (const line of lines) {
+    const scheduleMatch = line.match(/^(.+?)\s+Schedule\s*$/i)
+    if (scheduleMatch?.[1]) {
+      const name = scheduleMatch[1].replace(/\d{4}-\d{2}(?:\s|$)/g, '').trim()
+      if (name.length >= 3 && name.length <= 80) return name
+    }
     const labeledMatch = line.match(
       /(?:course|class|team|organization|org|department|group|project|club|squad)\s*(?:name|title)?\s*[:\-]\s*(.+)/i
     )
@@ -274,6 +277,11 @@ function extractGroupNameFromContent(content: string, context?: string): string 
   return undefined
 }
 
+const MONTH_ABBREV: Record<string, number> = {
+  jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+  jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+}
+
 function findDateInText(text: string, fallbackYear: number): string | undefined {
   const isoMatch = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/)
   if (isoMatch) {
@@ -281,6 +289,17 @@ function findDateInText(text: string, fallbackYear: number): string | undefined 
     const month = Number(isoMatch[2])
     const day = Number(isoMatch[3])
     if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return formatDateYYYYMMDD(year, month, day)
+    }
+  }
+
+  // "Nov 8 (Sat)", "Jan 3", "Dec 15" — month abbreviation + day
+  const abbrevMatch = text.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})(?:\s*\([A-Za-z]{2,3}\))?\b/i)
+  if (abbrevMatch) {
+    const month = MONTH_ABBREV[abbrevMatch[1].toLowerCase()]
+    const day = Number(abbrevMatch[2])
+    if (month && day >= 1 && day <= 31) {
+      const year = month >= 11 ? fallbackYear - 1 : fallbackYear
       return formatDateYYYYMMDD(year, month, day)
     }
   }
@@ -316,6 +335,9 @@ function findKeywordInText(text: string): { category: ExtractedTask['category'];
   if (/\b(problem set|ps[-\s]?\d+|assignment|homework)\b/.test(lower)) {
     return { category: 'assignment', priority: 'medium' }
   }
+  if (/\b(vs\.?|at\s+[A-Za-z]|opponent|game|match|home|away|neutral)\b/.test(lower) || /(W|L)\s+\d+-\d+/.test(text)) {
+    return { category: 'game', priority: 'medium' }
+  }
   return undefined
 }
 
@@ -328,6 +350,14 @@ function buildTitleFromLine(text: string, keyword: { category: ExtractedTask['ca
   const examMatch = text.match(/\b([A-Za-z0-9 &-]{0,40}\bExam)\b/i)
   if (examMatch?.[1]) {
     return examMatch[1].trim()
+  }
+
+  if (keyword.category === 'game') {
+    const vsMatch = text.match(/(?:vs\.?|at)\s+([A-Za-z0-9\s&.'-]{3,40})(?:\s|$|,)/i)
+    if (vsMatch?.[1]) return `vs ${vsMatch[1].trim()}`
+    const opponentMatch = text.match(/([A-Za-z0-9\s&.'-]{4,36})\s*(?:\(|$|,)/)
+    if (opponentMatch?.[1]) return `vs ${opponentMatch[1].trim()}`
+    return 'Game'
   }
 
   if (keyword.category === 'project') {

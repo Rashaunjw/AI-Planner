@@ -52,6 +52,8 @@ const CATEGORY_OPTIONS = [
   "Problem Set",
   "Presentation",
   "Discussion",
+  "Game",
+  "Event",
   "Other",
 ]
 
