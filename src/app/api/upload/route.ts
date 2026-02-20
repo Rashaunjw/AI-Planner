@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { extractTasksFromContent } from '@/lib/openai'
+import { extractTasksFromContent, getTextFromImage } from '@/lib/openai'
+import { fetchUrlToText } from '@/lib/fetch-url'
 import { parseDateWithTime } from '@/lib/date'
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
+
+const IMAGE_MIMES = ['image/png', 'image/jpeg', 'image/webp'] as const
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,10 +21,11 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     const text = formData.get('text')
+    const url = formData.get('url')
     const context = formData.get('context')
 
-    if (!file && !text) {
-      return NextResponse.json({ error: 'No file or text provided' }, { status: 400 })
+    if (!file && !text && !url) {
+      return NextResponse.json({ error: 'No file, text, or link provided' }, { status: 400 })
     }
 
     const FREE_UPLOADS_PER_MONTH = 10
@@ -57,24 +61,24 @@ export async function POST(request: NextRequest) {
     let fileSize = 0
 
     if (file) {
-      // Validate file type
+      // Validate file type (documents + images)
       const allowedTypes = [
         'application/pdf',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/msword',
-        'text/plain'
+        'text/plain',
+        ...IMAGE_MIMES,
       ]
       
       if (!allowedTypes.includes(file.type)) {
-        return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
+        return NextResponse.json({ error: 'Invalid file type. Use PDF, Word, text, or image (PNG, JPEG, WebP).' }, { status: 400 })
       }
 
       // Validate file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
-        return NextResponse.json({ error: 'File too large' }, { status: 400 })
+        return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 })
       }
 
-      // Save file to uploads directory
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
       
@@ -86,13 +90,13 @@ export async function POST(request: NextRequest) {
       const uploadsDir = join(baseDir, 'uploads')
       const uploadPath = join(uploadsDir, fileName)
 
-      // Ensure uploads directory exists (serverless-safe temp dir on Vercel)
       await mkdir(uploadsDir, { recursive: true })
       await writeFile(uploadPath, buffer)
 
-      // Extract text content based on file type
       try {
-        if (file.type === 'application/pdf') {
+        if (IMAGE_MIMES.includes(file.type as (typeof IMAGE_MIMES)[number])) {
+          content = await getTextFromImage(buffer, file.type)
+        } else if (file.type === 'application/pdf') {
           const pdf = await import('pdf-parse/lib/pdf-parse')
           const pdfData = await pdf.default(buffer)
           content = pdfData.text
@@ -106,13 +110,33 @@ export async function POST(request: NextRequest) {
         }
       } catch (error) {
         console.error('Error extracting text:', error)
-        return NextResponse.json({ error: 'Failed to extract text from file' }, { status: 500 })
+        return NextResponse.json({
+          error: IMAGE_MIMES.includes(file.type as (typeof IMAGE_MIMES)[number])
+            ? 'Could not read text from image. Try a clearer photo or use PDF/text.'
+            : 'Failed to extract text from file',
+        }, { status: 500 })
       }
-    } else if (typeof text === 'string') {
+    } else if (typeof text === 'string' && text.trim()) {
       content = text
       fileName = `pasted-text-${Date.now()}.txt`
       fileType = 'text/plain'
       fileSize = Buffer.byteLength(text, 'utf-8')
+    } else {
+      // url (only when no file and no text)
+      const urlStr = typeof url === 'string' ? url.trim() : ''
+      if (!urlStr) {
+        return NextResponse.json({ error: 'No file, text, or link provided' }, { status: 400 })
+      }
+      try {
+        content = await fetchUrlToText(urlStr)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to fetch link'
+        return NextResponse.json({ error: message }, { status: 400 })
+      }
+      const parsed = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`)
+      fileName = `link-${parsed.hostname}-${Date.now()}.txt`
+      fileType = 'text/plain'
+      fileSize = Buffer.byteLength(content, 'utf-8')
     }
 
     // Save upload record to database

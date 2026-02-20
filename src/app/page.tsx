@@ -294,9 +294,14 @@ export default async function Home() {
                   "PlanEra is an AI-powered study planner for students. Upload your syllabus, work schedule, or practice calendar and our AI extracts every deadline and assignment so you see everything in one place—dashboard, calendar view, and email reminders. No more manual copying into a planner.",
               },
               {
+                question: "How is PlanEra different from ChatGPT for study plans?",
+                answer:
+                  "ChatGPT can write a study plan if you paste in your assignments—but you have to gather and type everything yourself, and the plan lives in a chat. PlanEra is built around your real data: upload your syllabus once and we extract every deadline, class, and grade weight. The AI Study Plan is one click, uses your actual pending tasks, and lives next to your calendar and task list. When you complete something, regenerate and the plan stays in sync. No copy-paste, no prompt engineering—your semester in one place, then a plan that acts on it.",
+              },
+              {
                 question: "What can I upload?",
                 answer:
-                  "You can upload PDFs, Word documents (.doc, .docx), or paste plain text from a course page. The AI reads your content and pulls out assignments, exams, projects, and due dates. It works even when syllabi are messy or unstructured. File size limit is 10MB.",
+                  "You can upload PDFs, Word documents (.doc, .docx), images (PNG, JPEG, WebP) of a syllabus or schedule, or paste plain text. You can also paste a link to a course page or shared doc—we'll fetch the page and extract tasks. The AI pulls out assignments, exams, and due dates even from messy or unstructured content. File size limit is 10MB.",
               },
               {
                 question: "How does the AI work?",

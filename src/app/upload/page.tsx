@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Upload, FileText, CheckCircle, GraduationCap, Briefcase, Trophy, Users } from "lucide-react"
+import { Upload, FileText, CheckCircle, GraduationCap, Briefcase, Trophy, Users, Link as LinkIcon } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -18,6 +18,7 @@ export default function UploadPage() {
   const [extractedCount, setExtractedCount] = useState<number | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [pastedText, setPastedText] = useState("")
+  const [linkUrl, setLinkUrl] = useState("")
   const [uploadContext, setUploadContext] = useState<string | null>(null)
   const [showContextPrompt, setShowContextPrompt] = useState(false)
 
@@ -69,10 +70,13 @@ export default function UploadPage() {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "application/msword",
       "text/plain",
+      "image/png",
+      "image/jpeg",
+      "image/webp",
     ]
 
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Please upload a PDF, Word document, or text file.")
+      toast.error("Use a PDF, Word doc, text file, or image (PNG, JPEG, WebP).")
       return
     }
 
@@ -97,7 +101,10 @@ export default function UploadPage() {
   }
 
   const handleUpload = async () => {
-    if (!file && !pastedText.trim()) return
+    const hasFile = !!file
+    const hasText = !!pastedText.trim()
+    const hasLink = !!linkUrl.trim()
+    if (!hasFile && !hasText && !hasLink) return
     if (!uploadContext) {
       setShowContextPrompt(true)
       return
@@ -109,11 +116,13 @@ export default function UploadPage() {
 
     try {
       const formData = new FormData()
+      // Send only one source: file wins, then text, then link
       if (file) {
         formData.append("file", file)
-      }
-      if (pastedText.trim()) {
+      } else if (pastedText.trim()) {
         formData.append("text", pastedText.trim())
+      } else {
+        formData.append("url", linkUrl.trim())
       }
       formData.append("context", uploadContext)
 
@@ -246,7 +255,7 @@ export default function UploadPage() {
             Upload Your Syllabus or Schedule
           </h1>
           <p className="text-gray-500 text-sm">
-            Upload a PDF, Word document, or paste text. AI will extract your assignments and deadlines
+            Upload a file, paste text, or add a link. AI will extract your assignments and deadlines.
           </p>
         </div>
 
@@ -311,7 +320,7 @@ export default function UploadPage() {
                   <p className="text-gray-500 text-sm mb-4">or click to browse your files</p>
                   <input
                     type="file"
-                    accept=".pdf,.doc,.docx,.txt"
+                    accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
                     onChange={handleFileInput}
                     className="hidden"
                     id="file-upload"
@@ -322,9 +331,37 @@ export default function UploadPage() {
                     </Button>
                   </label>
                 </div>
-                <p className="text-xs text-gray-400">PDF, Word documents, or text files, up to 10MB</p>
+                <p className="text-xs text-gray-400">PDF, Word, text, or images (PNG, JPEG, WebP), up to 10MB</p>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Paste link */}
+        <div className="mt-6 bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+            <LinkIcon className="h-4 w-4 text-indigo-500" />
+            Or paste a link
+          </label>
+          <p className="text-xs text-gray-500 mb-2">
+            Course page, shared doc, or any page with syllabus/schedule text. We’ll fetch the page and extract tasks.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="https://..."
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            />
+            <Button
+              onClick={handleUpload}
+              disabled={!linkUrl.trim() || uploading}
+              variant="outline"
+              className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 shrink-0"
+            >
+              {uploading ? "Fetching..." : "Fetch & process"}
+            </Button>
           </div>
         </div>
 

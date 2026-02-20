@@ -113,6 +113,24 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* ── Why PlanEra (vs generic AI) ─────────────────────────── */}
+      <section className="py-20 px-4 bg-indigo-50 border-y border-indigo-100">
+        <div className="max-w-3xl mx-auto text-center">
+          <span className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3 block">
+            Why PlanEra, not just ChatGPT
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+            Your data, one click, built-in calendar
+          </h2>
+          <p className="text-gray-600 leading-relaxed mb-6">
+            ChatGPT can write a study plan if you paste in your assignments—but you have to gather everything yourself, and the plan stays in a chat. PlanEra uses your <strong>actual</strong> tasks: upload your syllabus once, we extract every deadline and grade weight, and the AI Study Plan is one click from your dashboard. The plan lives next to your calendar and task list and stays in sync when you complete things. No copy-paste, no prompt engineering.
+          </p>
+          <p className="text-gray-500 text-sm">
+            We&apos;re not a general-purpose chatbot. We&apos;re a workflow: upload → extract → plan → act—all in one place.
+          </p>
+        </div>
+      </section>
+
       {/* ── What PlanEra Does ───────────────────────────────────── */}
       <section className="py-20 px-4 bg-gray-50">
         <div className="max-w-5xl mx-auto">

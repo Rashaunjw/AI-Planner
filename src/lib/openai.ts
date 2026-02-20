@@ -23,6 +23,51 @@ export interface ExtractTasksResult {
   classDefaultTimes: Record<string, string>
 }
 
+/**
+ * Extract raw text from an image (e.g. photo of a syllabus) using vision.
+ * Returns text suitable for extractTasksFromContent.
+ */
+export async function getTextFromImage(
+  imageBuffer: Buffer,
+  mimeType: string = 'image/png'
+): Promise<string> {
+  if (!openai) {
+    throw new Error('OpenAI API key not configured')
+  }
+  const base64 = imageBuffer.toString('base64')
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are an OCR assistant. Extract all text from the image exactly as it appears. Preserve structure: line breaks, lists, tables (as lines or rows). Do not add commentary. If the image contains a syllabus, schedule, or calendar, include every date, assignment name, and deadline you can read. If you cannot read any text, return the word NONE.',
+      },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: 'Extract all text from this image. Return only the raw extracted text.',
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: `data:${mimeType};base64,${base64}`,
+            },
+          },
+        ],
+      },
+    ],
+    max_tokens: 2000,
+  })
+  const text = response.choices[0]?.message?.content?.trim() ?? ''
+  if (text.toUpperCase() === 'NONE' || text.length < 2) {
+    throw new Error('No readable text found in the image')
+  }
+  return text
+}
+
 export async function extractTasksFromContent(
   content: string,
   context?: string
