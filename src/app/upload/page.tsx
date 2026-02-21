@@ -59,7 +59,7 @@ export default function UploadPage() {
     if (!stillExtracting) return
     const interval = setInterval(() => {
       setParsingFactIndex((i) => (i + 1) % PARSING_FACTS.length)
-    }, 3500)
+    }, 10000)
     return () => clearInterval(interval)
   }, [stillExtracting])
 
