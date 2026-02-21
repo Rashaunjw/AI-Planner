@@ -71,7 +71,7 @@ export const authOptions: NextAuthOptions = {
         params: {
           scope:
             "openid email profile https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.events.readonly",
-          prompt: "consent",
+          prompt: "select_account",
           access_type: "offline",
         },
       },

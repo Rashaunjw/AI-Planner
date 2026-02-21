@@ -12,11 +12,7 @@ export default function GoogleSignInButton() {
       type="button"
       className="w-full inline-flex items-center justify-center gap-3 rounded-md border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 shadow-sm transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       onClick={() =>
-        signIn("google", {
-          callbackUrl,
-          prompt: "consent",
-          access_type: "offline",
-        })
+        signIn("google", { callbackUrl })
       }
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
