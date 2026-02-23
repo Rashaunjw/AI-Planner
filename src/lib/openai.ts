@@ -250,8 +250,18 @@ export async function generateStudyPlan(tasks: ExtractedTask[]): Promise<string>
   return result.plan
 }
 
+export type StudyPlanPreferences = {
+  whenStudying: string
+  focusMinutes: string
+  startsBefore: string
+  commonObstacle: string
+  blockPreference: string
+  weeklyStudyHours: string
+}
+
 export async function generateStudyPlanWithBlocks(
-  tasks: ExtractedTask[]
+  tasks: ExtractedTask[],
+  options?: { preferences?: StudyPlanPreferences; materialsText?: string }
 ): Promise<{ plan: string; blocks: StudyPlanBlock[] }> {
   try {
     if (!openai) {
@@ -260,8 +270,75 @@ export async function generateStudyPlanWithBlocks(
 
     const basePrompt =
       "You are an AI study planner. Given the following academic tasks, create a personalized study plan."
+
+    let contextParts: string[] = []
+
+    if (options?.preferences) {
+      const p = options.preferences
+      const whenLabel: Record<string, string> = {
+        morning: "studies in the morning",
+        afternoon: "studies in the afternoon",
+        evening: "studies in the evening",
+        late_night: "studies late at night",
+        mixed: "studies at mixed times",
+      }
+      const focusLabel: Record<string, string> = {
+        "25": "can focus for about 25-30 minutes at a time",
+        "45": "can focus for 45-60 minutes at a time",
+        "90": "can focus for 90+ minutes at a time",
+        varies: "focus length varies",
+      }
+      const startsLabel: Record<string, string> = {
+        last_day: "usually starts the day before or day of the deadline",
+        "2_3_days": "usually starts 2-3 days before",
+        about_week: "usually starts about a week before",
+        "2_weeks_plus": "usually starts 2+ weeks before",
+      }
+      const obstacleLabel: Record<string, string> = {
+        procrastination: "often procrastinates",
+        forgetting_dates: "sometimes forgets due dates",
+        underestimating_time: "often underestimates how long tasks take",
+        overwhelmed: "gets overwhelmed by workload",
+        nothing_major: "doesn't have a major obstacle",
+      }
+      const blockLabel: Record<string, string> = {
+        one_long: "prefers one long study block",
+        several_short: "prefers several short sessions",
+        depends: "preference depends on the task",
+      }
+      const hoursLabel: Record<string, string> = {
+        "1_5": "has 1-5 hours per week for studying",
+        "5_10": "has 5-10 hours per week for studying",
+        "10_15": "has 10-15 hours per week for studying",
+        "15_20": "has 15-20 hours per week for studying",
+        "20_plus": "has 20+ hours per week for studying",
+      }
+      contextParts.push(
+        "Study habits (personalize the plan to these):",
+        `- ${whenLabel[p.whenStudying] || p.whenStudying}.`,
+        `- ${focusLabel[p.focusMinutes] || p.focusMinutes}.`,
+        `- ${startsLabel[p.startsBefore] || p.startsBefore}.`,
+        `- ${obstacleLabel[p.commonObstacle] || p.commonObstacle}.`,
+        `- ${blockLabel[p.blockPreference] || p.blockPreference}.`,
+        `- ${hoursLabel[p.weeklyStudyHours] || p.weeklyStudyHours}.`
+      )
+    }
+
+    if (options?.materialsText && options.materialsText.trim()) {
+      const trimmed = options.materialsText.trim().slice(0, 12000)
+      contextParts.push(
+        "",
+        "Additional context from the user's class slides or study guides (use to prioritize topics and suggest what to study):",
+        trimmed
+      )
+    }
+
     const tasksJson = JSON.stringify(tasks, null, 2)
-    const requirements = `Create a study plan that: 1. Prioritizes tasks by due date and importance, 2. Suggests realistic time blocks for studying, 3. Includes buffer time for unexpected delays, 4. Considers workload distribution, 5. Provides specific study strategies for each task type.
+    const contextBlock =
+      contextParts.length > 0
+        ? `\n\n${contextParts.join("\n")}\n\n`
+        : ""
+    const requirements = `Create a study plan that: 1. Prioritizes tasks by due date and importance, 2. Suggests realistic time blocks for studying, 3. Includes buffer time for unexpected delays, 4. Considers workload distribution, 5. Provides specific study strategies for each task type.${options?.preferences ? " Tailor block lengths and timing to the user's study habits above." : ""}
 
 Return your response in two parts:
 1. First, the full study plan as structured text (headings, bullets, clear advice).
@@ -278,7 +355,7 @@ Return your response in two parts:
         },
         {
           role: "user",
-          content: `${basePrompt}\n\nTasks:\n${tasksJson}\n\n${requirements}`,
+          content: `${basePrompt}${contextBlock}Tasks:\n${tasksJson}\n\n${requirements}`,
         },
       ],
       temperature: 0.3,

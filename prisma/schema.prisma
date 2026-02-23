@@ -57,6 +57,21 @@ model User {
   digestSents      DigestSent[]
   conversations    Conversation[]
   pushSubscriptions PushSubscription[]
+  studyPlanPreferences StudyPlanPreferences?
+}
+
+model StudyPlanPreferences {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  whenStudying      String   // morning | afternoon | evening | late_night | mixed
+  focusMinutes      String   // 25 | 45 | 90 | varies
+  startsBefore      String   // last_day | 2_3_days | about_week | 2_weeks_plus
+  commonObstacle    String   // procrastination | forgetting_dates | underestimating_time | overwhelmed | nothing_major
+  blockPreference   String   // one_long | several_short | depends
+  weeklyStudyHours  String   // 1_5 | 5_10 | 10_15 | 15_20 | 20_plus
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PushSubscription {
