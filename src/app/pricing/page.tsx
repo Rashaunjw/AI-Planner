@@ -5,19 +5,28 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import AppNav from "@/components/app-nav"
 
+// Free: enough to fully test the app and give feedback; clear limits on usage
 const FREE_FEATURES = [
-  "10 syllabus uploads per month",
-  "AI task extraction",
-  "Dashboard and calendar view",
-  "Email reminders",
-  "ICS calendar feed",
-  "Google Calendar sync",
+  "5 document uploads per month",
+  "AI task extraction from syllabus/schedule",
+  "Full dashboard, tasks, and calendar view",
+  "Email reminders and push notifications",
+  "ICS calendar feed and Google Calendar sync",
+  "AI study plan (generate up to 5 per month)",
+  "Add study blocks to calendar (limited)",
+  "Weekly digest email",
 ]
 
+// Pro: unrestricted usage + premium features
 const PRO_FEATURES = [
-  "Unlimited uploads",
-  "Study block scheduling",
-  "Crunch week reports",
+  "Schedule chat (ask about your schedule with AI)",
+  "Unlimited document uploads",
+  "Unlimited AI study plan generations",
+  "Unlimited “add study blocks to calendar”",
+  "Crunch week reports (busiest week, workload insights)",
+  "Custom reminder windows (1 day, 3 days, 1 week, etc.)",
+  "Export to CSV / PDF (when available)",
+  "Priority support",
   "Everything in Free",
 ]
 

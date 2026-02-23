@@ -19,7 +19,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(getSiteBaseUrl()),
   title: "PlanEra - Smart Study Planning",
   description: "Upload your syllabus or schedule and get AI-powered study plans with calendar integration",
-  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-icon.png",
+  },
   appleWebApp: { capable: true, title: "PlanEra" },
 };
 

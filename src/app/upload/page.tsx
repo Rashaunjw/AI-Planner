@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Upload, FileText, CheckCircle, GraduationCap, Briefcase, Trophy, Users, Link as LinkIcon, LayoutDashboard, Brain, ListTodo } from "lucide-react"
 import { useSession } from "next-auth/react"
@@ -37,6 +37,8 @@ export default function UploadPage() {
   const [linkError, setLinkError] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [parsingFactIndex, setParsingFactIndex] = useState(0)
+  const [pendingFilePicker, setPendingFilePicker] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -48,8 +50,6 @@ export default function UploadPage() {
     const savedContext = window.localStorage.getItem("uploadContext")
     if (savedContext) {
       setUploadContext(savedContext)
-    } else {
-      setShowContextPrompt(true)
     }
   }, [])
 
@@ -125,6 +125,15 @@ export default function UploadPage() {
     setUploadContext(context)
     window.localStorage.setItem("uploadContext", context)
     setShowContextPrompt(false)
+    if (pendingFilePicker) {
+      setPendingFilePicker(false)
+      setTimeout(() => fileInputRef.current?.click(), 0)
+    }
+  }
+
+  const openContextThenFilePicker = () => {
+    setPendingFilePicker(true)
+    setShowContextPrompt(true)
   }
 
   const handleUpload = async () => {
@@ -390,7 +399,7 @@ export default function UploadPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => setFile(null)}
+                  onClick={openContextThenFilePicker}
                   disabled={uploading}
                   className="border-gray-300"
                 >
@@ -406,17 +415,20 @@ export default function UploadPage() {
                   </h3>
                   <p className="text-gray-500 text-sm mb-4">or click to browse your files</p>
                   <input
+                    ref={fileInputRef}
                     type="file"
                     accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
                     onChange={handleFileInput}
                     className="hidden"
                     id="file-upload"
                   />
-                  <label htmlFor="file-upload">
-                    <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer">
-                      <span>Choose File</span>
-                    </Button>
-                  </label>
+                  <Button
+                    type="button"
+                    onClick={openContextThenFilePicker}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
+                  >
+                    Choose File
+                  </Button>
                 </div>
                 <p className="text-xs text-gray-400">PDF, Word, text, or images (PNG, JPEG, WebP), up to 10MB</p>
               </div>

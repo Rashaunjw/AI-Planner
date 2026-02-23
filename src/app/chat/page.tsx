@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { MessageCircle, Send, Loader2, GraduationCap } from "lucide-react"
+import { MessageCircle, Send, Loader2, GraduationCap, Sparkles } from "lucide-react"
+import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import AppNav from "@/components/app-nav"
 import LoadingScreen from "@/components/loading-screen"
+import { Button } from "@/components/ui/button"
 
 type Message = { role: "user" | "assistant"; content: string }
 
@@ -16,6 +18,7 @@ export default function ChatPage() {
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(true)
+  const [proRequired, setProRequired] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -28,10 +31,19 @@ export default function ChatPage() {
     if (status !== "authenticated" || !session?.user?.id) return
     let cancelled = false
     setLoadingHistory(true)
+    setProRequired(false)
     fetch("/api/chat")
-      .then((res) => (res.ok ? res.json() : { messages: [] }))
+      .then((res) => {
+        if (res.status === 403) return res.json().then((d) => ({ upgrade: d?.upgrade }))
+        return res.ok ? res.json() : { messages: [] }
+      })
       .then((data) => {
-        if (!cancelled && Array.isArray(data?.messages)) {
+        if (cancelled) return
+        if (data?.upgrade) {
+          setProRequired(true)
+          return
+        }
+        if (Array.isArray(data?.messages)) {
           setMessages(
             data.messages.map((m: Message) => ({
               role: m.role,
@@ -69,6 +81,10 @@ export default function ChatPage() {
       const data = await res.json()
 
       if (!res.ok) {
+        if (res.status === 403 && data?.upgrade) {
+          setProRequired(true)
+          return
+        }
         const errorMsg =
           data?.rateLimited === true
             ? data?.error ?? "Message limit reached for today. Try again tomorrow."
@@ -100,6 +116,26 @@ export default function ChatPage() {
 
   if (!session) {
     return null
+  }
+
+  if (proRequired) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50">
+        <AppNav />
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+          <Sparkles className="h-14 w-14 text-indigo-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Schedule chat is a Pro feature</h1>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            Ask about your schedule, due dates, and assignments with AI. Upgrade to Pro to use the schedule chat.
+          </p>
+          <Link href="/pricing">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+              View Pro plan
+            </Button>
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "prisma migrate deploy && prisma generate && next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate-favicons": "node scripts/generate-favicons.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
@@ -47,7 +48,9 @@
     "eslint": "^9",
     "eslint-config-next": "^15.5.9",
     "node-cron": "^4.2.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
+    "to-ico": "^1.1.5",
     "tsx": "^4.21.0",
     "typescript": "^5"
   }

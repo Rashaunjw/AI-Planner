@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { MessageCircle, Send, Loader2, GraduationCap, X } from "lucide-react"
+import { MessageCircle, Send, Loader2, GraduationCap, X, Sparkles } from "lucide-react"
+import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useChatPanel } from "@/components/chat-panel-context"
+import { Button } from "@/components/ui/button"
 
 type Message = { role: "user" | "assistant"; content: string }
 
@@ -15,6 +17,7 @@ export function ChatPanel() {
   const [sending, setSending] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(true)
   const [hasFetched, setHasFetched] = useState(false)
+  const [proRequired, setProRequired] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   // Load history once when authenticated (messages persist when panel is closed)
@@ -22,9 +25,17 @@ export function ChatPanel() {
     if (status !== "authenticated" || !session?.user?.id || hasFetched) return
     setHasFetched(true)
     setLoadingHistory(true)
+    setProRequired(false)
     fetch("/api/chat")
-      .then((res) => (res.ok ? res.json() : { messages: [] }))
+      .then((res) => {
+        if (res.status === 403) return res.json().then((d) => ({ upgrade: d?.upgrade }))
+        return res.ok ? res.json() : { messages: [] }
+      })
       .then((data) => {
+        if (data?.upgrade) {
+          setProRequired(true)
+          return
+        }
         if (Array.isArray(data?.messages)) {
           setMessages(
             data.messages.map((m: Message) => ({
@@ -61,6 +72,10 @@ export function ChatPanel() {
       const data = await res.json()
 
       if (!res.ok) {
+        if (res.status === 403 && data?.upgrade) {
+          setProRequired(true)
+          return
+        }
         const errorMsg =
           data?.rateLimited === true
             ? data?.error ?? "Message limit reached for today. Try again tomorrow."
@@ -122,6 +137,19 @@ export function ChatPanel() {
           {status !== "authenticated" ? (
             <div className="flex-1 flex items-center justify-center p-6 text-center text-gray-500 text-sm">
               Sign in to use chat.
+            </div>
+          ) : proRequired ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+              <Sparkles className="h-12 w-12 text-indigo-400 mb-3" />
+              <p className="text-sm font-medium text-gray-700 mb-1">Schedule chat is a Pro feature</p>
+              <p className="text-xs text-gray-500 mb-4 max-w-xs">
+                Ask about your schedule, due dates, and assignments with AI. Upgrade to Pro to use it.
+              </p>
+              <Link href="/pricing" onClick={closeChat}>
+                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                  View Pro plan
+                </Button>
+              </Link>
             </div>
           ) : (
             <>
