@@ -115,7 +115,7 @@ export default function StudyPlanButton() {
               <BookOpen className="h-4 w-4 text-amber-600 shrink-0" />
               <p className="text-xs text-amber-700">
                 Based on your {" "}
-                <span className="font-semibold">pending assignments</span>. Mark tasks complete
+                <span className="font-semibold">pending tasks</span>. Mark tasks complete
                 as you finish them to keep this accurate.
               </p>
             </div>

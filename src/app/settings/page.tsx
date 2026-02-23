@@ -9,6 +9,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import AppNav from "@/components/app-nav"
 import LoadingScreen from "@/components/loading-screen"
+import { subscribeToPush, unsubscribeFromPush } from "@/lib/push-client"
 
 const GOOGLE_CALENDAR_COLORS = [
   { id: "1", hex: "#A4BDFC" },
@@ -61,6 +62,7 @@ export default function SettingsPage() {
               emailReminders: Boolean(data.settings.emailReminders),
               reminderDays: Number(data.settings.reminderDays) || 2,
               calendarSync: Boolean(data.settings.calendarSync),
+              notifications: Boolean(data.pushSubscribed),
             }))
             if (data.settings.plan === "pro" || data.settings.plan === "free") {
               setPlan(data.settings.plan)
@@ -302,11 +304,25 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between pt-1">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Push Notifications</label>
-                  <p className="text-xs text-gray-400 mt-0.5">Receive browser notifications</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Receive browser notifications for deadlines</p>
                 </div>
                 <Toggle
                   checked={settings.notifications}
-                  onChange={(v) => setSettings({ ...settings, notifications: v })}
+                  onChange={async (v) => {
+                    if (v) {
+                      const result = await subscribeToPush()
+                      if (result.ok) {
+                        setSettings((s) => ({ ...s, notifications: true }))
+                        toast.success("Push notifications enabled")
+                      } else {
+                        toast.error(result.error || "Could not enable push")
+                      }
+                    } else {
+                      await unsubscribeFromPush()
+                      setSettings((s) => ({ ...s, notifications: false }))
+                      toast.success("Push notifications disabled")
+                    }
+                  }}
                 />
               </div>
             </div>

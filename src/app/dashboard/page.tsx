@@ -188,7 +188,7 @@ export default async function Dashboard() {
             <p className="text-sm text-gray-500 mt-1">
               {pendingTasks.length === 0
                 ? "You're all caught up! Upload a syllabus to get started."
-                : `You have ${pendingTasks.length} pending assignment${pendingTasks.length !== 1 ? "s" : ""}.`}
+                : `You have ${pendingTasks.length} pending tasks${pendingTasks.length !== 1 ? "s" : ""}.`}
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">

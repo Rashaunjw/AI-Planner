@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const [user, accounts] = await Promise.all([
+    const [user, accounts, pushCount] = await Promise.all([
       prisma.user.findUnique({
         where: { id: session.user.id },
         select: { emailReminders: true, reminderDays: true, calendarSync: true, plan: true },
@@ -19,6 +19,7 @@ export async function GET() {
         where: { userId: session.user.id },
         select: { provider: true, providerAccountId: true },
       }),
+      prisma.pushSubscription.count({ where: { userId: session.user.id } }),
     ])
 
     const uploads = await prisma.upload.findMany({
@@ -29,6 +30,7 @@ export async function GET() {
 
     return NextResponse.json({
       settings: user ?? { emailReminders: true, reminderDays: 2 },
+      pushSubscribed: pushCount > 0,
       accounts,
       uploads,
     })

@@ -118,7 +118,7 @@ export default function PlanPage() {
           <div className="bg-amber-50 border-b border-amber-100 px-6 py-2.5 flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-amber-600 shrink-0" />
             <p className="text-xs text-amber-700">
-              Based on your <span className="font-semibold">pending assignments</span>. Mark tasks
+              Based on your <span className="font-semibold">pending tasks</span>. Mark tasks
               complete as you finish them to keep this accurate.
             </p>
           </div>

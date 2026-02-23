@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { sendPushNotification } from "@/lib/push"
+import { getSiteBaseUrl } from "@/lib/site-url"
 
 type ReminderCandidate = {
   taskId: string
@@ -82,7 +84,89 @@ async function handleRequest(request: NextRequest) {
       sentCount += 1
     }
 
-    return NextResponse.json({ sentCount })
+    // Push notifications: same reminder logic for users with push subscriptions (only if VAPID is configured)
+    const vapidConfigured = Boolean(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY)
+    const usersWithPush = vapidConfigured
+      ? await prisma.user.findMany({
+          where: { pushSubscriptions: { some: {} } },
+          select: { id: true, reminderDays: true },
+        })
+      : []
+
+    let pushSentCount = 0
+    for (const user of usersWithPush) {
+      const tasks = await prisma.task.findMany({
+        where: {
+          userId: user.id,
+          dueDate: { not: null },
+          NOT: { status: "completed" },
+        },
+        select: { id: true, title: true, dueDate: true },
+      })
+
+      const todayKey = formatDateKeyUTC(new Date())
+      const candidates: ReminderCandidate[] = []
+      for (const task of tasks) {
+        if (!task.dueDate) continue
+        const reminderDate = new Date(task.dueDate)
+        reminderDate.setUTCDate(reminderDate.getUTCDate() - user.reminderDays)
+        if (formatDateKeyUTC(reminderDate) === todayKey) {
+          candidates.push({ taskId: task.id, title: task.title, dueDate: task.dueDate })
+        }
+      }
+
+      if (candidates.length === 0) continue
+
+      const existingPush = await prisma.reminder.findMany({
+        where: {
+          userId: user.id,
+          type: "push",
+          scheduledFor: startOfDayUTC(new Date()),
+        },
+        select: { taskId: true },
+      })
+      const sentTaskIds = new Set(existingPush.map((item) => item.taskId))
+      const toSend = candidates.filter((item) => !sentTaskIds.has(item.taskId))
+      if (toSend.length === 0) continue
+
+      const subscriptions = await prisma.pushSubscription.findMany({
+        where: { userId: user.id },
+        select: { endpoint: true, p256dh: true, auth: true },
+      })
+
+      const dayLabel = user.reminderDays === 1 ? "tomorrow" : `in ${user.reminderDays} days`
+      const body =
+        toSend.length === 1
+          ? `${toSend[0].title} due ${dayLabel}`
+          : `${toSend.length} assignments due ${dayLabel}`
+      const baseUrl = getSiteBaseUrl()
+      const payload = {
+        title: "PlanEra – Deadline reminder",
+        body,
+        url: `${baseUrl}/tasks`,
+        tag: "planera-reminder",
+      }
+
+      try {
+        for (const sub of subscriptions) {
+          await sendPushNotification(sub, payload)
+        }
+        await prisma.reminder.createMany({
+          data: toSend.map((item) => ({
+            userId: user.id,
+            taskId: item.taskId,
+            type: "push",
+            scheduledFor: startOfDayUTC(new Date()),
+            isSent: true,
+          })),
+        })
+        pushSentCount += 1
+      } catch (err) {
+        console.error("Push reminder failed for user", user.id, err)
+      }
+    }
+
+    return NextResponse.json({ sentCount, pushSentCount })
   } catch (error) {
     console.error("Reminder run error:", error)
     return NextResponse.json({ error: "Failed to send reminders." }, { status: 500 })

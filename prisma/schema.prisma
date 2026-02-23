@@ -34,28 +34,42 @@ model Session {
 }
 
 model User {
-  id             String     @id @default(cuid())
-  name           String?
-  email          String     @unique
-  passwordHash   String?
-  emailVerified  DateTime?
-  image          String?
-  plan           String     @default("free")
-  emailReminders Boolean   @default(true)
-  reminderDays   Int       @default(2)
-  calendarSync   Boolean   @default(false)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  accounts       Account[]
-  calendars      Calendar[]
-  reminders      Reminder[]
-  sessions       Session[]
-  tasks          Task[]
-  uploads        Upload[]
-  classShares     ClassShare[]
-  classColors     UserClassColor[]
-  digestSents     DigestSent[]
-  conversations   Conversation[]
+  id               String            @id @default(cuid())
+  name             String?
+  email            String            @unique
+  passwordHash     String?
+  emailVerified    DateTime?
+  image            String?
+  plan             String            @default("free")
+  emailReminders   Boolean           @default(true)
+  reminderDays     Int               @default(2)
+  calendarSync     Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  accounts         Account[]
+  calendars        Calendar[]
+  reminders        Reminder[]
+  sessions         Session[]
+  tasks            Task[]
+  uploads          Upload[]
+  classShares      ClassShare[]
+  classColors      UserClassColor[]
+  digestSents      DigestSent[]
+  conversations    Conversation[]
+  pushSubscriptions PushSubscription[]
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String   // client public key for ECDH
+  auth      String   // auth secret
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@index([userId])
 }
 
 model Conversation {
