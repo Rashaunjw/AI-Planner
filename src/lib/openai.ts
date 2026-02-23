@@ -271,7 +271,7 @@ export async function generateStudyPlanWithBlocks(
     const basePrompt =
       "You are an AI study planner. Given the following academic tasks, create a personalized study plan."
 
-    let contextParts: string[] = []
+    const contextParts: string[] = []
 
     if (options?.preferences) {
       const p = options.preferences
