@@ -477,7 +477,7 @@ export default async function Dashboard() {
               {/* Class Progress */}
               <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-indigo-100">
                 <div className="px-6 py-4 border-b border-gray-100">
-                  <h2 className="text-base font-semibold text-gray-900">Class Progress</h2>
+                  <h2 className="text-base font-semibold text-gray-900">Progress</h2>
                   <p className="text-xs text-gray-400 mt-0.5">Assignments completed per class</p>
                 </div>
                 <div className="p-4 space-y-4">
@@ -535,7 +535,7 @@ export default async function Dashboard() {
                   icon: BookOpen,
                   iconBg: "bg-violet-100 group-hover:bg-violet-200",
                   iconColor: "text-violet-600",
-                  title: "All Assignments",
+                  title: "All Tasks",
                   desc: "Filter, edit, and track your full task list.",
                 },
               ].map(({ href, icon: Icon, iconBg, iconColor, title, desc }) => (

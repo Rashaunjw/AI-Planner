@@ -277,8 +277,17 @@ export default function UploadPage() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50">
       {/* Context Prompt Modal */}
       {showContextPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-7 shadow-xl border border-indigo-100">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => setShowContextPrompt(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Choose context for your upload"
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-white p-7 shadow-xl border border-indigo-100"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="text-center mb-5">
               <div className="bg-indigo-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Upload className="h-6 w-6 text-indigo-600" />

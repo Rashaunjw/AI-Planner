@@ -142,7 +142,7 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -150,9 +150,15 @@ export async function DELETE() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await prisma.task.deleteMany({
-      where: { userId: session.user.id },
-    })
+    const url = new URL(request.url)
+    const completedOnly = url.searchParams.get('completedOnly') === 'true'
+
+    const where: { userId: string; status?: string } = { userId: session.user.id }
+    if (completedOnly) {
+      where.status = 'completed'
+    }
+
+    await prisma.task.deleteMany({ where })
 
     return NextResponse.json({ success: true })
   } catch (error) {

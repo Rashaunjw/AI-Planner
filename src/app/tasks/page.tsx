@@ -195,6 +195,15 @@ export default function TasksPage() {
     }
   }, [router, session, status])
 
+  useEffect(() => {
+    if (!showConfirmDeleteAll) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowConfirmDeleteAll(false)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [showConfirmDeleteAll])
+
   const weightKey = (value: number) => (Math.round(value * 100) / 100).toFixed(2)
 
   const weightGroups = useMemo(() => {
@@ -387,20 +396,37 @@ export default function TasksPage() {
     }
   }
 
+  const handleDeleteCompleted = async () => {
+    setDeletingAll(true)
+    try {
+      const response = await fetch("/api/tasks?completedOnly=true", { method: "DELETE" })
+      if (response.ok) {
+        setTasks((prev) => prev.filter((t) => t.status !== "completed"))
+        toast.success("Completed tasks cleared.")
+      } else {
+        toast.error("Failed to clear completed tasks.")
+      }
+    } catch (error) {
+      console.error("Error clearing completed tasks:", error)
+      toast.error("Failed to clear completed tasks.")
+    } finally {
+      setDeletingAll(false)
+    }
+  }
+
   const handleDeleteAll = async () => {
-    setShowConfirmDeleteAll(false)
     setDeletingAll(true)
     try {
       const response = await fetch("/api/tasks", { method: "DELETE" })
       if (response.ok) {
         setTasks([])
-        toast.success("All assignments cleared.")
+        toast.success("All tasks cleared.")
       } else {
-        toast.error("Failed to clear assignments.")
+        toast.error("Failed to clear tasks.")
       }
     } catch (error) {
       console.error("Error deleting tasks:", error)
-      toast.error("Failed to clear assignments.")
+      toast.error("Failed to clear tasks.")
     } finally {
       setDeletingAll(false)
     }
@@ -601,16 +627,55 @@ export default function TasksPage() {
         onCancel={() => setConfirmDeleteId(null)}
       />
 
-      {/* Confirm: Delete all */}
-      <ConfirmDialog
-        isOpen={showConfirmDeleteAll}
-        title="Clear All Assignments"
-        message="This will permanently delete all your assignments. This action cannot be undone."
-        confirmLabel="Clear All"
-        variant="danger"
-        onConfirm={handleDeleteAll}
-        onCancel={() => setShowConfirmDeleteAll(false)}
-      />
+      {/* Confirm: Clear completed vs all */}
+      {showConfirmDeleteAll && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowConfirmDeleteAll(false)}
+            aria-hidden
+          />
+          <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 max-w-sm w-full p-6 animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="text-base font-semibold text-gray-900 mb-2">Clear tasks</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Do you want to clear completed tasks only, or all tasks?
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                disabled={deletingAll || completedAssignments === 0}
+                onClick={() => {
+                  setShowConfirmDeleteAll(false)
+                  handleDeleteCompleted()
+                }}
+              >
+                Clear completed only ({completedAssignments})
+              </Button>
+              <Button
+                size="sm"
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={deletingAll}
+                onClick={() => {
+                  setShowConfirmDeleteAll(false)
+                  handleDeleteAll()
+                }}
+              >
+                Clear all tasks ({totalAssignments})
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowConfirmDeleteAll(false)}
+                className="mt-2"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Page Header */}
       <div className="bg-white border-b shadow-sm">

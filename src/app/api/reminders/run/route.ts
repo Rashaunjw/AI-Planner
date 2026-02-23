@@ -244,7 +244,7 @@ async function sendReminderEmail(
             <div style="margin-top:28px;text-align:center;">
               <a href="https://planera.app/tasks"
                  style="display:inline-block;background:#4f46e5;color:#ffffff;font-weight:600;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;">
-                View All Assignments →
+                View All Tasks →
               </a>
             </div>
           </td>
