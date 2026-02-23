@@ -639,7 +639,7 @@ export default function CalendarPage() {
             {classColorMap.size > 0 && (
               <div className="mt-4 bg-white rounded-xl shadow-sm border border-indigo-100 p-5">
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">
-                  Classes
+                  Classes/Organizations
                 </h3>
                 <ul className="space-y-2">
                   {Array.from(classColorMap.entries()).map(([name, idx]) => {

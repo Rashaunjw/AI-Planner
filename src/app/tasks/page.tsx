@@ -684,7 +684,7 @@ export default function TasksPage() {
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <BookOpen className="h-7 w-7 text-indigo-600" />
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Assignments</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Tasks</h1>
               </div>
               <p className="text-gray-500 text-sm">
                 Track deadlines, grades, and priorities across all your classes
@@ -1001,7 +1001,7 @@ export default function TasksPage() {
                     : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300"
                     }`}
                 >
-                  All Classes
+                  All Classes/Organizations
                 </button>
                 {classNames.map((name) => {
                   const color = getClassColor(name === "No Class" ? null : name)

@@ -478,7 +478,7 @@ export default async function Dashboard() {
               <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-indigo-100">
                 <div className="px-6 py-4 border-b border-gray-100">
                   <h2 className="text-base font-semibold text-gray-900">Progress</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Assignments completed per class</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Tasks completed per class</p>
                 </div>
                 <div className="p-4 space-y-4">
                   {classProgress.length === 0 ? (
