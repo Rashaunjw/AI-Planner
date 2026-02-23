@@ -1,15 +1,24 @@
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Calendar, FileText, GraduationCap, BookOpen, CheckCircle, Clock, Zap, Shield, Star, Smartphone, Monitor, HelpCircle } from "lucide-react"
 import Link from "next/link"
+import { headers } from "next/headers"
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
+import { isCrawler } from "@/lib/site-url"
 import FaqSection from "@/components/faq-section"
+
+export const metadata = {
+  alternates: { canonical: "/" },
+}
 
 export default async function Home() {
   const session = await getServerSession(authOptions)
 
-  if (session) {
+  // Don't redirect crawlers: serve the landing page so Google indexes / and doesn't see "page with redirect"
+  const headersList = await headers()
+  const userAgent = headersList.get("user-agent") ?? undefined
+  if (session && !isCrawler(userAgent)) {
     redirect("/dashboard")
   }
 

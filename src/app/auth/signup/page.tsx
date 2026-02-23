@@ -28,6 +28,10 @@ const STEPS = [
   },
 ]
 
+export const metadata = {
+  alternates: { canonical: "/auth/signup" },
+}
+
 export default async function SignUp() {
   const session = await getServerSession(authOptions)
 

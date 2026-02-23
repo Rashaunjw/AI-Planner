@@ -2,6 +2,10 @@ import { GraduationCap, FileText, BookOpen, Calendar, Zap, Heart, ArrowRight, Ch
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
+export const metadata = {
+  alternates: { canonical: "/about" },
+}
+
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">

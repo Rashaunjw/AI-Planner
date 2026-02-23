@@ -1,6 +1,10 @@
 import { GraduationCap } from "lucide-react"
 import Link from "next/link"
 
+export const metadata = {
+  alternates: { canonical: "/terms" },
+}
+
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-slate-50">

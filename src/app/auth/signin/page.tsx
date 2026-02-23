@@ -30,6 +30,10 @@ const FEATURES = [
   },
 ]
 
+export const metadata = {
+  alternates: { canonical: "/auth/signin" },
+}
+
 export default async function SignIn() {
   const session = await getServerSession(authOptions)
 

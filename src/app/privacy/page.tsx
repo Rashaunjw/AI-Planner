@@ -1,6 +1,10 @@
 import { GraduationCap } from "lucide-react"
 import Link from "next/link"
 
+export const metadata = {
+  alternates: { canonical: "/privacy" },
+}
+
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-slate-50">

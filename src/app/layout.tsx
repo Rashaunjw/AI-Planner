@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers"
 import { PwaRegister } from "@/components/pwa-register"
+import { getSiteBaseUrl } from "@/lib/site-url"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,6 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteBaseUrl()),
   title: "PlanEra - Smart Study Planning",
   description: "Upload your syllabus or schedule and get AI-powered study plans with calendar integration",
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
