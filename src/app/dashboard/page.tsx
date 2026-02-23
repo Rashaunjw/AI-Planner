@@ -183,7 +183,7 @@ export default async function Dashboard() {
         <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Welcome back, {session.user?.name?.split(" ")[0] || "Student"}
+              Hello, {session.user?.name?.split(" ")[0] || "Student"}
             </h1>
             <p className="text-sm text-gray-500 mt-1">
               {pendingTasks.length === 0
