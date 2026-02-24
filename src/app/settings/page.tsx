@@ -43,6 +43,8 @@ export default function SettingsPage() {
   const [classColors, setClassColors] = useState<Record<string, string>>({})
   const [classNames, setClassNames] = useState<string[]>([])
   const [savingColor, setSavingColor] = useState<string | null>(null)
+  const [proCode, setProCode] = useState("")
+  const [proCodeLoading, setProCodeLoading] = useState(false)
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -220,11 +222,56 @@ export default function SettingsPage() {
               )}
             </p>
             {plan === "free" && (
-              <Link href="/pricing">
-                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                  View plans and upgrade
-                </Button>
-              </Link>
+              <>
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <Link href="/pricing">
+                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                      View plans and upgrade
+                    </Button>
+                  </Link>
+                </div>
+                <div className="pt-3 border-t border-gray-100">
+                  <p className="text-xs font-medium text-gray-500 mb-2">Have a Pro trial code?</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={proCode}
+                      onChange={(e) => setProCode(e.target.value)}
+                      placeholder="Enter code"
+                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={proCodeLoading || !proCode.trim()}
+                      onClick={async () => {
+                        setProCodeLoading(true)
+                        try {
+                          const res = await fetch("/api/settings/pro-code", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ code: proCode.trim() }),
+                          })
+                          const data = await res.json().catch(() => ({}))
+                          if (res.ok && data.plan === "pro") {
+                            setPlan("pro")
+                            setProCode("")
+                            toast.success("Pro access enabled")
+                          } else {
+                            toast.error(data.error || "Invalid code")
+                          }
+                        } catch {
+                          toast.error("Something went wrong")
+                        } finally {
+                          setProCodeLoading(false)
+                        }
+                      }}
+                    >
+                      {proCodeLoading ? "Applying…" : "Apply"}
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
 

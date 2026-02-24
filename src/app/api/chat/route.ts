@@ -29,16 +29,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { plan: true },
-    })
-    if (user?.plan !== "pro") {
-      return NextResponse.json(
-        { error: "Schedule chat is a Pro feature. Upgrade to use it.", upgrade: true },
-        { status: 403 }
-      )
-    }
+    // Plan check disabled for now — everything is free; Pro still shown in Settings/Pricing.
 
     const conv = await getOrCreateConversation(session.user.id)
     const messages = conv.messages.map((m) => ({
@@ -63,16 +54,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { plan: true },
-    })
-    if (user?.plan !== "pro") {
-      return NextResponse.json(
-        { error: "Schedule chat is a Pro feature. Upgrade to use it.", upgrade: true },
-        { status: 403 }
-      )
-    }
+    // Plan check disabled for now — everything is free; Pro still shown in Settings/Pricing.
 
     const body = await request.json().catch(() => ({}))
     const message = typeof body?.message === "string" ? body.message.trim() : ""
