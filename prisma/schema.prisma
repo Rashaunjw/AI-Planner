@@ -41,9 +41,9 @@ model User {
   emailVerified    DateTime?
   image            String?
   plan             String            @default("free")
-  emailReminders   Boolean           @default(true)
-  reminderDays     Int               @default(2)
-  calendarSync     Boolean           @default(false)
+  emailReminders        Boolean           @default(true)
+  reminderMinutesBefore  Int               @default(2880) // 2880 = 2 days; also 10, 30, 60, 1440, 4320, 10080
+  calendarSync          Boolean           @default(false)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   accounts         Account[]

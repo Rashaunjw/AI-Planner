@@ -13,7 +13,7 @@ export async function GET() {
     const [user, accounts, pushCount] = await Promise.all([
       prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { emailReminders: true, reminderDays: true, calendarSync: true, plan: true },
+        select: { emailReminders: true, reminderMinutesBefore: true, calendarSync: true, plan: true },
       }),
       prisma.account.findMany({
         where: { userId: session.user.id },
@@ -29,7 +29,7 @@ export async function GET() {
     })
 
     return NextResponse.json({
-      settings: user ?? { emailReminders: true, reminderDays: 2 },
+      settings: user ?? { emailReminders: true, reminderMinutesBefore: 2880 },
       pushSubscribed: pushCount > 0,
       accounts,
       uploads,
@@ -49,16 +49,17 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json()
     const emailReminders = Boolean(body.emailReminders)
-    const reminderDays =
-      typeof body.reminderDays === "number" && body.reminderDays > 0
-        ? Math.min(body.reminderDays, 30)
-        : 2
+    const allowedMinutes = [10, 30, 60, 1440, 2880, 4320, 10080] as const // 10m, 30m, 1h, 1d, 2d, 3d, 1w
+    const reminderMinutesBefore =
+      typeof body.reminderMinutesBefore === "number" && allowedMinutes.includes(body.reminderMinutesBefore as (typeof allowedMinutes)[number])
+        ? (body.reminderMinutesBefore as (typeof allowedMinutes)[number])
+        : 2880
     const calendarSync = Boolean(body.calendarSync)
 
     const user = await prisma.user.update({
       where: { id: session.user.id },
-      data: { emailReminders, reminderDays, calendarSync },
-      select: { emailReminders: true, reminderDays: true, calendarSync: true },
+      data: { emailReminders, reminderMinutesBefore, calendarSync },
+      select: { emailReminders: true, reminderMinutesBefore: true, calendarSync: true },
     })
 
     return NextResponse.json({ settings: user })

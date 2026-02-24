@@ -4,10 +4,20 @@ import { sendPushNotification } from "@/lib/push"
 import { getFromAddress } from "@/lib/email"
 import { getSiteBaseUrl } from "@/lib/site-url"
 
+const MINUTES_PER_DAY = 1440
+const SUB_DAY_WINDOW_MS = 10 * 60 * 1000 // 10 min; cron runs every 10 min to catch sub-day reminders
+
 type ReminderCandidate = {
   taskId: string
   title: string
   dueDate: Date
+}
+
+function reminderLabel(minutesBefore: number): string {
+  if (minutesBefore < 60) return `in ${minutesBefore} min`
+  if (minutesBefore < MINUTES_PER_DAY) return `in ${Math.round(minutesBefore / 60)} hour${minutesBefore >= 120 ? "s" : ""}`
+  const days = Math.round(minutesBefore / MINUTES_PER_DAY)
+  return days === 1 ? "tomorrow" : `in ${days} days`
 }
 
 export async function POST(request: NextRequest) {
@@ -28,14 +38,20 @@ async function handleRequest(request: NextRequest) {
   }
 
   try {
+    const now = new Date()
+    const nowMs = now.getTime()
+    const todayKey = formatDateKeyUTC(now)
+    const dayStart = startOfDayUTC(now)
+
     const users = await prisma.user.findMany({
       where: { emailReminders: true },
-      select: { id: true, email: true, reminderDays: true },
+      select: { id: true, email: true, reminderMinutesBefore: true },
     })
 
     let sentCount = 0
     for (const user of users) {
       if (!user.email) continue
+      const mins = user.reminderMinutesBefore ?? 2880
       const tasks = await prisma.task.findMany({
         where: {
           userId: user.id,
@@ -45,43 +61,75 @@ async function handleRequest(request: NextRequest) {
         select: { id: true, title: true, dueDate: true },
       })
 
-      const todayKey = formatDateKeyUTC(new Date())
-      const candidates: ReminderCandidate[] = []
-      for (const task of tasks) {
-        if (!task.dueDate) continue
-        const reminderDate = new Date(task.dueDate)
-        reminderDate.setUTCDate(reminderDate.getUTCDate() - user.reminderDays)
-        if (formatDateKeyUTC(reminderDate) === todayKey) {
-          candidates.push({ taskId: task.id, title: task.title, dueDate: task.dueDate })
+      let toSend: ReminderCandidate[] = []
+      if (mins >= MINUTES_PER_DAY) {
+        const candidates: ReminderCandidate[] = []
+        for (const task of tasks) {
+          if (!task.dueDate) continue
+          const reminderTime = new Date(task.dueDate.getTime() - mins * 60 * 1000)
+          if (formatDateKeyUTC(reminderTime) === todayKey) {
+            candidates.push({ taskId: task.id, title: task.title, dueDate: task.dueDate })
+          }
         }
+        const existing = await prisma.reminder.findMany({
+          where: { userId: user.id, type: "email", scheduledFor: dayStart },
+          select: { taskId: true },
+        })
+        toSend = candidates.filter((c) => !new Set(existing.map((r) => r.taskId)).has(c.taskId))
+      } else {
+        for (const task of tasks) {
+          if (!task.dueDate) continue
+          const reminderTime = new Date(task.dueDate.getTime() - mins * 60 * 1000)
+          if (nowMs >= reminderTime.getTime() && nowMs < reminderTime.getTime() + SUB_DAY_WINDOW_MS) {
+            toSend.push({ taskId: task.id, title: task.title, dueDate: task.dueDate })
+          }
+        }
+        const stillToSend: ReminderCandidate[] = []
+        for (const item of toSend) {
+          const reminderTime = new Date(item.dueDate.getTime() - mins * 60 * 1000)
+          const existing = await prisma.reminder.findFirst({
+            where: {
+              userId: user.id,
+              taskId: item.taskId,
+              type: "email",
+              scheduledFor: {
+                gte: new Date(reminderTime.getTime() - 60000),
+                lte: new Date(reminderTime.getTime() + 60000),
+              },
+            },
+          })
+          if (!existing) stillToSend.push(item)
+        }
+        toSend = stillToSend
       }
 
-      if (candidates.length === 0) continue
-
-      const existing = await prisma.reminder.findMany({
-        where: {
-          userId: user.id,
-          type: "email",
-          scheduledFor: startOfDayUTC(new Date()),
-        },
-        select: { taskId: true },
-      })
-      const sentTaskIds = new Set(existing.map((item) => item.taskId))
-      const toSend = candidates.filter((item) => !sentTaskIds.has(item.taskId))
       if (toSend.length === 0) continue
 
-      await sendReminderEmail(user.email, user.reminderDays, toSend)
+      await sendReminderEmail(user.email, mins, toSend)
 
-      await prisma.reminder.createMany({
-        data: toSend.map((item) => ({
-          userId: user.id,
-          taskId: item.taskId,
-          type: "email",
-          scheduledFor: startOfDayUTC(new Date()),
-          isSent: true,
-        })),
-      })
-
+      if (mins >= MINUTES_PER_DAY) {
+        await prisma.reminder.createMany({
+          data: toSend.map((item) => ({
+            userId: user.id,
+            taskId: item.taskId,
+            type: "email",
+            scheduledFor: dayStart,
+            isSent: true,
+          })),
+        })
+      } else {
+        for (const item of toSend) {
+          await prisma.reminder.create({
+            data: {
+              userId: user.id,
+              taskId: item.taskId,
+              type: "email",
+              scheduledFor: new Date(item.dueDate.getTime() - mins * 60 * 1000),
+              isSent: true,
+            },
+          })
+        }
+      }
       sentCount += 1
     }
 
@@ -90,12 +138,13 @@ async function handleRequest(request: NextRequest) {
     const usersWithPush = vapidConfigured
       ? await prisma.user.findMany({
           where: { pushSubscriptions: { some: {} } },
-          select: { id: true, reminderDays: true },
+          select: { id: true, reminderMinutesBefore: true },
         })
       : []
 
     let pushSentCount = 0
     for (const user of usersWithPush) {
+      const mins = user.reminderMinutesBefore ?? 2880
       const tasks = await prisma.task.findMany({
         where: {
           userId: user.id,
@@ -105,62 +154,87 @@ async function handleRequest(request: NextRequest) {
         select: { id: true, title: true, dueDate: true },
       })
 
-      const todayKey = formatDateKeyUTC(new Date())
-      const candidates: ReminderCandidate[] = []
-      for (const task of tasks) {
-        if (!task.dueDate) continue
-        const reminderDate = new Date(task.dueDate)
-        reminderDate.setUTCDate(reminderDate.getUTCDate() - user.reminderDays)
-        if (formatDateKeyUTC(reminderDate) === todayKey) {
-          candidates.push({ taskId: task.id, title: task.title, dueDate: task.dueDate })
+      let toSend: ReminderCandidate[] = []
+      if (mins >= MINUTES_PER_DAY) {
+        const candidates: ReminderCandidate[] = []
+        for (const task of tasks) {
+          if (!task.dueDate) continue
+          const reminderTime = new Date(task.dueDate.getTime() - mins * 60 * 1000)
+          if (formatDateKeyUTC(reminderTime) === todayKey) {
+            candidates.push({ taskId: task.id, title: task.title, dueDate: task.dueDate })
+          }
         }
+        const existing = await prisma.reminder.findMany({
+          where: { userId: user.id, type: "push", scheduledFor: dayStart },
+          select: { taskId: true },
+        })
+        toSend = candidates.filter((c) => !new Set(existing.map((r) => r.taskId)).has(c.taskId))
+      } else {
+        for (const task of tasks) {
+          if (!task.dueDate) continue
+          const reminderTime = new Date(task.dueDate.getTime() - mins * 60 * 1000)
+          if (nowMs >= reminderTime.getTime() && nowMs < reminderTime.getTime() + SUB_DAY_WINDOW_MS) {
+            toSend.push({ taskId: task.id, title: task.title, dueDate: task.dueDate })
+          }
+        }
+        const stillToSend: ReminderCandidate[] = []
+        for (const item of toSend) {
+          const reminderTime = new Date(item.dueDate.getTime() - mins * 60 * 1000)
+          const existing = await prisma.reminder.findFirst({
+            where: {
+              userId: user.id,
+              taskId: item.taskId,
+              type: "push",
+              scheduledFor: {
+                gte: new Date(reminderTime.getTime() - 60000),
+                lte: new Date(reminderTime.getTime() + 60000),
+              },
+            },
+          })
+          if (!existing) stillToSend.push(item)
+        }
+        toSend = stillToSend
       }
 
-      if (candidates.length === 0) continue
-
-      const existingPush = await prisma.reminder.findMany({
-        where: {
-          userId: user.id,
-          type: "push",
-          scheduledFor: startOfDayUTC(new Date()),
-        },
-        select: { taskId: true },
-      })
-      const sentTaskIds = new Set(existingPush.map((item) => item.taskId))
-      const toSend = candidates.filter((item) => !sentTaskIds.has(item.taskId))
       if (toSend.length === 0) continue
 
       const subscriptions = await prisma.pushSubscription.findMany({
         where: { userId: user.id },
         select: { endpoint: true, p256dh: true, auth: true },
       })
-
-      const dayLabel = user.reminderDays === 1 ? "tomorrow" : `in ${user.reminderDays} days`
+      const label = reminderLabel(mins)
       const body =
-        toSend.length === 1
-          ? `${toSend[0].title} due ${dayLabel}`
-          : `${toSend.length} assignments due ${dayLabel}`
+        toSend.length === 1 ? `${toSend[0].title} due ${label}` : `${toSend.length} assignments due ${label}`
       const baseUrl = getSiteBaseUrl()
-      const payload = {
-        title: "PlanEra – Deadline reminder",
-        body,
-        url: `${baseUrl}/tasks`,
-        tag: "planera-reminder",
-      }
+      const payload = { title: "PlanEra – Deadline reminder", body, url: `${baseUrl}/tasks`, tag: "planera-reminder" }
 
       try {
         for (const sub of subscriptions) {
           await sendPushNotification(sub, payload)
         }
-        await prisma.reminder.createMany({
-          data: toSend.map((item) => ({
-            userId: user.id,
-            taskId: item.taskId,
-            type: "push",
-            scheduledFor: startOfDayUTC(new Date()),
-            isSent: true,
-          })),
-        })
+        if (mins >= MINUTES_PER_DAY) {
+          await prisma.reminder.createMany({
+            data: toSend.map((item) => ({
+              userId: user.id,
+              taskId: item.taskId,
+              type: "push",
+              scheduledFor: dayStart,
+              isSent: true,
+            })),
+          })
+        } else {
+          for (const item of toSend) {
+            await prisma.reminder.create({
+              data: {
+                userId: user.id,
+                taskId: item.taskId,
+                type: "push",
+                scheduledFor: new Date(item.dueDate.getTime() - mins * 60 * 1000),
+                isSent: true,
+              },
+            })
+          }
+        }
         pushSentCount += 1
       } catch (err) {
         console.error("Push reminder failed for user", user.id, err)
@@ -176,7 +250,7 @@ async function handleRequest(request: NextRequest) {
 
 async function sendReminderEmail(
   email: string,
-  reminderDays: number,
+  reminderMinutesBefore: number,
   tasks: ReminderCandidate[]
 ) {
   const apiKey = process.env.RESEND_API_KEY
@@ -188,14 +262,14 @@ async function sendReminderEmail(
   const { Resend } = await import("resend")
   const resend = new Resend(apiKey)
 
-  const dayLabel = reminderDays === 1 ? "tomorrow" : `in ${reminderDays} days`
-  const subject = `${tasks.length} assignment${tasks.length !== 1 ? "s" : ""} due ${dayLabel} (PlanEra)`
+  const label = reminderLabel(reminderMinutesBefore)
+  const subject = `${tasks.length} assignment${tasks.length !== 1 ? "s" : ""} due ${label} (PlanEra)`
 
   // Plain-text fallback
   const textLines = tasks
     .map((t) => `• ${t.title}  (due ${formatDateDisplay(t.dueDate)})`)
     .join("\n")
-  const text = `Hi,\n\nYou have ${tasks.length} assignment${tasks.length !== 1 ? "s" : ""} due ${dayLabel}:\n\n${textLines}\n\nStay on top of it at https://planera.app/tasks\n\n- PlanEra`
+  const text = `Hi,\n\nYou have ${tasks.length} assignment${tasks.length !== 1 ? "s" : ""} due ${label}:\n\n${textLines}\n\nStay on top of it at https://planera.app/tasks\n\n- PlanEra`
 
   // Branded HTML email
   const taskRows = tasks
@@ -232,7 +306,7 @@ async function sendReminderEmail(
         <tr>
           <td style="padding:28px 32px;">
             <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#111827;">
-              You have ${tasks.length} assignment${tasks.length !== 1 ? "s" : ""} due ${dayLabel}.
+              You have ${tasks.length} assignment${tasks.length !== 1 ? "s" : ""} due ${label}.
             </p>
             <p style="margin:0 0 24px;font-size:14px;color:#6b7280;">
               Don&rsquo;t let these sneak up on you &mdash; here&rsquo;s what&rsquo;s coming up:

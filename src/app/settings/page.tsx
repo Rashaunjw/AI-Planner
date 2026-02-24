@@ -30,7 +30,7 @@ export default function SettingsPage() {
   const router = useRouter()
   const [settings, setSettings] = useState({
     emailReminders: true,
-    reminderDays: 2,
+    reminderMinutesBefore: 2880 as number, // 2880 = 2 days
     calendarSync: false,
     notifications: true,
   })
@@ -62,7 +62,7 @@ export default function SettingsPage() {
             setSettings((prev) => ({
               ...prev,
               emailReminders: Boolean(data.settings.emailReminders),
-              reminderDays: Number(data.settings.reminderDays) || 2,
+              reminderMinutesBefore: Number(data.settings.reminderMinutesBefore) || 2880,
               calendarSync: Boolean(data.settings.calendarSync),
               notifications: Boolean(data.pushSubscribed),
             }))
@@ -114,7 +114,7 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           emailReminders: settings.emailReminders,
-          reminderDays: settings.reminderDays,
+          reminderMinutesBefore: settings.reminderMinutesBefore,
           calendarSync: settings.calendarSync,
         }),
       })
@@ -331,19 +331,22 @@ export default function SettingsPage() {
               {settings.emailReminders && (
                 <div className="ml-4 pl-4 border-l-2 border-indigo-100">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Remind me how many days before the due date?
+                    Remind me how long before the due date?
                   </label>
                   <select
-                    value={settings.reminderDays}
+                    value={settings.reminderMinutesBefore}
                     onChange={(e) =>
-                      setSettings({ ...settings, reminderDays: parseInt(e.target.value) })
+                      setSettings({ ...settings, reminderMinutesBefore: parseInt(e.target.value, 10) })
                     }
                     className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   >
-                    <option value={1}>1 day before</option>
-                    <option value={2}>2 days before</option>
-                    <option value={3}>3 days before</option>
-                    <option value={7}>1 week before</option>
+                    <option value={10}>10 minutes before</option>
+                    <option value={30}>30 minutes before</option>
+                    <option value={60}>1 hour before</option>
+                    <option value={1440}>1 day before</option>
+                    <option value={2880}>2 days before</option>
+                    <option value={4320}>3 days before</option>
+                    <option value={10080}>1 week before</option>
                   </select>
                 </div>
               )}
