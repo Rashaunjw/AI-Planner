@@ -5,7 +5,8 @@ export async function GET() {
   try {
     const publicKey = getVapidPublicKey()
     return NextResponse.json({ publicKey })
-  } catch {
+  } catch (err) {
+    console.error("[push/vapid-public]", err)
     return NextResponse.json(
       { error: "Push notifications are not configured" },
       { status: 503 }

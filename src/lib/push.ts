@@ -1,8 +1,8 @@
 import webpush from "web-push"
 
 const getVapidKeys = () => {
-  const publicKey = process.env.VAPID_PUBLIC_KEY
-  const privateKey = process.env.VAPID_PRIVATE_KEY
+  const publicKey = process.env.VAPID_PUBLIC_KEY?.trim()
+  const privateKey = process.env.VAPID_PRIVATE_KEY?.trim()
   if (!publicKey || !privateKey) {
     throw new Error("VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY must be set for push notifications")
   }
