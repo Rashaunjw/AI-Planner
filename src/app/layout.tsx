@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers"
 import { PwaRegister } from "@/components/pwa-register"
+import { PushPromptPwa } from "@/components/push-prompt-pwa"
 import { getSiteBaseUrl } from "@/lib/site-url"
 
 const geistSans = Geist({
@@ -48,6 +49,7 @@ export default function RootLayout({
       >
         <Providers>
           <PwaRegister />
+          <PushPromptPwa />
           {children}
         </Providers>
       </body>
