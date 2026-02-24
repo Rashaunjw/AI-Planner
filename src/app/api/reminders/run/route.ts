@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { sendPushNotification } from "@/lib/push"
+import { getFromAddress } from "@/lib/email"
 import { getSiteBaseUrl } from "@/lib/site-url"
 
 type ReminderCandidate = {
@@ -179,7 +180,7 @@ async function sendReminderEmail(
   tasks: ReminderCandidate[]
 ) {
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.RESEND_FROM || process.env.FROM_EMAIL || process.env.EMAIL_FROM
+  const from = getFromAddress()
   if (!apiKey || !from) {
     throw new Error("Email provider not configured")
   }

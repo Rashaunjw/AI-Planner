@@ -21,8 +21,20 @@ const getResendClient = () => {
   return new Resend(apiKey)
 }
 
-const getFromAddress = () =>
+const rawFrom = () =>
   process.env.RESEND_FROM || process.env.FROM_EMAIL || process.env.EMAIL_FROM
+
+/** Returns "PlanEra <email>" so the inbox shows "PlanEra" instead of the raw address (e.g. noreply). */
+function formatFromWithPlanEra(raw: string): string {
+  const match = raw.match(/<([^>]+)>/)
+  const email = match ? match[1].trim() : raw.trim()
+  return `PlanEra <${email}>`
+}
+
+export const getFromAddress = () => {
+  const from = rawFrom()
+  return from ? formatFromWithPlanEra(from) : undefined
+}
 
 export const createVerificationLink = (token: string, email: string) => {
   const url = new URL("/auth/verify", getAppBaseUrl())

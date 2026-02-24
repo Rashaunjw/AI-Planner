@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { getFromAddress } from "@/lib/email"
 
 const APP_URL = process.env.NEXTAUTH_URL || "https://planera.app"
 
@@ -96,7 +97,7 @@ async function sendWeeklyDigestEmail(
   tasks: { title: string; dueDate: Date | null; className: string | null }[]
 ) {
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.RESEND_FROM || process.env.FROM_EMAIL || process.env.EMAIL_FROM
+  const from = getFromAddress()
   if (!apiKey || !from) {
     throw new Error("Email provider not configured")
   }
